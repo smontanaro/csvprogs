@@ -84,6 +84,8 @@ SEE ALSO
 * mpl
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import csv
 import getopt
@@ -92,6 +94,7 @@ import datetime
 import copy
 
 import dateutil.parser
+from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -129,12 +132,12 @@ def main(args):
         rdr = csv.DictReader(sys.stdin, delimiter=sep)
         wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames,
                              delimiter=sep)
-        wtr.writerow(dict(zip(wtr.fieldnames, wtr.fieldnames)))
+        wtr.writerow(dict(list(zip(wtr.fieldnames, wtr.fieldnames))))
     else:
         rdr = csv.reader(sys.stdin, delimiter=sep)
         wtr = csv.writer(sys.stdout, delimiter=sep)
         if skip_header:
-            wtr.writerow(rdr.next())
+            wtr.writerow(next(rdr))
     for row in square(remove_dups(rdr, keys, blank), 0, keys[-1], numeric):
         wtr.writerow(row)
 
@@ -154,7 +157,7 @@ def remove_dups(iterator, keys, blank):
         yield row
 
 def square(iterator, t, y, numeric):
-    r1 = iterator.next()
+    r1 = next(iterator)
     yield r1
     for r2 in iterator:
         row = copy.copy(r2)
@@ -164,7 +167,7 @@ def square(iterator, t, y, numeric):
         r1 = r2
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

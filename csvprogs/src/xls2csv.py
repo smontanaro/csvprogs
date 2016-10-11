@@ -35,6 +35,8 @@ SEE ALSO
 * csv2csv
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import tempfile
 import getopt
@@ -43,6 +45,7 @@ import os
 import datetime
 
 import xlrd
+from six.moves import range
 
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 EPOCH = datetime.datetime.fromtimestamp(0)
@@ -86,8 +89,8 @@ def main(args):
 
 def usage(msg=""):
     if msg:
-        print >> sys.stderr, msg.rstrip()
-    print >> sys.stderr, __doc__ % globals()
+        print(msg.rstrip(), file=sys.stderr)
+    print(__doc__ % globals(), file=sys.stderr)
 
 def cell_value(cell, datemode):
     if cell.ctype == xlrd.XL_CELL_DATE:

@@ -58,18 +58,21 @@ SEE ALSO
 :Manual group: data filters
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import csv
 import getopt
 import os
+from six.moves import zip
 
 PROG = os.path.split(sys.argv[0])[1]
 
 def usage(msg=None):
     if msg is not None:
-        print >> sys.stderr, msg
-        print >> sys.stderr
-    print >> sys.stderr, (__doc__.strip() % globals())
+        print(msg, file=sys.stderr)
+        print(file=sys.stderr)
+    print((__doc__.strip() % globals()), file=sys.stderr)
 
 def main(args):
     keys = []
@@ -77,7 +80,7 @@ def main(args):
 
     try:
         opts, args = getopt.getopt(args, "k:h")
-    except getopt.GetoptError, msg:
+    except getopt.GetoptError as msg:
         usage(msg)
         return 1
 
@@ -104,13 +107,13 @@ def main(args):
     out_fields = keys + sorted(rest)
 
     writer = csv.DictWriter(sys.stdout, fieldnames=out_fields, restval="")
-    writer.writerow(dict(zip(out_fields, out_fields)))
+    writer.writerow(dict(list(zip(out_fields, out_fields))))
 
     rows = {}
     # Populate dict of readers with the first row from each.
     for rdr in readers:
         try:
-            row = rdr.next()
+            row = next(rdr)
         except StopIteration:
             pass
         else:
@@ -125,7 +128,7 @@ def main(args):
 
         # Fill in the now stale slot with the next row.
         try:
-            row = rdr.next()
+            row = next(rdr)
         except StopIteration:
             del rows[rdr]
         else:

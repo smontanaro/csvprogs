@@ -45,6 +45,8 @@ SEE ALSO
 * mpl
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import getopt
 import datetime
@@ -95,11 +97,11 @@ def main(args):
             close = prev_last
             barstart += interval
         fields.append(str(close))
-        print sep.join(fields)
+        print(sep.join(fields))
     return 0
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

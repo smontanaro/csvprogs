@@ -60,6 +60,8 @@ SEE ALSO
 * csv2csv
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import sys
 import getopt
@@ -69,9 +71,9 @@ PROG = os.path.split(sys.argv[0])[1]
 
 def usage(msg=None):
     if msg is not None:
-        print >> sys.stderr, msg
-        print >> sys.stderr
-    print >> sys.stderr, (__doc__.strip() % globals())
+        print(msg, file=sys.stderr)
+        print(file=sys.stderr)
+    print((__doc__.strip() % globals()), file=sys.stderr)
 
 def main(args):
     keys = ()

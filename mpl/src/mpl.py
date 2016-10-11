@@ -12,7 +12,7 @@ plot csv-ish input from stdin using matplotlib
 :Author: skipm@trdlnk.com
 :Date: 2013-03-15
 :Copyright: TradeLink LLC 2013
-:Version: @@VERSION@@
+:Version: 0.1
 :Manual section: 1
 :Manual group: data filters
 
@@ -149,6 +149,8 @@ SEE ALSO
 
 from __future__ import division
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import csv
 import getopt
@@ -303,7 +305,7 @@ def main(args):
         matplotlib.use(backend)
 
     if verbose:
-        print >> sys.stderr, "Using", matplotlib.get_backend()
+        print("Using", matplotlib.get_backend(), file=sys.stderr)
 
     from matplotlib import ticker, dates
 
@@ -314,10 +316,10 @@ def main(args):
         try:
             pyplot.xkcd()
         except AttributeError:
-            print >> sys.stderr, "XKCD style not available."
+            print("XKCD style not available.", file=sys.stderr)
         else:
             if verbose:
-                print >> sys.stderr, "Using XKCD style."
+                print("Using XKCD style.", file=sys.stderr)
 
     if not fields:
         # normal output from pt, nt, etc
@@ -333,7 +335,7 @@ def main(args):
             try:
                 return dateutil.parser.parse(x)
             except ValueError:
-                print >> sys.stderr, "Can't parse", repr(x), "as a timestamp."
+                print("Can't parse", repr(x), "as a timestamp.", file=sys.stderr)
                 raise
         def fmt_date(f, _=None, xfmt=xfmt):
             dt = dates.num2date(f)
@@ -365,7 +367,7 @@ def main(args):
 
 
     if reader == csv.DictReader:
-        fieldnames = csv.reader(sys.stdin, delimiter=sep).next()
+        fieldnames = next(csv.reader(sys.stdin, delimiter=sep))
         rdr = reader(sys.stdin, fieldnames=fieldnames, delimiter=sep)
     else:
         rdr = reader(sys.stdin, delimiter=sep)
@@ -378,7 +380,7 @@ def main(args):
     x_range = [min_x, max_x]
     for (c1, c2, side, color, legend, style, marker) in fields:
         if sloppy_names:
-            keys = raw[0].keys()
+            keys = list(raw[0].keys())
             if c1 not in keys:
                 for k in keys:
                     if re.match(r"^\s*%s\s*$" % c1, k):
@@ -407,8 +409,8 @@ def main(args):
             if x and y:
                 try:
                     x = parse_x(x)
-                except ValueError, err:
-                    print >> sys.stderr, err, values
+                except ValueError as err:
+                    print(err, values, file=sys.stderr)
                     raise
                 y = float(y)
                 # If we get inputs with timezone info, convert. This
@@ -424,10 +426,10 @@ def main(args):
             x_range = [min([x for (x, _y) in data[0]]+[x_range[0]]),
                        max([x for (x, _y) in data[0]]+[x_range[1]])]
         else:
-            print >> sys.stderr, "No data for x range!"
+            print("No data for x range!", file=sys.stderr)
     if (sum([len(x) for x in left]) == 0 and
         sum([len(x) for x in right]) == 0):
-        print >> sys.stderr, "No points to plot!"
+        print("No points to plot!", file=sys.stderr)
         return 1
 
     figure = pylab.figure(figsize=dims)
@@ -510,7 +512,7 @@ def main(args):
         try:
             x_range = [x_range[0] - extra, x_range[1] + extra]
         except OverflowError:
-            print >> sys.stderr, "overflow:", x_range, extra
+            print("overflow:", x_range, extra, file=sys.stderr)
             raise
         left_plot.set_xlim(x_range)
 
@@ -545,8 +547,8 @@ def color_bkgd(bkgds, plot, y_range, raw_data, parse_x):
             if x and y:
                 try:
                     x = parse_x(x)
-                except ValueError, err:
-                    print >> sys.stderr, err, values
+                except ValueError as err:
+                    print(err, values, file=sys.stderr)
                     raise
                 y = float(y)
                 data.append((x, y))
@@ -561,7 +563,7 @@ def color_bkgd(bkgds, plot, y_range, raw_data, parse_x):
                           where=mask)
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 def as_days(delta):
     return delta.days + delta.seconds / SECONDS_PER_DAY

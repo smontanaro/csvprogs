@@ -91,18 +91,21 @@ SEE ALSO
 * data_misc package
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import csv
 import os
 import getopt
+from six.moves import zip
 
 PROG = os.path.split(sys.argv[0])[1]
 
 def usage(msg=None):
     if msg is not None:
-        print >> sys.stderr, msg
-        print >> sys.stderr
-    print >> sys.stderr, (__doc__.strip() % globals())
+        print(msg, file=sys.stderr)
+        print(file=sys.stderr)
+    print((__doc__.strip() % globals()), file=sys.stderr)
 
 def main(args):
     opts, args = getopt.getopt(args, "hf:")
@@ -133,12 +136,12 @@ def main(args):
     # We've now built a function.  Compile the code and proceed.
 
     glbls = {}
-    exec func in glbls
+    exec(func, glbls)
     func = glbls["compare_func"]
 
     rdr = csv.DictReader(sys.stdin)
     wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames)
-    wtr.writerow(dict(zip(rdr.fieldnames, rdr.fieldnames)))
+    wtr.writerow(dict(list(zip(rdr.fieldnames, rdr.fieldnames))))
     for row in rdr:
         if func(row):
             wtr.writerow(row)

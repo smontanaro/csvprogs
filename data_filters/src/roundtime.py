@@ -48,6 +48,8 @@ SEE ALSO
 * csvmerge
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import getopt
 import datetime
@@ -56,6 +58,7 @@ import csv
 import time
 
 import dateutil.parser
+from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -86,7 +89,7 @@ def main(args):
     rdr = reader(sys.stdin)
     if writer == csv.DictWriter:
         wtr = writer(sys.stdout, fieldnames=rdr.fieldnames)
-        wtr.writerow(dict(zip(rdr.fieldnames, rdr.fieldnames)))
+        wtr.writerow(dict(list(zip(rdr.fieldnames, rdr.fieldnames))))
     else:
         wtr = writer(sys.stdout)
     power = 10 ** digits
@@ -103,7 +106,7 @@ def to_timestamp(dt):
     return time.mktime(dt.timetuple()) + dt.microsecond/1e6
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

@@ -41,6 +41,8 @@ SEE ALSO
 * csv2csv
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import getopt
 import os
@@ -100,8 +102,8 @@ def type_convert(cell):
 
 def usage(msg=""):
     if msg:
-        print >> sys.stderr, msg.rstrip()
-    print >> sys.stderr, __doc__ % globals()
+        print(msg.rstrip(), file=sys.stderr)
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

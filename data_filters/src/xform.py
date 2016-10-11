@@ -150,12 +150,16 @@ SEE ALSO
 * take
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import getopt
 import os
 import csv
 import UserDict
 import inspect
+from six.moves import range
+from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -194,7 +198,7 @@ def xform(rdr, wtr, func, indexes):
         try:
             result = func(row)
         except Exception as e:
-            print >> sys.stderr, "Error processing:", row
+            print("Error processing:", row, file=sys.stderr)
             raise
         if do_header:
             pre, post = result if result is not None else [{}, {}]
@@ -237,9 +241,9 @@ def inject_globals(func, vrbls):
     # not a normal function-like beast.
     for _i in (0, 1):
         if inspect.ismethod(func):
-            func_globals = func.im_func.func_globals
+            func_globals = func.__func__.__globals__
         elif inspect.isfunction(func):
-            func_globals = func.func_globals
+            func_globals = func.__globals__
         elif inspect.isbuiltin(func):
             func_globals = sys.modules[func.__module__].__dict__
         elif inspect.ismethoddescriptor(func):
@@ -266,12 +270,12 @@ def process_args(args):
             options.sep = arg
         elif opt == "-f":
             d = {}
-            exec arg in {}, d
+            exec(arg, {}, d)
             if "__xform__" in d:
                 options.xform = d[d["__xform__"]]
             else:
                 # Better only define a single object!
-                options.xform = d[d.keys()[0]]
+                options.xform = d[list(d.keys())[0]]
             if "__xform_names__" in d:
                 options.extra_names.extend(d["__xform_names__"])
         elif opt == "-F":
@@ -290,7 +294,7 @@ def process_args(args):
             keys = [x.split("=")[0].strip() for x in arg.split(",")]
             vals = [x.split("=")[1].strip() for x in arg.split(",")]
             type_convert(vals)
-            options.vars = dict(zip(keys, vals))
+            options.vars = dict(list(zip(keys, vals)))
         elif opt == "-h":
             usage()
             raise SystemExit
@@ -314,7 +318,7 @@ class ListyDict(UserDict.DictMixin):
         self.indexes = dict(indexes)
 
     def keys(self):
-        return self.data.keys()
+        return list(self.data.keys())
 
     def __contains__(self, k):
         return k in self.data
@@ -375,8 +379,8 @@ def make_number(val):
 
 def usage(msg=""):
     if msg:
-        print >> sys.stderr, msg
-    print >> sys.stderr, __doc__ % globals()
+        print(msg, file=sys.stderr)
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

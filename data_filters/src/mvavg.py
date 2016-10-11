@@ -44,10 +44,13 @@ SEE ALSO
 * mpl
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import getopt
 import os
 import csv
+from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -83,7 +86,7 @@ def main(args):
         fnames = rdr.fieldnames[:]
         fnames.append("mean")
         wtr = writer(sys.stdout, delimiter=sep, fieldnames=fnames)
-        wtr.writerow(dict(zip(fnames, fnames)))
+        wtr.writerow(dict(list(zip(fnames, fnames))))
     else:
         wtr = writer(sys.stdout, delimiter=sep)
     for row in rdr:
@@ -102,7 +105,7 @@ def main(args):
     return 0
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

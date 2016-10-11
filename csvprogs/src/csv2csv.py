@@ -63,18 +63,21 @@ SEE ALSO
 * data_misc package
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import sys
 import getopt
 import os
+from six.moves import zip
 
 PROG = os.path.split(sys.argv[0])[1]
 
 def usage(msg=None):
     if msg is not None:
-        print >> sys.stderr, msg
-        print >> sys.stderr
-    print >> sys.stderr, (__doc__.strip() % globals())
+        print(msg, file=sys.stderr)
+        print(file=sys.stderr)
+    print((__doc__.strip() % globals()), file=sys.stderr)
 
 def main(args):
     quote_style = csv.QUOTE_ALL
@@ -88,7 +91,7 @@ def main(args):
 
     try:
         opts, args = getopt.getopt(args, "o:i:f:F:DHnh")
-    except getopt.GetoptError, msg:
+    except getopt.GetoptError as msg:
         usage(msg)
         return 1
 
@@ -135,14 +138,14 @@ def main(args):
     if headers:
         fields = headers
     else:
-        fields = reader.next()
+        fields = next(reader)
     if not inputfields:
         inputfields = outputfields = fields
     reader = csv.DictReader(inf, fields, delimiter=insep)
     writer = csv.DictWriter(outf, outputfields, dialect=outdialect,
                             extrasaction='ignore')
     if emitheader:
-        writer.writerow(dict(zip(outputfields, outputfields)))
+        writer.writerow(dict(list(zip(outputfields, outputfields))))
 
     try:
         for inrow in reader:

@@ -29,6 +29,8 @@ of stdin must be read first, so it is not a good idea to use this
 filter with very large files.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import random
 import getopt
@@ -54,9 +56,9 @@ def main(args):
 
 def usage(msg=""):
     if msg:
-        print >> sys.stderr, msg
-        print >> sys.stderr
-    print >> sys.stderr, __doc__ % globals()
+        print(msg, file=sys.stderr)
+        print(file=sys.stderr)
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

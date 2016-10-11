@@ -115,10 +115,14 @@ SEE ALSO
 * mean
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import getopt
 import os
 import csv
+from six.moves import range
+from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -148,7 +152,7 @@ def main(args):
 
     rdr = csv.reader(sys.stdin)
     wtr = csv.writer(sys.stdout)
-    first = rdr.next()
+    first = next(rdr)
     indexes = None
     if has_header:
         # Treat first row as a header.
@@ -158,7 +162,7 @@ def main(args):
             first.append(lambda_key)
         rdr = csv.DictReader(sys.stdin, fieldnames=first, restval="")
         wtr = csv.DictWriter(sys.stdout, fieldnames=first)
-        wtr.writerow(dict(zip(first, first)))
+        wtr.writerow(dict(list(zip(first, first))))
         indexes = enumerate(first)
 
     for row in rdr:
@@ -214,8 +218,8 @@ def floatify(val):
 
 def usage(msg=""):
     if msg:
-        print >> sys.stderr, msg
-    print >> sys.stderr, __doc__ % globals()
+        print(msg, file=sys.stderr)
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

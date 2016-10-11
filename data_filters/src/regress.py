@@ -43,12 +43,15 @@ SEE ALSO
 * sigavg
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import getopt
 import os
 import csv
 
 import scipy.stats
+from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -91,7 +94,7 @@ def main(args):
         names = reader.fieldnames[:]
         names.append(str(field3))
         writer = csv.DictWriter(sys.stdout, fieldnames=names, delimiter=sep)
-        writer.writerow(dict(zip(names, names)))
+        writer.writerow(dict(list(zip(names, names))))
 
     x = []
     y = []
@@ -106,8 +109,8 @@ def main(args):
 
     (slope, intercept, r, p, stderr) = scipy.stats.linregress(x, y)
 
-    print >> sys.stderr, "slope:", slope, "intercept:", intercept
-    print >> sys.stderr, "corr coeff:", r, "p:", p, "err:", stderr
+    print("slope:", slope, "intercept:", intercept, file=sys.stderr)
+    print("corr coeff:", r, "p:", p, "err:", stderr, file=sys.stderr)
 
     for row in rows:
         if row[field1]:
@@ -120,7 +123,7 @@ def main(args):
     return 0
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

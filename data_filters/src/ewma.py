@@ -45,6 +45,8 @@ SEE ALSO
 * avg
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import getopt
 import os
@@ -77,11 +79,11 @@ def main(args):
             else:
                 val = alpha * float(fields[field]) + (1-alpha) * val
         fields.append(str(val))
-        print sep.join(fields)
+        print(sep.join(fields))
     return 0
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

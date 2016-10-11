@@ -45,6 +45,8 @@ SEE ALSO
 * mpl
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import csv
@@ -80,7 +82,7 @@ def main(args):
     rdr = csv.reader(sys.stdin, delimiter=sep)
     wtr = csv.writer(sys.stdout, delimiter=sep)
     if skip_header:
-        row = rdr.next()
+        row = next(rdr)
         row.extend(["mean", "sum", "n"])
         wtr.writerow(row)
     for row in rdr:
@@ -92,7 +94,7 @@ def main(args):
             total, n = times.get(now, (0.0, 0))
             total += val
         except IndexError:
-            print >> sys.stderr, "failed to process row:", row
+            print("failed to process row:", row, file=sys.stderr)
         else:
             n += 1
             times[now] = (total, n)
@@ -101,7 +103,7 @@ def main(args):
         wtr.writerow((t, total/n, total, n))
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

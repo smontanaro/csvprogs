@@ -36,6 +36,8 @@ SEE ALSO
 * mpl
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import getopt
 import os
@@ -56,12 +58,12 @@ def main(args):
     i = 0
     for line in sys.stdin:
         if not i % n:
-            print line.strip()
+            print(line.strip())
         i += 1
     return 0
 
 def usage():
-    print >> sys.stderr, __doc__ % globals()
+    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
