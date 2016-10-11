@@ -1,0 +1,13 @@
+Some to-do tasks before release
+
+* Scrub all TradeLink references, including #! paths, example usage in doc
+  strings, and TL-specific Makefile targets.
+
+* Unify the command line args across programs where it makes sense.  For
+  example, some programs reference column headings using -f, others using
+  -k. Separator characters are also specified using multiple command line
+  args.
+
+* Convert to Python 3 syntax.
+
+* Rewrite sharpe.sh as Python.
