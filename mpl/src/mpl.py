@@ -100,9 +100,9 @@ The -f option is the most frequently used and most complicated:
   spelled out or given using hex notation.
 * A legend label can be specified, and defaults to the y column name.
 * Consult the matplotlib documentation for details of acceptable styles
-  (default '-') and
-* markers (default ''). The one exception to matplotlib convention is
-  to use ';' instead of ',' to specify use of the pixel marker.
+  (default '-').
+* markers (default ''). You may use a ';' instead of ',', or quote field
+   and the full field string (it is split using the csv.reader class).
 
 You can also color the background of the plot based on one or more
 values using the -b flag.  For example, if you have a value at offset
@@ -148,15 +148,16 @@ SEE ALSO
 """
 
 from __future__ import division
-
 from __future__ import absolute_import
 from __future__ import print_function
+
 import sys
 import csv
 import getopt
 import datetime
 import os
 import re
+import io
 
 import numpy
 import matplotlib
@@ -213,7 +214,12 @@ def main(args):
         if opt in ("-B", "--backend"):
             backend = arg
         elif opt in ("-f", "--field"):
-            arg = arg.split(",")
+            if "'" in arg:
+                quotechar = "'"
+            else:
+                quotechar = '"'
+            arg = io.StringIO(unicode(arg))
+            arg = next(csv.reader(arg, quotechar=quotechar))
             if len(arg) == 2:
                 # plot using left y axis by default
                 arg.append("l")
