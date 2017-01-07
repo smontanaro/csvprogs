@@ -100,14 +100,19 @@ The -f option is the most frequently used and most complicated:
   spelled out or given using hex notation.
 * A legend label can be specified, and defaults to the y column name.
 * Consult the matplotlib documentation for details of acceptable styles
-  (default '-').
-* markers (default ''). You may use a ';' instead of ',', or quote field
-   and the full field string (it is split using the csv.reader class).
+  (default '-').  By default, the line width is 1.0, but you can specify
+  the linestyle as "s/w", where "s" is the basic style, and "w" is a
+  floating point width.
+* markers (default ''). You may use a ';' instead of ',', or quote the
+  field and the full field string (to preserve the quoting around the
+  field - it is split using Python's csv.reader class). By default, the
+  marker size is 1.0, but you can define the marker as "m/s", where "m"
+  is the marker, and "s" is a floating point scale value.
 
-You can also color the background of the plot based on one or more
-values using the -b flag.  For example, if you have a value at offset
-2 which toggles between three values, -1, 0, and +1, you could color
-the background accordingly::
+You can color the background of the plot based on one or more values using
+the -b flag.  For example, if you have a value at offset 2 which toggles
+between three values, -1, 0, and +1, you could color the background
+accordingly::
 
   -b 0,2,-1,skyblue -b 0,2,0,pink -b 0,2,+1,lightgreen.
 
@@ -397,9 +402,19 @@ def main(args):
                     if re.match(r"^\s*%s\s*$" % c2, k):
                         c2 = k
                         break
+        if "/" in style:
+            style, width = style.split("/", 1)
+            width = float(width)
+        else:
+            width = 1.0
+        if "/" in marker:
+            marker, m_scale = marker.split("/", 1)
+            m_scale = float(m_scale)
+        else:
+            m_scale = 1.0
         if marker == ";":
             marker = ","
-        data = ([], color, legend, style, marker)
+        data = ([], color, legend, (style, width), (marker, m_scale))
         if side == "l":
             left.append(data)
             y_range = lt_y_range
@@ -465,10 +480,11 @@ def main(args):
             lines.extend(left_plot.plot([x for x, y in points],
                                         [y for x, y in points],
                                         color=color,
-                                        linestyle=style,
+                                        linestyle=style[0],
+                                        linewidth=style[1],
                                         label=legend,
-                                        marker=marker,
-                                        markersize=8))
+                                        marker=marker[0],
+                                        markersize=marker[1]))
         for tl in left_plot.get_yticklabels():
             tl.set_color(left[0][1])
 
@@ -494,10 +510,11 @@ def main(args):
             lines.extend(right_plot.plot([x for x, y in points],
                                          [y for x, y in points],
                                          color=color,
-                                         linestyle=style,
+                                         linestyle=style[0],
+                                         linewidth=style[1],
                                          label=legend,
-                                         marker=marker,
-                                         markersize=8))
+                                         marker=marker[0],
+                                         markersize=marker[1]))
         for tl in right_plot.get_yticklabels():
             tl.set_color(right[0][1])
 
