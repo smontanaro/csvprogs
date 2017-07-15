@@ -1,3 +1,5 @@
+INSTDIR = $(shell for p in `echo $$PATH | sed -e 's/:/ /g'` ; do if test `echo $$p | egrep $$HOME | wc -l` -eq 1 ; then echo $$p ; break ; fi ; done)
+
 # Update this stuff to add/delete scripts
 SCRIPTS = mvavg.py ewma.py mean.py shuffle.py spline.py take.py \
 	  bars.py filter.py sigavg.py square.py roundtime.py xform.py \
@@ -72,6 +74,13 @@ $(MANDIR)/%.1 : $(SRCDIR)/%.py
 	      -e '/^\.de UNINDENT/,/^\.\./d' \
 	| egrep -v '^\.(UN)?INDENT' > $@
 	chmod 0444 $@
+
+.PHONY: install
+install: all
+	for f in $(BINDIR)/* ; do \
+	    rm -f $(INSTDIR)/`basename $$f` ; \
+	    cp -p $$f $(INSTDIR) ; \
+	done
 
 .PHONY: clean
 clean: FORCE
