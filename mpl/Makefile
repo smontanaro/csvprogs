@@ -33,6 +33,10 @@ bin : $(BIN_SCRIPTS)
 .PHONY: man
 man : $(MAN_FILES)
 
+.PHONY: lint
+lint : FORCE
+	pylint $(SRC_SCRIPTS)
+
 $(BINDIR)/% : $(SRCDIR)/%.py
 	mkdir -p $(BINDIR)
 	rm -f $@
