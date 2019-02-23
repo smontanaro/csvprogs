@@ -12,5 +12,9 @@ install: FORCE
 clean: FORCE
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d clean ; done
 
+.PHONY: lint
+lint: FORCE
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d lint ; done
+
 .PHONY: FORCE
 FORCE:
