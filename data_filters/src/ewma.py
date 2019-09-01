@@ -2,7 +2,7 @@
 
 """
 ===========
-%(PROG)s
+{PROG}
 ===========
 
 ----------------------------------------------------
@@ -19,13 +19,13 @@ Compute exponentially weighted moving average
 SYNOPSIS
 ========
 
-  %(PROG)s [ -f x ] [ -a val ] [ -s sep ]
+  {PROG} [ -f x ] [ -a val ] [ -s sep ]
 
 OPTIONS
 =======
 
 -a val   alpha of the ewma (default 0.1)
--f x     average the values in column x (zero-based offset - default 1)
+-f x     average the values in column x (zero-based offset or name - default 1)
 -s sep   use sep as the field separator (default is comma)
 
 DESCRIPTION
@@ -45,11 +45,10 @@ SEE ALSO
 * avg
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-import sys
+import csv
 import getopt
 import os
+import sys
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -63,7 +62,15 @@ def main(args):
         if opt == "-a":
             alpha = float(arg)
         elif opt == "-f":
-            field = int(arg)
+            try:
+                field = int(arg)
+                reader = csv.reader
+                writer = csv.writer
+            except ValueError:
+                # Dict key
+                field = arg
+                reader = csv.DictReader
+                writer = csv.DictWriter
         elif opt == "-s":
             sep = arg
         elif opt == "-h":
@@ -71,19 +78,29 @@ def main(args):
             raise SystemExit
 
     val = None
-    for line in sys.stdin:
-        fields = line.strip().split(sep)
-        if fields[field]:
+    rdr = reader(sys.stdin, delimiter=sep)
+    if isinstance(field, str):
+        fnames = rdr.fieldnames[:]
+        fnames.append("ewma")
+        wtr = writer(sys.stdout, delimiter=sep, fieldnames=fnames)
+        wtr.writeheader()
+    else:
+        wtr = writer(sys.stdout, delimiter=sep)
+    for row in rdr:
+        if row[field]:
             if val is None:
-                val = float(fields[field])
+                val = float(row[field])
             else:
-                val = alpha * float(fields[field]) + (1-alpha) * val
-        fields.append(str(val))
-        print(sep.join(fields))
+                val = alpha * float(row[field]) + (1-alpha) * val
+            if isinstance(field, str):
+                row["ewma"] = val
+            else:
+                row.append(val)
+        wtr.writerow(row)
     return 0
 
 def usage():
-    print(__doc__ % globals(), file=sys.stderr)
+    print(__doc__.format(**globals()).strip(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
