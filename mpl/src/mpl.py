@@ -2,7 +2,7 @@
 
 """
 ===========
-%(PROG)s
+{PROG}
 ===========
 
 ----------------------------------------------------
@@ -19,9 +19,9 @@ plot csv-ish input from stdin using matplotlib
 SYNOPSIS
 ========
 
-%(PROG)s [ -f x,y[,a[,c[,l[s[,m]]]]]] [ -p file ] [ -F fmt ] [ -s sep ] \\
+{PROG} [ -f x,y[,a[,c[,l[s[,m]]]]]] [ -p file ] [ -F fmt ] [ -s sep ] \\
          [ -T title ] [ -r label ] [ -l label] [ -x label ] \\
-         [ -b x,y,val,c ] [ -L ] [ -v ] [ -B bkend ] [ -S ] \\
+         [ -b x,y,val,c ] [ -L ] [ -v ] [ -B bkend ] \\
          [ -X min:max ] [ -Y min:max[,min:max] ] [ --xkcd ]
 
 OPTIONS
@@ -40,7 +40,7 @@ OPTIONS
 * -l label - set the label for the left y axis
 * -x label - set the label for the x axis
 * -L - do not create a legend
-* -X min:max - set the min and max values for the X axis
+* -X min:max or min,max - set the min and max values for the X axis
 * -Y min:max[,min:max] - set the initial min and max values for the left (and
   optionally, right) Y axis
 * -v - be a bit more verbose
@@ -58,7 +58,6 @@ equivalent short names are:
 * backend: B
 * format : F
 * skip_legend: L
-* sloppy_names: S
 * title: T
 * xkcd: X
 * y_range: Y
@@ -76,7 +75,7 @@ equivalent short names are:
 DESCRIPTION
 ===========
 
-The %(PROG)s command takes a CSV-like file as input and generates one
+The {PROG} command takes a CSV-like file as input and generates one
 or more plots.  Those plots can be displayed interactively (the
 default) or written to an image file (if the -p option is given).
 
@@ -152,10 +151,6 @@ SEE ALSO
 
 """
 
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
 import csv
 import getopt
@@ -164,19 +159,22 @@ import os
 import re
 import io
 
-import numpy
-import matplotlib
-
 import dateutil.parser
+import numpy
+import matplotlib.dates
+import matplotlib.ticker
+import pylab
 
 PROG = os.path.basename(sys.argv[0])
 
 SECONDS_PER_DAY = 60 * 60 * 24
-ONE_MINUTE = datetime.timedelta(minutes=10)
+ONE_MINUTE = datetime.timedelta(minutes=1)
 ONE_DAY = datetime.timedelta(days=1)
 ONE_HOUR = datetime.timedelta(minutes=60)
 
-def main(args):
+def main():
+    "see __doc__"
+    args = sys.argv[1:]
     fields = []
     xtime = True
     xfmt = None
@@ -194,12 +192,10 @@ def main(args):
     backend = None
     use_xkcd = False
     verbose = False
-    sloppy_names = False
-    opts, args = getopt.getopt(args, "B:F:LST:X:Y:b:d:f:hl:p:r:s:vx:",
+    opts, args = getopt.getopt(args, "B:F:LT:X:Y:b:d:f:hl:p:r:s:vx:",
                                ["backend=",
                                 "format=",
                                 "skip_legend",
-                                "sloppy_names"
                                 "title=",
                                 "xkcd",
                                 "x_range=",
@@ -223,55 +219,52 @@ def main(args):
                 quotechar = "'"
             else:
                 quotechar = '"'
-            arg = io.StringIO(unicode(arg))
-            arg = next(csv.reader(arg, quotechar=quotechar))
-            if len(arg) == 2:
+            plarg = io.StringIO(arg)
+            plarg = next(csv.reader(plarg, quotechar=quotechar))
+            if len(plarg) == 2:
                 # plot using left y axis by default
-                arg.append("l")
-            if len(arg) == 3:
+                plarg.append("l")
+            if len(plarg) == 3:
                 # plot using blue by default
-                arg.append("b")
-            if len(arg) == 4:
+                plarg.append("b")
+            if len(plarg) == 4:
                 # use the Y column name as the default legend name.
-                arg.append(arg[1])
-            if len(arg) == 5:
+                plarg.append(plarg[1])
+            if len(plarg) == 5:
                 # plot with '-' line style by default
-                arg.append("-")
-            if len(arg) == 6:
+                plarg.append("-")
+            if len(plarg) == 6:
                 # no marker by default
-                arg.append("")
+                plarg.append("")
             try:
-                fields.append([int(x.strip()) for x in arg[0:2]]+
-                              [arg[2][0].lower()]+
-                              [arg[3].lower()]+
-                              arg[4:])
+                fields.append([int(x.strip()) for x in plarg[0:2]]+
+                              [plarg[2][0].lower()]+
+                              [plarg[3].lower()]+
+                              plarg[4:])
                 reader = csv.reader
             except ValueError:
                 # Assume first two fields name column headers.
-                fields.append(arg[0:2]+
-                              [arg[2][0].lower()]+
-                              [arg[3].lower()]+
-                              arg[4:])
+                fields.append(plarg[0:2]+
+                              [plarg[2][0].lower()]+
+                              [plarg[3].lower()]+
+                              plarg[4:])
                 reader = csv.DictReader
 
         elif opt in ("-b", "--background"):
-            vals = arg.split(",")
+            bg_spec = arg.split(",")
             try:
-                x = int(vals[0])
-                y = int(vals[1])
+                bg_spec[0] = int(bg_spec[0])
+                bg_spec[1] = int(bg_spec[1])
                 reader = csv.reader
             except ValueError:
-                x = vals[0].strip()
-                y = vals[1].strip()
+                bg_spec[0] = bg_spec[0].strip()
+                bg_spec[1] = bg_spec[1].strip()
                 reader = csv.DictReader
-            if ":" in vals[2]:
-                low, hi = [float(x) for x in vals[2].split(":")]
+            if ":" in bg_spec[2]:
+                low, high = [float(x) for x in bg_spec[2].split(":")]
             else:
-                low = hi = float(vals[2])
-            c = vals[3]
-            bkgds.append((x, y, low, hi, c))
-        elif opt in ("-S", "--sloppy_names"):
-            sloppy_names = True
+                low = high = float(bg_spec[2])
+            bkgds.append((bg_spec[0], bg_spec[1], low, high, bg_spec[3]))
         elif opt in ("-F", "--format"):
             xtime = "%H" in arg or "%M" in arg or "%m" in arg or "%d" in arg
             xfmt = arg
@@ -299,7 +292,13 @@ def main(args):
             else:
                 y_min_max = [[float(x) for x in arg.split(":")]]
         elif opt in ("-X", "--x_range"):
-            x_min_max = [[float(x) for x in arg.split(":")]]
+            # First try splitting at colon (assuming a pair of floats). If
+            # that produces too many values, try a comma (assuming
+            # timestamps).
+            if len(arg.split(":")) == 2:
+                x_min_max = [[float(x) for x in arg.split(":")]]
+            else:
+                x_min_max = [[dateutil.parser.parse(x) for x in arg.split(",")]]
         elif opt in ("-s", "--separator"):
             sep = arg
         elif opt in ("-T", "--title"):
@@ -318,10 +317,6 @@ def main(args):
     if verbose:
         print("Using", matplotlib.get_backend(), file=sys.stderr)
 
-    from matplotlib import ticker, dates
-
-    import pylab
-
     if use_xkcd:
         from matplotlib import pyplot
         try:
@@ -333,7 +328,6 @@ def main(args):
                 print("Using XKCD style.", file=sys.stderr)
 
     if not fields:
-        # normal output from pt, nt, etc
         fields = [(0, 2, "l", "b", "2", "-", "")]
         reader = csv.reader
 
@@ -342,18 +336,18 @@ def main(args):
     if xtime:
         min_x = datetime.datetime(9999, 12, 31, 23, 59, 59)
         max_x = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        def parse_x(x):
+        def parse_x(x_val):
             try:
-                return dateutil.parser.parse(x)
+                return dateutil.parser.parse(x_val)
             except ValueError:
-                print("Can't parse", repr(x), "as a timestamp.", file=sys.stderr)
+                print(f"Can't parse {x_val!r} as a timestamp.", file=sys.stderr)
                 raise
-        def fmt_date(f, _=None, xfmt=xfmt):
-            dt = dates.num2date(f)
+        def fmt_date(tick_val, _=None, xfmt=xfmt):
+            date = matplotlib.dates.num2date(tick_val)
             if xfmt is None:
                 # Calculate X format dynamically based on the visible
                 # range.
-                left, right = [dates.num2date(x) for x in pylab.xlim()]
+                left, right = [matplotlib.dates.num2date(x) for x in pylab.xlim()]
                 x_delta = right - left
                 if x_delta > int(1.5 * 365) * ONE_DAY:
                     xfmt = "%Y-%m-%d"
@@ -365,16 +359,17 @@ def main(args):
                     xfmt = "%H:%M:%S"
                 else:
                     xfmt = "%H:%M"
-            return dt.strftime(xfmt)
-        formatter = ticker.FuncFormatter(fmt_date)
+            return date.strftime(xfmt)
+
+        formatter = matplotlib.ticker.FuncFormatter(fmt_date)
     else:
         min_x = 1e99
         max_x = -1e99
-        def parse_x(x):
-            return float(x)
-        def fmt_float(x, _=None):
-            return xfmt % x
-        formatter = ticker.FuncFormatter(fmt_float)
+        def parse_x(x_val):
+            return float(x_val)
+        def fmt_float(x_val, _=None):
+            return xfmt % x_val
+        formatter = matplotlib.ticker.FuncFormatter(fmt_float)
 
 
     if reader == csv.DictReader:
@@ -389,19 +384,7 @@ def main(args):
     lt_y_range = [min_y, max_y]
     rt_y_range = [min_y, max_y]
     x_range = [min_x, max_x]
-    for (c1, c2, side, color, legend, style, marker) in fields:
-        if sloppy_names:
-            keys = list(raw[0].keys())
-            if c1 not in keys:
-                for k in keys:
-                    if re.match(r"^\s*%s\s*$" % c1, k):
-                        c1 = k
-                        break
-            if c2 not in keys:
-                for k in keys:
-                    if re.match(r"^\s*%s\s*$" % c2, k):
-                        c2 = k
-                        break
+    for (col1, col2, side, color, legend, style, marker) in fields:
         if "/" in style:
             style, width = style.split("/", 1)
             width = float(width)
@@ -423,26 +406,28 @@ def main(args):
             y_range = rt_y_range
         for values in raw:
             try:
-                x, y = (values[c1], values[c2])
+                _, _ = (values[col1], values[col2])
             except IndexError:
                 # Rows don't need to be completely filled.
                 continue
-            if x and y:
+            x_val = values[col1]
+            y_val = values[col2]
+            if x_val and y_val:
                 try:
-                    x = parse_x(x)
+                    x_val = parse_x(x_val)
                 except ValueError as err:
                     print(err, values, file=sys.stderr)
                     raise
-                y = float(y)
+                y_val = float(values[col2])
                 # If we get inputs with timezone info, convert. This
                 # is likely only to be executed once, as if one
                 # timestamp has tzinfo, all are likely to.
-                if xtime and x_range[0].tzinfo != x.tzinfo:
-                    tz = x.tzinfo
-                    x_range = [dt.replace(tzinfo=tz) for dt in x_range]
-                #x_range = [min(x_range[0], x), max(x_range[1], x)]
-                y_range[:] = [min(y_range[0], y), max(y_range[1], y)]
-                data[0].append((x, y))
+                if xtime and x_range[0].tzinfo != x_val.tzinfo:
+                    zone = x_val.tzinfo
+                    x_range = [dt.replace(tzinfo=zone) for dt in x_range]
+                y_range[:] = [min(y_range[0], y_val),
+                              max(y_range[1], y_val)]
+                data[0].append((x_val, y_val))
         if data[0]:
             x_range = [min([x for (x, _y) in data[0]]+[x_range[0]]),
                        max([x for (x, _y) in data[0]]+[x_range[1]])]
@@ -485,8 +470,8 @@ def main(args):
                                         label=legend,
                                         marker=marker[0],
                                         markersize=marker[1]))
-        for tl in left_plot.get_yticklabels():
-            tl.set_color(left[0][1])
+        for tick_label in left_plot.get_yticklabels():
+            tick_label.set_color(left[0][1])
 
         extra = 0.02 * (lt_y_range[1]-lt_y_range[0])
         lt_y_range = [lt_y_range[0] - extra, lt_y_range[1] + extra]
@@ -515,8 +500,8 @@ def main(args):
                                          label=legend,
                                          marker=marker[0],
                                          markersize=marker[1]))
-        for tl in right_plot.get_yticklabels():
-            tl.set_color(right[0][1])
+        for tick_label in right_plot.get_yticklabels():
+            tick_label.set_color(right[0][1])
 
         extra = 0.02 * (rt_y_range[1]-rt_y_range[0])
         rt_y_range = [rt_y_range[0] - extra, rt_y_range[1] + extra]
@@ -540,12 +525,11 @@ def main(args):
         left_plot.set_xlim(x_range)
 
     if do_legend:
-        # right_plot.legend()
         labels = [line.get_label() for line in lines]
         if right:
-            right_plot.legend(lines, labels, loc='best').draggable(True)
+            right_plot.legend(lines, labels, loc='best').set_draggable(True)
         else:
-            left_plot.legend(lines, labels, loc='best').draggable(True)
+            left_plot.legend(lines, labels, loc='best').set_draggable(True)
 
     figure.tight_layout()
     if plot_file:
@@ -556,40 +540,43 @@ def main(args):
     return 0
 
 def color_bkgd(bkgds, plot, y_range, raw_data, parse_x):
+    "Add background fill colors."
     if not bkgds:
         return
 
-    for x_ind, y_ind, low, hi, color in bkgds:
+    for col1, col2, low, high, color in bkgds:
         data = []
         for values in raw_data:
             try:
-                x, y = (values[x_ind], values[y_ind])
+                _, _ = (values[col1], values[col2])
             except IndexError:
                 # Rows don't need to be completely filled.
                 continue
-            if x and y:
+            if values[col1] and values[col2]:
                 try:
-                    x = parse_x(x)
+                    values[col1] = parse_x(values[col1])
                 except ValueError as err:
                     print(err, values, file=sys.stderr)
                     raise
-                y = float(y)
-                data.append((x, y))
+                values[col2] = float(values[col2])
+                data.append((values[col1], values[col2]))
         xdata = [x for (x, y) in data]
         ydata = [y for (x, y) in data]
-        if low == hi:
+        if low == high:
             mask = (low == numpy.array(ydata))
         else:
-            mask = (low <= numpy.array(ydata) < hi)
+            mask = (low <= numpy.array(ydata) < high)
         plot.fill_between(xdata, y_range[0], y_range[1],
                           edgecolor=color, facecolor=color,
                           where=mask)
 
 def usage():
-    print(__doc__ % globals(), file=sys.stderr)
+    "help"
+    print(__doc__.format(**globals()), file=sys.stderr)
 
 def as_days(delta):
+    "timedelta as float # of days"
     return delta.days + delta.seconds / SECONDS_PER_DAY
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
