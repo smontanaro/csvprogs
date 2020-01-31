@@ -1,4 +1,5 @@
 INSTDIR = $(shell for p in `echo $$PATH | sed -e 's/:/ /g'` ; do if test `echo $$p | egrep $$HOME | wc -l` -eq 1 ; then echo $$p ; break ; fi ; done)
+INSTMANDIR = $(INSTDIR)/../share/man
 
 # Update this stuff to add/delete scripts
 SCRIPTS = mvavg.py ewma.py mean.py shuffle.py spline.py take.py \
@@ -84,6 +85,10 @@ install: all
 	for f in $(BINDIR)/* ; do \
 	    rm -f $(INSTDIR)/`basename $$f` ; \
 	    cp -p $$f $(INSTDIR) ; \
+	done
+	for d in share/man/man? ; do \
+	    SECTION=`basename $$d` ; \
+	    cp -p $$d $(INSTMANDIR)/$$SECTION ; \
 	done
 
 .PHONY: clean
