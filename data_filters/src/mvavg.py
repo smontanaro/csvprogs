@@ -25,7 +25,7 @@ OPTIONS
 =======
 
 -n val   number of elements in the moving average (default 5)
--f x     average the values in column x (zero-based offset, default 1)
+-f x     average the values in column x (zero-based offset or name, default 1)
 -s sep   use sep as the field separator (default is comma)
 
 DESCRIPTION
