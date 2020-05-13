@@ -2,7 +2,8 @@ INSTDIR = $(shell for p in `echo $$PATH | sed -e 's/:/ /g'` ; do if test `echo $
 
 # Update this stuff to add/delete scripts
 PY_SCRIPTS = csvmerge.py csvsort.py xls2csv.py csv2csv.py extractcsv.py \
-	     csv2json.py csvfill.py csvcollapse.py csv2xls.py
+	     csv2json.py csvfill.py csvcollapse.py csv2xls.py interp.py \
+	     html2csv.py
 RST_FILES =
 
 ### Usage:
