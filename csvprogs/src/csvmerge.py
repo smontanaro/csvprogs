@@ -97,7 +97,7 @@ def main(args):
 
     all_fields = set()
     for fname in args:
-        f = open(fname, "rb")
+        f = open(fname, "r")
         rdr = csv.DictReader(f)
         all_fields |= set(rdr.fieldnames)
         readers.append(rdr)
