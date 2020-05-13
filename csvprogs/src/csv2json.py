@@ -112,11 +112,11 @@ def main(args):
         usage(sys.argv[0])
 
     if len(args) >= 1:
-        inf = open(args[0], "rb")
+        inf = open(args[0], "r")
     else:
         inf = sys.stdin
     if len(args) == 2:
-        outf = open(args[1], "wb")
+        outf = open(args[1], "w")
     else:
         outf = sys.stdout
 

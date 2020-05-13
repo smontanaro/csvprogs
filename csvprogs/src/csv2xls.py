@@ -77,7 +77,7 @@ def append_sheet_from_csv(book, csvf):
     populate_sheet_from_csv(sheet, csvf)
 
 def populate_sheet_from_csv(sheet, csvf):
-    rdr = csv.reader(open(csvf, "rb"))
+    rdr = csv.reader(open(csvf, "r"))
     r = 0
     for row in rdr:
         c = 0
