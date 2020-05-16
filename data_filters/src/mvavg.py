@@ -19,13 +19,14 @@ compute moving averages
 SYNOPSIS
 ========
 
-  %(PROG)s [ -f x ] [ -n val ] [ -s sep ]
+  %(PROG)s [ -f x ] [ -n val ] [ -s sep ] [ -o name ]
 
 OPTIONS
 =======
 
 -n val   number of elements in the moving average (default 5)
 -f x     average the values in column x (zero-based offset or name, default 1)
+-o name  name of output column (default "mean")
 -s sep   use sep as the field separator (default is comma)
 
 DESCRIPTION
@@ -44,23 +45,22 @@ SEE ALSO
 * mpl
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import getopt
 import os
 import csv
-from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
 def main(args):
-    opts, args = getopt.getopt(args, "n:f:s:h")
+    opts, args = getopt.getopt(args, "n:f:s:o:h")
 
+    outcol = "mean"
     length = 5
     field = 1
     sep = ","
     reader = csv.reader
+    writer = csv.writer
     for opt, arg in opts:
         if opt == "-n":
             length = int(arg)
@@ -76,6 +76,8 @@ def main(args):
                 writer = csv.DictWriter
         elif opt == "-s":
             sep = arg
+        elif opt == "-o":
+            outcol = arg
         elif opt == "-h":
             usage()
             raise SystemExit
@@ -84,7 +86,7 @@ def main(args):
     rdr = reader(sys.stdin, delimiter=sep)
     if isinstance(field, str):
         fnames = rdr.fieldnames[:]
-        fnames.append("mean")
+        fnames.append(outcol)
         wtr = writer(sys.stdout, delimiter=sep, fieldnames=fnames)
         wtr.writerow(dict(list(zip(fnames, fnames))))
     else:
@@ -100,7 +102,7 @@ def main(args):
         if reader == csv.reader:
             row.append(val)
         else:
-            row["mean"] = val
+            row[outcol] = val
         wtr.writerow(row)
     return 0
 
