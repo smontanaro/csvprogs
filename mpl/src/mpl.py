@@ -40,7 +40,9 @@ OPTIONS
 * -l label - set the label for the left y axis
 * -x label - set the label for the x axis
 * -L - do not create a legend
-* -X min:max or min,max - set the min and max values for the X axis
+* -X min:max (two floats) or min,max (two dates) - set the min and max
+     values for the X axis - "today" or "yesterday" may be used as the max
+     date
 * -Y min:max[,min:max] - set the initial min and max values for the left (and
   optionally, right) Y axis
 * -v - be a bit more verbose
@@ -298,7 +300,18 @@ def main():
             if len(arg.split(":")) == 2:
                 x_min_max = [[float(x) for x in arg.split(":")]]
             else:
-                x_min_max = [[dateutil.parser.parse(x) for x in arg.split(",")]]
+                min_dt, max_dt = arg.split(",")
+                x_min = dateutil.parser.parse(min_dt)
+                try:
+                    x_max = dateutil.parser.parse(max_dt)
+                except dateutil.parser.ParserError:
+                    if max_dt == "today":
+                        x_max = datetime.datetime.now()
+                    elif max_dt == "yesterday":
+                        x_max = datetime.datetime.now() - datetime.timedelta(days=1)
+                    else:
+                        raise
+                x_min_max = [x_min, x_max]
         elif opt in ("-s", "--separator"):
             sep = arg
         elif opt in ("-T", "--title"):
