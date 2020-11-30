@@ -24,7 +24,7 @@ SYNOPSIS
 OPTIONS
 =======
 
--f names   comma-separated list of field names
+-k names   comma-separated list of field names
 
 DESCRIPTION
 ===========
