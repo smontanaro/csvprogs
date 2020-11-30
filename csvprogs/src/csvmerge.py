@@ -21,7 +21,7 @@ OPTIONS
 =======
 
 -k fields    merge fields (quote if names contain spaces)
-
+-d fields    normalize fields as date
 if given, infile specifies the input CSV file (default: stdin)
 
 DESCRIPTION
@@ -66,6 +66,8 @@ import getopt
 import os
 from six.moves import zip
 
+import dateutil.parser
+
 PROG = os.path.split(sys.argv[0])[1]
 
 def usage(msg=None):
@@ -79,14 +81,17 @@ def main(args):
     readers = []
 
     try:
-        opts, args = getopt.getopt(args, "k:h")
+        opts, args = getopt.getopt(args, "k:d:h")
     except getopt.GetoptError as msg:
         usage(msg)
         return 1
 
+    date_keys = set()
     for opt, arg in opts:
         if opt == "-k":
             keys = arg.split(",")
+        elif opt == "-d":
+            date_keys |= set(arg.split(","))
         elif opt == "-h":
             usage()
             return 0
@@ -117,14 +122,16 @@ def main(args):
         except StopIteration:
             pass
         else:
-            rows[rdr] = ([row.get(k, "") for k in keys], row, rdr)
+            rows[rdr] = (construct_key(row, keys, date_keys),
+                         sorted(row.items()), rdr)
 
     while True:
         if not rows:
             return 0
 
         _, row, rdr = min(rows.values())
-        writer.writerow(row)
+        # Back to dict form for writing...
+        writer.writerow(dict(row))
 
         # Fill in the now stale slot with the next row.
         try:
@@ -132,8 +139,30 @@ def main(args):
         except StopIteration:
             del rows[rdr]
         else:
-            rows[rdr] = ([row.get(k, "") for k in keys], row, rdr)
+            rows[rdr] = (construct_key(row, keys, date_keys),
+                         sorted(row.items()), rdr)
     return 0
 
+def construct_key(row, keys, date_keys):
+    "helper"
+    key = []
+    for k in keys:
+        v = row.get(k, "")
+        if k in date_keys:
+            if v:
+                v = dateutil.parser.parse(v)
+                row[k] = v
+            else:
+                # Comparison will still fail if the key is
+                # missing, so substitute epoch for empty
+                # string.
+                v = EPOCH
+        key.append(v)
+    return key
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    try:
+        result = main(sys.argv[1:])
+    except BrokenPipeError:
+        result = 0
+    sys.exit(result)
