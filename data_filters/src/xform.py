@@ -12,6 +12,7 @@ Transform input values based upon user-defined function
 :Author: skipm@trdlnk.com
 :Date: 2013-12-12
 :Copyright: TradeLink LLC 2013
+:Copyright: Skip Montanaro 2016-2021
 :Version: 0.1
 :Manual section: 1
 :Manual group: data filters
@@ -150,20 +151,16 @@ SEE ALSO
 * take
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import getopt
 import os
 import csv
-import UserDict
 import inspect
-from six.moves import range
-from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
 def main(args):
+    "see __doc__"
     options = process_args(args)
 
     if options.xform is None:
@@ -190,6 +187,7 @@ def main(args):
     return 0
 
 def xform(rdr, wtr, func, indexes):
+    "see __doc__"
     do_header = write_header = isinstance(wtr, csv.DictWriter)
     for row in rdr:
         type_convert(row)
@@ -197,7 +195,7 @@ def xform(rdr, wtr, func, indexes):
             row = ListyDict(row, indexes)
         try:
             result = func(row)
-        except Exception as e:
+        except Exception:
             print("Error processing:", row, file=sys.stderr)
             raise
         if do_header:
@@ -215,8 +213,9 @@ def xform(rdr, wtr, func, indexes):
                 wtr.writerows(rows)
 
 def inject_globals(func, vrbls):
-    # Inject user-defined variables into the function's globals.  We
-    # can have callables which aren't methods or functions, such as
+    "Inject user-defined variables into the function's globals."
+
+    # We can have callables which aren't methods or functions, such as
     # class instances, so allow to loop twice. On the first pass we
     # discover that we don't have a normal callable and set func to
     # the __call__ attribute of that object. On the second pass, it
@@ -262,6 +261,7 @@ def inject_globals(func, vrbls):
     func_globals.update(vrbls)
 
 def process_args(args):
+    "getopt wrapper"
     opts, args = getopt.getopt(args, "f:F:s:hHc:p:v")
 
     options = Options()
@@ -302,7 +302,8 @@ def process_args(args):
     options.extra_names = sorted(set(options.extra_names))
     return options
 
-class Options(object):
+class Options:
+    "holder for processed cmdline options."
     def __init__(self):
         self.xform = lambda _: None
         self.sep = ","
@@ -311,55 +312,63 @@ class Options(object):
         self.vars = {}
         self.verbose = False
 
-class ListyDict(UserDict.DictMixin):
+class ListyDict:
     """Dictish objects which also support some list-style numeric indexing."""
     def __init__(self, d, indexes):
         self.data = d
         self.indexes = dict(indexes)
 
     def keys(self):
+        "delegate to self.data"
         return list(self.data.keys())
 
     def __contains__(self, k):
+        "delegate to self.data"
         return k in self.data
 
     def __iter__(self):
+        "delegate to self.data"
         return iter(self.data)
-    iterkeys = __iter__
 
     def __getitem__(self, k):
+        "k can be list index or dict key"
         k = self.indexes.get(k, k)
         return self.data[k]
 
     def __delitem__(self, k):
+        "k can be list index or dict key"
         k = self.indexes.get(k, k)
         del self.data[k]
 
     def __setitem__(self, k, v):
+        "k can be list index or dict key"
         k = self.indexes.get(k, k)
         self.data[k] = v
 
     def __len__(self):
+        "delegate to self.data"
         return len(self.data)
 
     def __str__(self):
         return "<%s %s>" % (self.__class__.__name__, self.data)
 
     def __getattr__(self, k):
+        "delegate to self.data"
         return getattr(self.data, k)
 
 def add_numeric_keys(row, indexes):
-    # Add numeric keys to dicts so functions can index using ints.
+    "Add numeric keys to dicts so functions can index using ints."
     for index, key in indexes:
         row[index] = row[key]
 
 def del_numeric_keys(row, indexes):
-    # Undo work of add_numeric_keys
+    "Undo work of add_numeric_keys"
     for index, _key in indexes:
         if index in row:
             del row[index]
 
 def type_convert(row):
+    "guess data types (can you say Perl???)"
     if isinstance(row, dict):
         for k in row:
             row[k] = make_number(row[k])
@@ -368,6 +377,7 @@ def type_convert(row):
             row[i] = make_number(row[i])
 
 def make_number(val):
+    "Convert val to the most specific kind of number we can."
     try:
         val = int(val)
     except ValueError:
@@ -378,6 +388,7 @@ def make_number(val):
     return val
 
 def usage(msg=""):
+    "display user help"
     if msg:
         print(msg, file=sys.stderr)
     print(__doc__ % globals(), file=sys.stderr)
