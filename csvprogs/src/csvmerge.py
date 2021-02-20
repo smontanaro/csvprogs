@@ -58,17 +58,16 @@ SEE ALSO
 :Manual group: data filters
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
+import datetime
 import sys
 import csv
 import getopt
 import os
-from six.moves import zip
 
 import dateutil.parser
 
 PROG = os.path.split(sys.argv[0])[1]
+EPOCH = datetime.datetime.fromtimestamp(0)
 
 def usage(msg=None):
     if msg is not None:
@@ -102,8 +101,7 @@ def main(args):
 
     all_fields = set()
     for fname in args:
-        f = open(fname, "r")
-        rdr = csv.DictReader(f)
+        rdr = csv.DictReader(open(fname))
         all_fields |= set(rdr.fieldnames)
         readers.append(rdr)
 
@@ -112,8 +110,12 @@ def main(args):
     out_fields = keys + sorted(rest)
 
     writer = csv.DictWriter(sys.stdout, fieldnames=out_fields, restval="")
-    writer.writerow(dict(list(zip(out_fields, out_fields))))
+    writer.writeheader()
 
+    return merge(keys, date_keys, readers, writer)
+
+def merge(keys, date_keys, readers, writer):
+    "merge rows from all readers, sending to writer"
     rows = {}
     # Populate dict of readers with the first row from each.
     for rdr in readers:
@@ -129,7 +131,7 @@ def main(args):
         if not rows:
             return 0
 
-        _, row, rdr = min(rows.values())
+        _, row, rdr = min(rows.values(), key=lambda x: x[0])
         # Back to dict form for writing...
         writer.writerow(dict(row))
 
