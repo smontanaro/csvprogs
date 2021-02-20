@@ -66,6 +66,7 @@ SEE ALSO
 from __future__ import absolute_import
 from __future__ import print_function
 import csv
+import io
 import sys
 import getopt
 import os
@@ -88,9 +89,10 @@ def main(args):
     terminator = "\r\n"
     emitheader = True
     headers = []
+    encoding = "utf-8"
 
     try:
-        opts, args = getopt.getopt(args, "o:i:f:F:DHnh")
+        opts, args = getopt.getopt(args, "e:o:i:f:F:DHnh")
     except getopt.GetoptError as msg:
         usage(msg)
         return 1
@@ -111,6 +113,8 @@ def main(args):
             quote_style = csv.QUOTE_NONE
         elif opt == "-D":
             terminator = "\n"
+        elif opt == "-e":
+            encoding = arg
         elif opt == "-h":
             usage()
             return 0
@@ -119,7 +123,7 @@ def main(args):
         usage(sys.argv[0])
 
     if len(args) >= 1:
-        inf = open(args[0], "r")
+        inf = open(args[0], "r", encoding=encoding)
     else:
         inf = sys.stdin
     if len(args) == 2:
