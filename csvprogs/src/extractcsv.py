@@ -65,12 +65,19 @@ DETAILS
 =======
 
 Under the covers, the script builds a Python function which compares
-the constraint expression against a given row.  The above example
+the constraint expression against a given row.  The first example
 would generate a function like this::
 
     def compare_func(row):
         return (row["contract"] == "F:LGOV13" and
                 (row["price"] > "96125" or row["price"] < "96000"))
+
+The second example generates this function:
+
+    def compare_func(row):
+        return (row["User Name"] == "putin" and
+                row["Source or Destination"] == "From Exchange" and
+                row["Transaction"] == "EXECUTION")
 
 LIMITATIONS
 ===========
@@ -91,13 +98,10 @@ SEE ALSO
 * data_misc package
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import csv
 import os
 import getopt
-from six.moves import zip
 
 PROG = os.path.split(sys.argv[0])[1]
 
@@ -108,13 +112,13 @@ def usage(msg=None):
     print((__doc__.strip() % globals()), file=sys.stderr)
 
 def main(args):
-    opts, args = getopt.getopt(args, "hf:")
-    for opt, arg in opts:
+    opts, args = getopt.getopt(args, "h")
+    for opt, _arg in opts:
         if opt == "-h":
             usage()
             return 0
 
-    # Build a comparison function from the remaining
+    # Build a comparison function from the remaining cmdline args
     func = ["def compare_func(row):\n",
             "    return ( "]
 
@@ -136,12 +140,13 @@ def main(args):
     # We've now built a function.  Compile the code and proceed.
 
     glbls = {}
+    # pylint: disable=exec-used
     exec(func, glbls)
     func = glbls["compare_func"]
 
     rdr = csv.DictReader(sys.stdin)
     wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames)
-    wtr.writerow(dict(list(zip(rdr.fieldnames, rdr.fieldnames))))
+    wtr.writeheader()
     for row in rdr:
         if func(row):
             wtr.writerow(row)
