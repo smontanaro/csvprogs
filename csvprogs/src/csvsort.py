@@ -39,7 +39,6 @@ import sys
 import csv
 import getopt
 import os
-from six.moves import zip
 
 PROG = os.path.splitext(os.path.split(sys.argv[0])[1])[0]
 
@@ -69,23 +68,11 @@ def main(args):
         usage("Too many input files")
         return 1
 
-    if args:
-        fname = args[0]
-    else:
-        fname = "/dev/stdin"
-    f = open(fname)
-    r = csv.reader(f)
-    fields = next(r)
-    rest = sorted(set(fields) - set(keys))
-    rdr = csv.DictReader(f, fieldnames=fields)
-
+    reader = csv.DictReader(open(args[0] if args else "/dev/stdin"))
+    fields = reader.fieldnames
     writer = csv.DictWriter(sys.stdout, fieldnames=fields, restval="")
-    writer.writerow(dict(list(zip(fields, fields))))
-
-    rows = sorted(rdr, cmp=lambda x, y: cmp([x[k] for k in keys],
-                                            [y[k] for k in keys]))
-    for row in rows:
-        writer.writerow(row)
+    writer.writeheader()
+    writer.writerows(sorted(reader, key=lambda x: [x[k] for k in keys]))
 
     return 0
 
