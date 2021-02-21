@@ -56,19 +56,13 @@ SEE ALSO
 * csv2csv
 """
 
-from __future__ import division
-
-from __future__ import absolute_import
-from __future__ import print_function
+import argparse
 import csv
-import sys
-import getopt
-import os
 import json
+import os
+import sys
 
 import dateutil.parser
-from six.moves import range
-from six.moves import zip
 
 PROG = os.path.split(sys.argv[0])[1]
 
@@ -78,38 +72,41 @@ def usage(msg=None):
         print(file=sys.stderr)
     print((__doc__.strip() % globals()), file=sys.stderr)
 
+def datetime(s):
+    dt = dateutil.parser.parse(s)
+    return "new Date(%d, %d, %d, %d, %d, %d, %d)" % (
+        dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
+        int(round(dt.microsecond / 1000)))
+date = time = datetime
+
+TYPES = {
+    'int': int,
+    'float': float,
+    'date': date,
+    'time': time,
+    'datetime': datetime,
+    'str': str,
+}
+
 def main(args):
-    insep = ','
-    inputfields = []
-    outputfields = []
-    headers = []
-    typenames = []
-    emit_arrays = False
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--fields", dest="inputfields", default=None)
+    parser.add_argument("-t", "--types", dest="typenames", default=None)
+    parser.add_argument("-i", "--insep", dest="insep", default=",")
+    parser.add_argument("-a", "--array", dest="emit_arrays", default=False,
+                        action="store_true")
 
-    try:
-        opts, args = getopt.getopt(args, "i:f:F:t:ha")
-    except getopt.GetoptError as msg:
-        usage(msg)
-        return 1
-
-    for opt, arg in opts:
-        if opt == "-f":
-            inputfields = arg.split(",")
-            outputfields.extend(inputfields)
-        elif opt == "-t":
-            typenames = arg.split(",")
-        elif opt == "-F":
-            headers.extend(arg.split(","))
-        elif opt == "-i":
-            insep = arg
-        elif opt == "-h":
-            usage()
-            return 0
-        elif opt == "-a":
-            emit_arrays = True
+    (options, args) = parser.parse_known_args()
+    options.inputfields = (options.inputfields.split(",")
+                               if options.inputfields
+                               else [])
+    options.typenames = (options.typenames.split(",")
+                               if options.typenames
+                               else [])
 
     if len(args) > 2:
         usage(sys.argv[0])
+        return 1
 
     if len(args) >= 1:
         inf = open(args[0], "r")
@@ -120,49 +117,33 @@ def main(args):
     else:
         outf = sys.stdout
 
-    # cheap trick to get the title row for the dict reader...
-    reader = csv.reader(inf, delimiter=insep)
-    if headers:
-        fields = headers
-    else:
-        fields = next(reader)
-
-    if not inputfields:
-        inputfields = outputfields = fields
-
-    if typenames:
-        if len(typenames) != len(inputfields):
+    if options.typenames:
+        if len(options.typenames) != len(options.inputfields):
             usage("Length of type names (-t) and field names (-f) must match.")
             return 1
-        typenames = {i: eval(t) for (i, t) in zip(inputfields, typenames)}
+        typenames = {i: TYPES[t]
+                       for (i, t) in zip(options.inputfields, options.typenames)}
 
-    reader = csv.DictReader(inf, fields, delimiter=insep)
+    reader = csv.DictReader(inf, delimiter=options.insep)
 
     try:
-        rows = list(reader)
-        if typenames:
-            for row in rows:
-                for k in row:
-                    row[k] = typenames[k](row[k])
-        if emit_arrays:
-            for i in range(len(rows)):
-                rows[i] = [rows[i][k] for k in fields]
         outf.write("[\n")
-        for row in rows:
-            json.dump(row, outf)
+        for row in reader:
+            if options.typenames:
+                for k in options.inputfields:
+                    row[k] = typenames[k](row[k])
+            outrow = dict((k, v)
+                              for (k, v) in row.items()
+                                  if k in options.inputfields)
+            if options.emit_arrays:
+                outrow = [outrow[k] for k in options.inputfields]
+            json.dump(outrow, outf)
             outf.write(",\n")
         outf.write("]\n")
     except IOError:
         pass
 
     return 0
-
-def datetime(s):
-    dt = dateutil.parser.parse(s)
-    return "new Date(%d, %d, %d, %d, %d, %d, %d)" % (
-        dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
-        int(round(dt.microsecond / 1000)))
-date = time = datetime
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
