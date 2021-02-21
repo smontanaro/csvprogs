@@ -63,14 +63,10 @@ SEE ALSO
 * data_misc package
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
+import argparse
 import csv
-import io
-import sys
-import getopt
 import os
-from six.moves import zip
+import sys
 
 PROG = os.path.split(sys.argv[0])[1]
 
@@ -80,50 +76,56 @@ def usage(msg=None):
         print(file=sys.stderr)
     print((__doc__.strip() % globals()), file=sys.stderr)
 
-def main(args):
-    quote_style = csv.QUOTE_ALL
-    escape_char = '\\'
-    insep = outsep = ','
-    inputfields = []
-    outputfields = []
-    terminator = "\r\n"
-    emitheader = True
-    headers = []
-    encoding = "utf-8"
+# pylint: disable=too-few-public-methods
+class QuoteAction(argparse.Action):
+    "Custom action for quote style"
+    # Keys are possible values used on cmdline.
+    quotes = {
+        'QUOTE_ALL': csv.QUOTE_ALL,
+        'QUOTE_MINIMAL': csv.QUOTE_MINIMAL,
+        'QUOTE_NONE': csv.QUOTE_NONE,
+        'QUOTE_NONNUMERIC': csv.QUOTE_NONNUMERIC,
+        'ALL': csv.QUOTE_ALL,
+        'MINIMAL': csv.QUOTE_MINIMAL,
+        'NONE': csv.QUOTE_NONE,
+        'NONNUMERIC': csv.QUOTE_NONNUMERIC,
+        str(csv.QUOTE_ALL): csv.QUOTE_ALL,
+        str(csv.QUOTE_MINIMAL): csv.QUOTE_MINIMAL,
+        str(csv.QUOTE_NONE): csv.QUOTE_NONE,
+        str(csv.QUOTE_NONNUMERIC): csv.QUOTE_NONNUMERIC,
+        }
 
-    try:
-        opts, args = getopt.getopt(args, "e:o:i:f:F:DHnh")
-    except getopt.GetoptError as msg:
-        usage(msg)
-        return 1
+    def __init__(self, option_strings, dest, nargs='?', **kwargs):
+        if nargs != '?':
+            raise ValueError("nargs must be '?'")
+        super().__init__(option_strings, dest, **kwargs)
 
-    for opt, arg in opts:
-        if opt == "-f":
-            inputfields = arg.split(",")
-            outputfields.extend(inputfields)
-        elif opt == "-F":
-            headers.extend(arg.split(","))
-        elif opt == "-o":
-            outsep = arg
-        elif opt == "-i":
-            insep = arg
-        elif opt == "-H":
-            emitheader = False
-        elif opt == "-n":
-            quote_style = csv.QUOTE_NONE
-        elif opt == "-D":
-            terminator = "\n"
-        elif opt == "-e":
-            encoding = arg
-        elif opt == "-h":
-            usage()
-            return 0
+    def __call__(self, parser, namespace, value, option_string=None):
+        val = self.quotes[value] if value else csv.QUOTE_NONE
+        setattr(namespace, self.dest, val)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--fields", dest="fields", default=None)
+    parser.add_argument("-F", "--headers", dest="headers", default=None)
+    parser.add_argument("-i", "--insep", dest="insep", default=",")
+    parser.add_argument("-o", "--outsep", dest="outsep", default=",")
+    parser.add_argument("-H", "--noheader", dest="emitheader",
+                        action="store_false", default=True)
+    parser.add_argument("-n", "--quote", dest="quote_style", nargs='?',
+                        action=QuoteAction, default=csv.QUOTE_ALL)
+    parser.add_argument("-D", "--newline", dest="terminator", default="\r\n",
+                        action="store_const", const="\n")
+    parser.add_argument("-e", "--encoding", dest="encoding", default="utf-8")
+    (options, args) = parser.parse_known_args()
+    options.fields = options.fields.split(",") if options.fields else []
+    options.headers = options.headers.split(",") if options.headers else []
 
     if len(args) > 2:
-        usage(sys.argv[0])
+        usage(args[0])
 
     if len(args) >= 1:
-        inf = open(args[0], "r", encoding=encoding)
+        inf = open(args[0], "r", encoding=options.encoding)
     else:
         inf = sys.stdin
     if len(args) == 2:
@@ -131,31 +133,28 @@ def main(args):
     else:
         outf = sys.stdout
 
+    # pylint: disable=too-few-public-methods
     class outdialect(csv.excel):
-        delimiter = outsep
-        quoting = quote_style
-        escapechar = escape_char
-        lineterminator = terminator
+        "user-defined values for several output csv params"
+        delimiter = options.outsep
+        quoting = options.quote_style
+        escapechar = '\\'
+        lineterminator = options.terminator
 
-    # cheap trick to get the title row for the dict reader...
-    reader = csv.reader(inf, delimiter=insep)
-    if headers:
-        fields = headers
-    else:
-        fields = next(reader)
-    if not inputfields:
-        inputfields = outputfields = fields
-    reader = csv.DictReader(inf, fields, delimiter=insep)
-    writer = csv.DictWriter(outf, outputfields, dialect=outdialect,
+    reader = csv.DictReader(inf, delimiter=options.insep)
+    if not options.fields:
+        # All by default
+        options.fields = reader.fieldnames
+    writer = csv.DictWriter(outf, options.fields, dialect=outdialect,
                             extrasaction='ignore')
-    if emitheader:
-        writer.writerow(dict(list(zip(outputfields, outputfields))))
+    if options.emitheader:
+        writer.writeheader()
 
     try:
         for inrow in reader:
-            if fields != inputfields:
+            if options.fields != reader.fieldnames:
                 outrow = {}
-                for field in inputfields:
+                for field in options.fields:
                     outrow[field] = inrow.get(field, "")
             else:
                 outrow = inrow
@@ -166,4 +165,4 @@ def main(args):
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
