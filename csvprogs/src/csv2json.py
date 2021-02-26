@@ -9,10 +9,11 @@
 Extract fields from a CSV file, output JSON
 ----------------------------------------------------
 
-:Author: skipm@trdlnk.com
+:Author: skip.montanaro@gmail.com
 :Date: 2013-07-19
 :Copyright: TradeLink LLC 2013
-:Version: 0.1
+:Copyright: Skip Montanaro 2-16-2021
+:Version: 1.0
 :Manual section: 1
 :Manual group: data filters
 
@@ -29,7 +30,10 @@ OPTIONS
 -t types   comma-separated list of types for the input data - valid
            values are 'int', 'float', 'date', 'time', 'datetime', 'str'.
            If given, length of this list must match the length of the
-           names list given by -f (or implicit in the file itself).
+           names list given by -f (or implicit in the file itself). The
+           types may also offer a default value, for instance, "float:0". If
+           the type converter raises an exception, the default value will be
+           returned.
 -a         emit rows as arrays, not dicts - array elements will be ordered
            by order of field names on input.
 -H         emit header if -a was given.
@@ -96,6 +100,9 @@ TYPES = {
     'str': str,
 }
 
+# Singleton indicating no default value for a typed field
+NO_DEFAULT = object()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--fields", dest="inputfields", default=None,
@@ -110,8 +117,12 @@ def main():
     parser.add_argument("-H", "--header", dest="array_header", default=False,
                         action="store_true",
                         help="when emitting arrays, also emit a header array")
-
+    parser.add_argument("--fullhelp", dest="full_help", action="store_true",
+                        default=False, help="display full usage")
     (options, args) = parser.parse_known_args()
+    if options.full_help:
+        usage()
+        return 0
     options.inputfields = (options.inputfields.split(",")
                                if options.inputfields
                                else [])
@@ -136,15 +147,36 @@ def main():
     if not options.inputfields:
         options.inputfields = reader.fieldnames
 
+    try:
+        generate_type_converters(options)
+    except ValueError as exc:
+        usage(exc.args)
+        return 1
+
+    return translate(reader, options, outf)
+
+def generate_type_converters(options):
+    "parse typename:default information"
     if options.typenames:
         if len(options.typenames) != len(options.inputfields):
-            usage("Length of type names (-t) and field names (-f) must match.")
-            return 1
-        options.typenames = {
-            i: TYPES[t]
-                for (i, t) in zip(options.inputfields, options.typenames)
-        }
-    return translate(reader, options, outf)
+            raise ValueError("Length of type names (-t) and field names"
+                             " (-f) must match.")
+        types = {}
+        defaults = {}
+        for (field, typename) in zip(options.inputfields, options.typenames):
+            if ":" in typename:
+                (typename, dflt) = typename.split(":")
+                typ = TYPES[typename]
+                dflt = typ(dflt)
+            else:
+                typ = TYPES[typename]
+                dflt = NO_DEFAULT
+            types[field] = typ
+            defaults[field] = dflt
+        result = {}
+        for field in types:
+            result[field] = (types[field], defaults[field])
+        options.typenames = result
 
 def translate(reader, options, outf):
     "Convert reader input to JSON output."
@@ -158,7 +190,13 @@ def translate(reader, options, outf):
         for row in reader:
             if options.typenames:
                 for k in options.inputfields:
-                    row[k] = options.typenames[k](row[k])
+                    (typ, dflt) = options.typenames[k]
+                    try:
+                        row[k] = typ(row[k])
+                    except ValueError:
+                        if dflt is NO_DEFAULT:
+                            raise
+                        row[k] = dflt
             outrow = dict((k, v)
                               for (k, v) in row.items()
                                   if k in options.inputfields)
