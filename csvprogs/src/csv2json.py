@@ -25,16 +25,17 @@ OPTIONS
 =======
 
 -f names   comma-separated list of field names to dump
--F names   comma-separated list of field names to use for files without a header line
 -i sep     alternate input field separator (default is a comma)
 -t types   comma-separated list of types for the input data - valid
            values are 'int', 'float', 'date', 'time', 'datetime', 'str'.
            If given, length of this list must match the length of the
-           names list (-f or -F).
+           names list given by -f (or implicit in the file itself).
 -a         emit rows as arrays, not dicts - array elements will be ordered
            by order of field names on input.
+-H         emit header if -a was given.
 
-One of -f or -F must be given.
+If -f isn't given, all fields in the CSV file will be dumped.
+
 if given, infile specifies the input CSV file (default: stdin)
 if given, outfile specifies the output CSV file (default: stdout)
 
@@ -49,6 +50,13 @@ EXAMPLE
 Extract just the time and price fields from a CSV file.
 
   csv2json -f time,price -t datetime,int < somefile.csv > somefile.json
+
+Generate a Python list of lists from the input CSV file.
+
+  csv2json -a -H < somefile.csv
+
+(This might be handy for generating unit test data from CSV
+files. Just sayin'...)
 
 SEE ALSO
 ========
@@ -88,13 +96,20 @@ TYPES = {
     'str': str,
 }
 
-def main(args):
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--fields", dest="inputfields", default=None)
-    parser.add_argument("-t", "--types", dest="typenames", default=None)
-    parser.add_argument("-i", "--insep", dest="insep", default=",")
+    parser.add_argument("-f", "--fields", dest="inputfields", default=None,
+                        help="fields to emit (default all fields)")
+    parser.add_argument("-t", "--types", dest="typenames", default=None,
+                        help="type converters for emitted fields")
+    parser.add_argument("-i", "--insep", dest="insep", default=",",
+                        help="input field separator (default ',')")
     parser.add_argument("-a", "--array", dest="emit_arrays", default=False,
-                        action="store_true")
+                        action="store_true",
+                        help="emit arrays instead of objects")
+    parser.add_argument("-H", "--header", dest="array_header", default=False,
+                        action="store_true",
+                        help="when emitting arrays, also emit a header array")
 
     (options, args) = parser.parse_known_args()
     options.inputfields = (options.inputfields.split(",")
@@ -117,33 +132,45 @@ def main(args):
     else:
         outf = sys.stdout
 
+    reader = csv.DictReader(inf, delimiter=options.insep)
+    if not options.inputfields:
+        options.inputfields = reader.fieldnames
+
     if options.typenames:
         if len(options.typenames) != len(options.inputfields):
             usage("Length of type names (-t) and field names (-f) must match.")
             return 1
-        typenames = {i: TYPES[t]
-                       for (i, t) in zip(options.inputfields, options.typenames)}
+        options.typenames = {
+            i: TYPES[t]
+                for (i, t) in zip(options.inputfields, options.typenames)
+        }
+    return translate(reader, options, outf)
 
-    reader = csv.DictReader(inf, delimiter=options.insep)
+def translate(reader, options, outf):
+    "Convert reader input to JSON output."
 
     try:
         outf.write("[\n")
+        if options.emit_arrays and options.array_header:
+            outf.write(" " * 4)
+            json.dump(options.inputfields, outf)
+            outf.write(",\n")
         for row in reader:
             if options.typenames:
                 for k in options.inputfields:
-                    row[k] = typenames[k](row[k])
+                    row[k] = options.typenames[k](row[k])
             outrow = dict((k, v)
                               for (k, v) in row.items()
                                   if k in options.inputfields)
             if options.emit_arrays:
                 outrow = [outrow[k] for k in options.inputfields]
+            outf.write(" " * 4)
             json.dump(outrow, outf)
             outf.write(",\n")
         outf.write("]\n")
     except IOError:
         pass
-
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
