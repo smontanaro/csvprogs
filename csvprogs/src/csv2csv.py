@@ -29,7 +29,8 @@ OPTIONS
 -F names   comma-separated list of field names to use for files without a header line
 -o sep     alternate output field separator (default is a comma)
 -i sep     alternate input field separator (default is a comma)
--n         don't quote fields
+-n [style] with no argument, don't quote fields, otherwise use the specified
+           value
 -D         don't use DOS/Windows line endings
 -H         do not emit the header line
 
@@ -94,12 +95,11 @@ class QuoteAction(argparse.Action):
         str(csv.QUOTE_MINIMAL): csv.QUOTE_MINIMAL,
         str(csv.QUOTE_NONE): csv.QUOTE_NONE,
         str(csv.QUOTE_NONNUMERIC): csv.QUOTE_NONNUMERIC,
+        int(csv.QUOTE_ALL): csv.QUOTE_ALL,
+        int(csv.QUOTE_MINIMAL): csv.QUOTE_MINIMAL,
+        int(csv.QUOTE_NONE): csv.QUOTE_NONE,
+        int(csv.QUOTE_NONNUMERIC): csv.QUOTE_NONNUMERIC,
         }
-
-    def __init__(self, option_strings, dest, nargs='?', **kwargs):
-        if nargs != '?':
-            raise ValueError("nargs must be '?'")
-        super().__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
         val = self.quotes[value] if value else csv.QUOTE_NONE
@@ -114,7 +114,8 @@ def main():
     parser.add_argument("-H", "--noheader", dest="emitheader",
                         action="store_false", default=True)
     parser.add_argument("-n", "--quote", dest="quote_style", nargs='?',
-                        action=QuoteAction, default=csv.QUOTE_ALL)
+                        action=QuoteAction, default=csv.QUOTE_ALL,
+                        const=csv.QUOTE_NONE)
     parser.add_argument("-D", "--newline", dest="terminator", default="\r\n",
                         action="store_const", const="\n")
     parser.add_argument("-e", "--encoding", dest="encoding", default="utf-8")
