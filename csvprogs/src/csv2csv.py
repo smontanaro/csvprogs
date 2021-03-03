@@ -9,9 +9,10 @@
 Extract fields from a CSV file, generate another
 ----------------------------------------------------
 
-:Author: skipm@trdlnk.com
+:Author: skip.montanaro@gmail.com
 :Date: 2013-07-19
 :Copyright: TradeLink LLC 2013
+:Copyright: Skip Montanaro, 2013-2021
 :Version: 0.1
 :Manual section: 1
 :Manual group: data filters
