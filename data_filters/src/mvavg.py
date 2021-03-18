@@ -9,9 +9,10 @@
 compute moving averages
 ----------------------------------------------------
 
-:Author: skipm@trdlnk.com
+:Author: skip.montanaro@gmail.com
 :Date: 2013-03-15
 :Copyright: TradeLink LLC 2013
+:Copyright: Skip Montanaro 2016-2021
 :Version: 0.1
 :Manual section: 1
 :Manual group: data filters
@@ -25,7 +26,7 @@ OPTIONS
 =======
 
 -n val   number of elements in the moving average (default 5)
--f x     average the values in column x (zero-based offset or name, default 1)
+-f x     average the values in column x (name, no default)
 -o name  name of output column (default "mean")
 -s sep   use sep as the field separator (default is comma)
 
@@ -57,30 +58,26 @@ def main(args):
 
     outcol = "mean"
     length = 5
-    field = 1
+    field = None
     sep = ","
-    reader = csv.reader
-    writer = csv.writer
+    reader = csv.DictReader
+    writer = csv.DictWriter
     for opt, arg in opts:
         if opt == "-n":
             length = int(arg)
         elif opt == "-f":
-            try:
-                field = int(arg)
-                reader = csv.reader
-                writer = csv.writer
-            except ValueError:
-                # Dict key
-                field = arg
-                reader = csv.DictReader
-                writer = csv.DictWriter
+            field = arg
         elif opt == "-s":
             sep = arg
         elif opt == "-o":
             outcol = arg
         elif opt == "-h":
             usage()
-            raise SystemExit
+            return 0
+
+    if field is None:
+        usage("field name is required.")
+        return 1
 
     elts = [None] * length
     rdr = reader(sys.stdin, delimiter=sep)
@@ -106,7 +103,9 @@ def main(args):
         wtr.writerow(row)
     return 0
 
-def usage():
+def usage(msg=None):
+    if msg:
+        print(msg, file=sys.stderr)
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
