@@ -27,14 +27,20 @@ OPTIONS
 
 -n val   number of elements in the moving average (default 5)
 -f x     average the values in column x (name, no default)
--o name  name of output column (default "mean")
+-o name  name of output column (default "mean" unless -w is given,
+         in which case the default is "wma")
 -s sep   use sep as the field separator (default is comma)
+-w       weight the values, providing more weight to more recent values
 
 DESCRIPTION
 ===========
 
 Data are read from stdin, the moving average is computed and appended
 to the end of the values, then printed to stdout.
+
+The weighted moving average formula used is from:
+
+  https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/wma
 
 SEE ALSO
 ========
@@ -54,14 +60,13 @@ import csv
 PROG = os.path.basename(sys.argv[0])
 
 def main(args):
-    opts, args = getopt.getopt(args, "n:f:s:o:h")
+    opts, args = getopt.getopt(args, "n:f:s:o:hw")
 
-    outcol = "mean"
+    outcol = ""
+    weighted = False
     length = 5
     field = None
     sep = ","
-    reader = csv.DictReader
-    writer = csv.DictWriter
     for opt, arg in opts:
         if opt == "-n":
             length = int(arg)
@@ -71,6 +76,8 @@ def main(args):
             sep = arg
         elif opt == "-o":
             outcol = arg
+        elif opt == "-w":
+            weighted = True
         elif opt == "-h":
             usage()
             return 0
@@ -79,29 +86,30 @@ def main(args):
         usage("field name is required.")
         return 1
 
+    outcol = outcol if outcol else ("wma" if weighted else "mean")
     elts = [None] * length
-    rdr = reader(sys.stdin, delimiter=sep)
-    if isinstance(field, str):
-        fnames = rdr.fieldnames[:]
-        fnames.append(outcol)
-        wtr = writer(sys.stdout, delimiter=sep, fieldnames=fnames)
-        wtr.writerow(dict(list(zip(fnames, fnames))))
-    else:
-        wtr = writer(sys.stdout, delimiter=sep)
+    rdr = csv.DictReader(sys.stdin, delimiter=sep)
+    fnames = rdr.fieldnames[:]
+    fnames.append(outcol)
+    wtr = csv.DictWriter(sys.stdout, delimiter=sep, fieldnames=fnames)
+    wtr.writeheader()
+    coeffs = [1] * length if not weighted else list(range(length, 0, -1))
     for row in rdr:
         if row[field]:
             elts.append(float(row[field]))
             del elts[0]
         if None not in elts:
-            val = sum(elts)/len(elts)
+            val = avg(elts, coeffs)
         else:
             val = ""
-        if reader == csv.reader:
-            row.append(val)
-        else:
-            row[outcol] = val
+        row[outcol] = val
         wtr.writerow(row)
     return 0
+
+def avg(elts, coeffs):
+    num = sum([c * e for (c, e) in zip(coeffs, elts)])
+    den = sum(coeffs[:len(elts)])
+    return num / den
 
 def usage(msg=None):
     if msg:
