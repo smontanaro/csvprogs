@@ -4,7 +4,7 @@ INSTMANDIR = $(INSTDIR)/../share/man
 # Update this stuff to add/delete scripts
 SCRIPTS = mvavg.py ewma.py mean.py shuffle.py spline.py take.py \
 	  bars.py filter.py sigavg.py square.py roundtime.py xform.py \
-	  regress.py sharpe.sh
+	  regress.py sharpe.sh hull.py
 RST_FILES = data_filters.rst
 
 ### Usage:
@@ -95,6 +95,10 @@ install: all
 clean: FORCE
 	rm -rf $(BINDIR)
 	rm -rf $(MANDIR)
+
+.PHONY: test
+test: FORCE
+	for f in csvprogs/test/*.sh ; do bash $f ; done
 
 .PHONY: FORCE
 FORCE:
