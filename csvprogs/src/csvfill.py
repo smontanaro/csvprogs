@@ -9,8 +9,9 @@
 Propagate known values down columns.
 ----------------------------------------------------
 
-:Author: skipm@trdlnk.com
+:Author: skip.montanaro@gmail.com
 :Date: 2015-04-30
+:Copyright: Skip Montanaro 2015-2021
 :Copyright: TradeLink LLC 2015
 :Version: 0.1
 :Manual section: 1
@@ -19,7 +20,7 @@ Propagate known values down columns.
 SYNOPSIS
 ========
 
- %(PROG)s -k f1,f2,f3,... [ options ] [ infile ]
+%(PROG)s -k f1,f2,f3,... [ infile [ outfile ] ]
 
 OPTIONS
 =======
@@ -82,13 +83,10 @@ SEE ALSO
 * csvmerge
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-import sys
+import argparse
 import csv
-import getopt
 import os
-from six.moves import zip
+import sys
 
 PROG = os.path.splitext(os.path.split(sys.argv[0])[1])[0]
 
@@ -98,39 +96,26 @@ def usage(msg=None):
         print(file=sys.stderr)
     print((__doc__.strip() % globals()), file=sys.stderr)
 
-def main(args):
-    keys = []
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-k", "--keys", dest="keys", required=True)
+    (options, args) = parser.parse_known_args()
+    if options.keys:
+        options.keys = options.keys.split(",")
 
-    try:
-        opts, args = getopt.getopt(args, "k:h")
-    except getopt.GetoptError as msg:
-        usage(msg)
-        return 1
-
-    for opt, arg in opts:
-        if opt == "-k":
-            keys = arg.split(",")
-        elif opt == "-h":
-            usage()
-            return 0
-
-    if len(args) > 1:
+    if len(args) > 2:
         usage("Too many input files")
         return 1
 
-    if args:
-        fname = args[0]
-    else:
-        fname = "/dev/stdin"
-    f = open(fname)
-    rdr = csv.DictReader(f)
-    fields = rdr.fieldnames
-    wtr = csv.DictWriter(sys.stdout, fieldnames=fields, restval="")
-    wtr.writerow(dict(list(zip(fields, fields))))
+    inf = open((args[0] if args else "/dev/stdin"), "r")
+    outf = open((args[1] if len(args) > 1 else "/dev/stdout"), "w")
+    rdr = csv.DictReader(inf)
+    wtr = csv.DictWriter(outf, fieldnames=rdr.fieldnames, restval="")
+    wtr.writeheader()
 
     last = {}
     for row in rdr:
-        for k in keys:
+        for k in options.keys:
             if not row[k]:
                 row[k] = last.get(k, "")
         wtr.writerow(row)
@@ -138,4 +123,4 @@ def main(args):
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
