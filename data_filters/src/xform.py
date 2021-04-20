@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-======================
+"""======================
 %(PROG)s
 ======================
 
@@ -9,7 +8,7 @@
 Transform input values based upon user-defined function
 ---------------------------------------------------------
 
-:Author: skipm@trdlnk.com
+:Author: skip.montanaro@gmail.com
 :Date: 2013-12-12
 :Copyright: TradeLink LLC 2013
 :Copyright: Skip Montanaro 2016-2021
@@ -21,7 +20,7 @@ SYNOPSIS
 ========
 
  %(PROG)s [ -v ] [ -f func | F mod.func ] [ -s sep ] [ -k name ] \\
-          [ -H [ -c names ] ]
+          [ -c names ]
 
 OPTIONS
 =======
@@ -38,13 +37,11 @@ OPTIONS
               with -f. Packages are currently not supported.  See also
               "-c".
 
--H            Treat the first line as a header
-
--c names      If -H is given, the comma-separated list of names is
-              guaranteed to be included in the output headers, even if
-              some are missing from the first output row.  If not
-              given, only those keys present in the first non-empty
-              row are guaranteed to be included in the header line.
+-c names      If given, the comma-separated list of names is guaranteed
+              to be included in the output headers, even if some are
+              missing from the first output row.  If not given, only
+              those keys present in the first non-empty row are
+              guaranteed to be included in the header line.
 
               The list of output columns can also be extended by
               defining a symbol, "__xform_names__" (a list of strings)
@@ -96,8 +93,7 @@ the output before or after the input row.
         # leave row unchanged...
         return (pre, post)
 
-If example.csv contains these rows and the -H flag was given on the
-command line::
+If example.csv contains these rows::
 
     time,GBM,ZF
     11/22/2013 14:00,125.680811,120.80775
@@ -149,6 +145,7 @@ SEE ALSO
 * filter
 * mpl
 * take
+
 """
 
 import sys
@@ -167,19 +164,15 @@ def main(args):
         usage("-f or -F are required.")
         return 1
 
-    if options.has_header:
-        rdr = csv.DictReader(sys.stdin, delimiter=options.sep)
-        # Treat first row as a header.
-        out_fields = rdr.fieldnames[:]
-        for name in options.extra_names:
-            if name not in rdr.fieldnames:
-                out_fields.append(name)
-        indexes = enumerate(rdr.fieldnames)
-        wtr = csv.DictWriter(sys.stdout, fieldnames=out_fields)
-    else:
-        indexes = None
-        rdr = csv.reader(sys.stdin, delimiter=options.sep)
-        wtr = csv.writer(sys.stdout, delimiter=options.sep)
+    rdr = csv.DictReader(sys.stdin, delimiter=options.sep)
+    # Treat first row as a header.
+    out_fields = rdr.fieldnames[:]
+    for name in options.extra_names:
+        if name not in rdr.fieldnames:
+            out_fields.append(name)
+    indexes = enumerate(rdr.fieldnames)
+    wtr = csv.DictWriter(sys.stdout, fieldnames=out_fields)
+    wtr.writeheader()
 
     inject_globals(options.xform, options.vars)
 
@@ -188,29 +181,14 @@ def main(args):
 
 def xform(rdr, wtr, func, indexes):
     "see __doc__"
-    do_header = write_header = isinstance(wtr, csv.DictWriter)
     for row in rdr:
         type_convert(row)
-        if indexes is not None:
-            row = ListyDict(row, indexes)
-        try:
-            result = func(row)
-        except Exception:
-            print("Error processing:", row, file=sys.stderr)
-            raise
-        if do_header:
-            pre, post = result if result is not None else [{}, {}]
-        else:
-            pre, post = result if result is not None else [[], []]
-        # Defer writing header as long as possible.
-        if write_header:
-            fieldnames = set(wtr.fieldnames) | set(pre) | set(post) | set(row)
-            wtr.fieldnames = sorted(fieldnames)
-            wtr.writeheader()
-            write_header = False
-        for rows in (pre, [row] if row else [], post):
-            if rows:
-                wtr.writerows(rows)
+        row = ListyDict(row, indexes)
+        result = func(row)
+        pre, post = result if result is not None else [{}, {}]
+        wtr.writerows(pre)
+        wtr.writerow(row.data)
+        wtr.writerows(post)
 
 def inject_globals(func, vrbls):
     "Inject user-defined variables into the function's globals."
@@ -226,7 +204,7 @@ def inject_globals(func, vrbls):
     #
     # class C(object):
     #    def __call__(self):
-    #        print "called"
+    #        print("called")
     #
     # class Other(object):
     #    c = C()
@@ -262,7 +240,7 @@ def inject_globals(func, vrbls):
 
 def process_args(args):
     "getopt wrapper"
-    opts, args = getopt.getopt(args, "f:F:s:hHc:p:v")
+    opts, args = getopt.getopt(args, "f:F:s:hc:p:v")
 
     options = Options()
     for opt, arg in opts:
@@ -284,8 +262,6 @@ def process_args(args):
             options.xform = getattr(mod, funcname)
             if hasattr(mod, "__xform_names__"):
                 options.extra_names.extend(getattr(mod, "__xform_names__"))
-        elif opt == "-H":
-            options.has_header = True
         elif opt == "-v":
             options.verbose = True
         elif opt == "-c":
@@ -307,7 +283,6 @@ class Options:
     def __init__(self):
         self.xform = lambda _: None
         self.sep = ","
-        self.has_header = False
         self.extra_names = []
         self.vars = {}
         self.verbose = False
