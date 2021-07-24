@@ -48,7 +48,7 @@ $(BINDIR)/% : $(SRCDIR)/%.py
 $(MANDIR)/%.1 : $(RSTDIR)/%.rst
 	mkdir -p $(MANDIR)
 	rm -f $@
-	rst2man < $< \
+	rst2man.py < $< \
 	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
 	      -e '/^\.de1 INDENT/,/^\.\./d' \
 	      -e '/^\.de UNINDENT/,/^\.\./d' \
@@ -58,7 +58,7 @@ $(MANDIR)/%.1 : $(RSTDIR)/%.rst
 $(MANDIR)/%.1 : $(SRCDIR)/%.py
 	mkdir -p $(MANDIR)
 	rm -f $@
-	python $< -h 2>&1 | rst2man \
+	python $< -h 2>&1 | rst2man.py \
 	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
 	      -e '/^\.de1 INDENT/,/^\.\./d' \
 	      -e '/^\.de UNINDENT/,/^\.\./d' \
@@ -70,6 +70,10 @@ install: all
 	for f in $(BINDIR)/* ; do \
 	    rm -f $(INSTDIR)/`basename $$f` ; \
 	    cp -p $$f $(INSTDIR) ; \
+	done
+	for d in share/man/man? ; do \
+	    SECTION=`basename $$d` ; \
+	    cp -r $$d $(INSTMANDIR)/$$SECTION ; \
 	done
 
 .PHONY: clean
