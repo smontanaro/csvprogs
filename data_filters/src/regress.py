@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-===========
+"""===========
 %(PROG)s
 ===========
 
@@ -19,20 +18,22 @@ compute linear regression of two user-specified fields
 SYNOPSIS
 ========
 
-  %(PROG)s [ -f x,y ] [ -s sep ] [ -o col ]
+  %(PROG)s [ -c ] [ -f x,y ] [ -s sep ] [ -o col ]
 
 OPTIONS
 =======
 
 -f x,y   use columns x and y as inputs to regression.
 -s sep   use sep as the field separator (default is comma)
--o col   write to column z - if not given, just append to output
+-o col   write to column col - if not given, just append to output
+-c       only print correlation coefficient to stdout, no regression data
 
 DESCRIPTION
 ===========
 
 Data are read from stdin, the regression is computed, the the input is
-written to stdout with the new field.
+written to stdout with the new field.  Details about the regression
+results are written to stderr (unless -c is given).
 
 SEE ALSO
 ========
@@ -57,11 +58,12 @@ PROG = os.path.basename(sys.argv[0])
 
 def main(args):
     try:
-        opts, args = getopt.getopt(args, "f:s:ho:")
+        opts, args = getopt.getopt(args, "f:s:ho:c")
     except getopt.GetoptError:
         usage()
         return 1
 
+    corr = False
     sep = ","
     field1 = 0
     field2 = 1
@@ -79,6 +81,8 @@ def main(args):
             except ValueError:
                 # Must have given names
                 field3 = arg
+        elif opt == "-c":
+            corr = True
         elif opt == "-s":
             sep = arg
         elif opt == "-h":
@@ -94,7 +98,6 @@ def main(args):
         names = reader.fieldnames[:]
         names.append(str(field3))
         writer = csv.DictWriter(sys.stdout, fieldnames=names, delimiter=sep)
-        writer.writerow(dict(list(zip(names, names))))
 
     x = []
     y = []
@@ -109,9 +112,14 @@ def main(args):
 
     (slope, intercept, r, p, stderr) = scipy.stats.linregress(x, y)
 
+    if corr:
+        print(r)
+        return 0
+
     print("slope:", slope, "intercept:", intercept, file=sys.stderr)
     print("corr coeff:", r, "p:", p, "err:", stderr, file=sys.stderr)
 
+    writer.writeheader()
     for row in rows:
         if row[field1]:
             val = slope * float(row[field1]) + intercept
