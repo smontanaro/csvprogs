@@ -362,7 +362,11 @@ def main():
                 # range.
                 left, right = [matplotlib.dates.num2date(x) for x in pylab.xlim()]
                 x_delta = right - left
-                if x_delta > int(1.5 * 365) * ONE_DAY:
+                if x_delta > int(5 * 365) * ONE_DAY:
+                    xfmt = "%Y"
+                elif x_delta > int(2 * 365) * ONE_DAY:
+                    xfmt = "%Y-%m"
+                elif x_delta > int(1.5 * 365) * ONE_DAY:
                     xfmt = "%Y-%m-%d"
                 elif x_delta > 2 * ONE_DAY:
                     xfmt = "%m/%d\n%H:%M"
