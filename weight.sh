@@ -25,6 +25,6 @@ LOOKBACK=$(min $LOOKBACK $(( $(wc -l < ~/misc/weight.csv) - 1 )) )
           -f date,'HR (7d avg)',r,g,'HR (r)' \
           -f date,weight,l,r,'',dotted \
           -f date,'weight (7d avg)',l,r,'Weight (l)' \
-          -Y 165:185,40:100 \
+          -Y 165:190,40:100 \
           -F %m/%d \
           "$@"
