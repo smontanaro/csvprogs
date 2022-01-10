@@ -95,9 +95,9 @@ def main(args):
         inf = sys.stdin
     values = []
     if header:
-        rdr = csv.DictReader(inf)
+        rdr = csv.DictReader(inf, delimiter=sep)
     else:
-        rdr = csv.reader(inf)
+        rdr = csv.reader(inf, delimiter=sep)
         field = int(field)
     for row in rdr:
         if row[field]:
