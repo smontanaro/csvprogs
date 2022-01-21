@@ -29,18 +29,27 @@ of stdin must be read first, so it is not a good idea to use this
 filter with very large files.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-import sys
-import random
+import contextlib
 import getopt
 import os
+import random
+import sys
 
 PROG = os.path.basename(sys.argv[0])
 
-def main(args):
-    opts, args = getopt.getopt(args, "h")
-    for opt, arg in opts:
+@contextlib.contextmanager
+def swallow(exceptions):
+    "catch and swallow the named exceptions"
+    try:
+        yield None
+    except exceptions:
+        pass
+    finally:
+        pass
+
+def main():
+    opts, args = getopt.getopt(sys.argv[1:], "h")
+    for opt, _arg in opts:
         if opt == "-h":
             usage()
             return 0
@@ -49,9 +58,10 @@ def main(args):
         usage("spurious command line arguments")
         return 1
 
-    lines = list(sys.stdin)
-    random.shuffle(lines)
-    sys.stdout.writelines(lines)
+    with swallow((BrokenPipeError, KeyboardInterrupt)):
+        lines = list(sys.stdin)
+        random.shuffle(lines)
+        sys.stdout.writelines(lines)
     return 0
 
 def usage(msg=""):
@@ -61,4 +71,4 @@ def usage(msg=""):
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
