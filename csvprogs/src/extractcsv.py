@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-===============
+"""===============
 %(PROG)s
 ===============
 
@@ -19,28 +18,38 @@ Extract rows from CSV files matching stated constraints.
 SYNOPSIS
 ========
 
- %(PROG)s [ options ] [ infile [ outfile ] ]
+ %(PROG)s [ options ] expression
 
 OPTIONS
 =======
 
-none yet
+-v - make output more verbose
+-h - display this help and exit
 
-if given, infile specifies the input CSV file (default: stdin)
-if given, outfile specifies the output CSV file (default: stdout)
+input is read from stdin, output written to stdout.
 
 DESCRIPTION
 ===========
 
 Filter an input CSV file, emitting rows to the output which match the
-constraints given on the command line.  Individual constraints are
-specified as
+expression given on the command line.  Individual terms are specified
+as
 
     column RELOP expr
 
-where RELOP is one of the Python relational operators.  Constraints
-can be joined together using "and" or "or".  Parentheses can be used
-to direct order of evaluation.
+where RELOP is one of the usual Python binary operators or 'match'.
+Terms can be joined together using "and" or "or".  Parentheses can be
+used to direct order of evaluation.
+
+'match' is used to specify a regular expression match. This term
+
+    column match pattern
+
+is equivalent to
+
+    re.match(pattern, row[column], re.I)
+
+Note that patterns are matched in a case-insensitive manner.
 
 EXAMPLE
 =======
@@ -96,12 +105,13 @@ SEE ALSO
 * csvsort
 * csv2csv
 * data_misc package
+
 """
 
-import sys
 import csv
-import os
 import getopt
+import os
+import sys
 
 PROG = os.path.split(sys.argv[0])[1]
 
@@ -112,27 +122,45 @@ def usage(msg=None):
     print((__doc__.strip() % globals()), file=sys.stderr)
 
 def main(args):
-    opts, args = getopt.getopt(args, "h")
+    opts, args = getopt.getopt(args, "hv")
+    verbose = False
     for opt, _arg in opts:
         if opt == "-h":
             usage()
             return 0
+        if opt == "-v":
+            verbose = True
+
 
     # Build a comparison function from the remaining cmdline args
     func = ["def compare_func(row):\n",
+            "    import re\n",
             "    return ( "]
 
     while args:
         # Expect the start of a constraint, a paren or the words "and"
         # or "or".
         if args[0] in ("(", ")", "and", "or"):
-            func.append(" %s " % args[0])
+            func.append(f" {args[0]} ")
+            if verbose:
+                eprint(repr(func[-1]))
             del args[0]
+            continue
+
+        if args[1] == "match":
+            # args[0] must match args[2], e.g.:
+            #    re.match(args[2], row[args[0]], re.I) is not None
+            func.append(f"(re.match({args[2]!r}, row[{args[0]!r}], re.I) is not None)")
+            if verbose:
+                eprint(repr(func[-1]))
+            del args[0:3]
             continue
 
         # Now we know we must find a constraint.  It must consume the
         # next three tokens.
-        func.append("row[%r] %s %r" % (args[0], args[1], args[2]))
+        func.append(f"(row[{args[0]!r}] {args[1]} {args[2]!r})")
+        if verbose:
+            eprint(repr(func[-1]))
         del args[0:3]
 
     func.append(" )\n")
@@ -148,10 +176,15 @@ def main(args):
     wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames)
     wtr.writeheader()
     for row in rdr:
+        if verbose:
+            eprint(row, func(row))
         if func(row):
             wtr.writerow(row)
 
     return 0
+
+def eprint(*args, file=sys.stderr, **kwds):
+    print(*args, file=file, **kwds)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
