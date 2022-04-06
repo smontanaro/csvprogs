@@ -1,4 +1,5 @@
 INSTDIR = $(shell for p in `echo $$PATH | sed -e 's/:/ /g'` ; do if test `echo $$p | egrep $$HOME | wc -l` -eq 1 ; then echo $$p ; break ; fi ; done)
+INSTMANDIR = $(INSTDIR)/../share/man
 
 # Update this stuff to add/delete scripts
 PY_SCRIPTS = csvmerge.py csvsort.py xls2csv.py csv2csv.py extractcsv.py \
@@ -72,8 +73,7 @@ install: all
 	    cp -p $$f $(INSTDIR) ; \
 	done
 	for d in share/man/man? ; do \
-	    SECTION=`basename $$d` ; \
-	    cp -r $$d $(INSTMANDIR)/$$SECTION ; \
+	    cp -fr $$d $(INSTMANDIR) ; \
 	done
 
 .PHONY: clean

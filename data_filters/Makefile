@@ -87,8 +87,7 @@ install: all
 	    cp -p $$f $(INSTDIR) ; \
 	done
 	for d in share/man/man? ; do \
-	    SECTION=`basename $$d` ; \
-	    cp -r $$d $(INSTMANDIR)/$$SECTION ; \
+	    cp -fr $$d $(INSTMANDIR) ; \
 	done
 
 .PHONY: clean
