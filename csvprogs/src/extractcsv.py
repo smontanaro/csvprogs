@@ -8,10 +8,10 @@
 Extract rows from CSV files matching stated constraints.
 --------------------------------------------------------
 
-:Author: skipm@trdlnk.com
-:Date: 2013-07-19
-:Copyright: TradeLink LLC 2013
-:Version: 0.1
+:Author: skip.montanaro@gmail.com
+:Date: 2022-04-06
+:Copyright: © TradeLink LLC 2013, Skip Montanaro, 2022
+:Version: 1.0
 :Manual section: 1
 :Manual group: data filters
 
