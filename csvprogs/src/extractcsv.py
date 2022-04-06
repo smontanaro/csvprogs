@@ -23,8 +23,10 @@ SYNOPSIS
 OPTIONS
 =======
 
--v - make output more verbose
--h - display this help and exit
+::
+
+    -v - make output more verbose
+    -h - display this help and exit
 
 input is read from stdin, output written to stdout.
 
@@ -33,21 +35,21 @@ DESCRIPTION
 
 Filter an input CSV file, emitting rows to the output which match the
 expression given on the command line.  Individual terms are specified
-as
+as::
 
-    column RELOP expr
+  column RELOP expr
 
 where RELOP is one of the usual Python binary operators or 'match'.
 Terms can be joined together using "and" or "or".  Parentheses can be
 used to direct order of evaluation.
 
-'match' is used to specify a regular expression match. This term
+'match' is used to specify a regular expression match. This term::
 
-    column match pattern
+  column match pattern
 
-is equivalent to
+is equivalent to::
 
-    re.match(pattern, row[column], re.I)
+  re.match(pattern, row[column], re.I)
 
 Note that patterns are matched in a case-insensitive manner.
 
@@ -60,9 +62,9 @@ and price > 96125 or price < 96000::
   %(PROG)s contract == F:LGOV13 and '(' price '>' 96125 or price '<' 96000 ')'
 
 Write rows from a trading audit archive file corresponding to fills
-for the user "putin"::
+for the user "zelenskyy"::
 
-  %(PROG)s "User Name" == putin and \\
+  %(PROG)s "User Name" == "zelenskyy" and \\
     'Source or Destination' == "From Exchange" and \\
     Transaction == "EXECUTION"
 
@@ -74,19 +76,19 @@ DETAILS
 =======
 
 Under the covers, the script builds a Python function which compares
-the constraint expression against a given row.  The first example
-would generate a function like this::
+the user's expression against the values of a given row.  The first
+example would generate a function like this::
 
     def compare_func(row):
-        return (row["contract"] == "F:LGOV13" and
-                (row["price"] > "96125" or row["price"] < "96000"))
+        return ((row["contract"] == "F:LGOV13") and
+                ((row["price"] > "96125" or row["price"] < "96000")))
 
-The second example generates this function:
+The second example generates this function::
 
     def compare_func(row):
-        return (row["User Name"] == "putin" and
-                row["Source or Destination"] == "From Exchange" and
-                row["Transaction"] == "EXECUTION")
+        return ((row["User Name"] == "zelenskyy") and
+                (row["Source or Destination"] == "From Exchange") and
+                (row["Transaction"] == "EXECUTION"))
 
 LIMITATIONS
 ===========
