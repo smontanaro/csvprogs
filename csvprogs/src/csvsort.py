@@ -17,7 +17,10 @@ SYNOPSIS
 OPTIONS
 =======
 
+::
+
 -k fields   list merge fields (quote if names contain spaces)
+-s          strip fields in the sort key function (data are not changed)
 
 An optional input file can be given on the command line.  If not
 given, input is read from stdin.  Output is to stdout.  Column order
@@ -30,8 +33,6 @@ To sort stdin by date and time::
 
     %(PROG)s -k 'Date Stamp,Time Stamp'
 """
-
-# source: URL: http://svnhost:3690/svn/people/skipm/trunk/scripts/csvmerge.py
 
 import sys
 import csv
@@ -50,27 +51,34 @@ def main(args):
     keys = []
 
     try:
-        opts, args = getopt.getopt(args, "k:h")
+        opts, args = getopt.getopt(args, "k:hs")
     except getopt.GetoptError as msg:
         usage(msg)
         return 1
 
+    strip = False
     for opt, arg in opts:
         if opt == "-k":
             keys = arg.split(",")
         elif opt == "-h":
             usage()
             return 0
+        if opt == "-s":
+            strip = True
 
     if len(args) > 1:
         usage("Too many input files")
         return 1
 
-    reader = csv.DictReader(open(args[0] if args else "/dev/stdin"))
-    fields = reader.fieldnames
-    writer = csv.DictWriter(sys.stdout, fieldnames=fields, restval="")
-    writer.writeheader()
-    writer.writerows(sorted(reader, key=lambda x: [x[k] for k in keys]))
+    def keyfunc(x):
+        return [(x[k].strip() if strip else x[k]) for k in keys]
+
+    with open(args[0] if args else "/dev/stdin", encoding="utf-8") as fobj:
+        reader = csv.DictReader(fobj)
+        fields = reader.fieldnames
+        writer = csv.DictWriter(sys.stdout, fieldnames=fields, restval="")
+        writer.writeheader()
+        writer.writerows(sorted(reader, key=keyfunc))
 
     return 0
 
