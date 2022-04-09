@@ -76,9 +76,12 @@ def main(args):
     with open(args[0] if args else "/dev/stdin", encoding="utf-8") as fobj:
         reader = csv.DictReader(fobj)
         fields = reader.fieldnames
-        writer = csv.DictWriter(sys.stdout, fieldnames=fields, restval="")
-        writer.writeheader()
-        writer.writerows(sorted(reader, key=keyfunc))
+        try:
+            writer = csv.DictWriter(sys.stdout, fieldnames=fields, restval="")
+            writer.writeheader()
+            writer.writerows(sorted(reader, key=keyfunc))
+        except (KeyboardInterrupt, BrokenPipeError):
+            pass
 
     return 0
 
