@@ -33,8 +33,6 @@ To sort stdin by date and time::
 
 # source: URL: http://svnhost:3690/svn/people/skipm/trunk/scripts/csvmerge.py
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import csv
 import getopt
