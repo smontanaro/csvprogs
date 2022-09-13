@@ -4,6 +4,8 @@ RST_FILES =
 
 INSTDIR = $(shell for p in `echo $$PATH | sed -e 's/:/ /g'` ; do if test `echo $$p | egrep $$HOME | wc -l` -eq 1 ; then echo $$p ; break ; fi ; done)
 
+INSTMODDIR = $(shell python -c 'import sys ; print(f"{sys.prefix}/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages")')
+
 ### Usage:
 #
 # Source files are stored in SRCDIR.  If you have hand-written ReST
@@ -16,19 +18,27 @@ SCRIPTS = $(PY_SCRIPTS)
 
 BINDIR = bin
 SRCDIR = src
+LIBDIR = lib
 MANDIR = share/man/man1
 RSTDIR = share/man/rst1
 
-BIN_SCRIPTS = $(foreach s,$(SCRIPTS),$(BINDIR)/$(basename $(s)))
+BIN_SCRIPTS = $(BINDIR)/mpl
+MODULES = $(LIBDIR)/mpl.py
 SRC_SCRIPTS = $(foreach s,$(SCRIPTS),$(SRCDIR)/$(s))
 MAN_FILES = $(foreach s,$(SCRIPTS),$(MANDIR)/$(basename $(s)).1) \
 	$(foreach s,$(RST_FILES),$(MANDIR)/$(basename $(s)).1)
 
 .PHONY: all
-all : bin man
+all : bin man $(MODULES)
 
 .PHONY: bin
 bin : $(BIN_SCRIPTS)
+
+$(MODULES) : bin
+	mkdir -p $(LIBDIR)
+	for m in $(MODULES) ; do \
+	    cp $(SRCDIR)/`basename $$m` $$m ; \
+	done
 
 .PHONY: man
 man : $(MAN_FILES)
@@ -60,10 +70,25 @@ $(MANDIR)/%.1 : $(SRCDIR)/%.py
 	chmod 0444 $@
 
 .PHONY: install
-install: all
+install: install-modules install-scripts
+
+.PHONY: install-scripts
+install-scripts: bin
 	for f in $(BINDIR)/* ; do \
-	    rm -f $(INSTDIR)/`basename $$f` ; \
-	    cp -p $$f $(INSTDIR) ; \
+	    name=`basename $$f .py` ; \
+	    scr=$(INSTDIR)/$$name ; \
+	    rm -f $$scr ; \
+	    echo '#!/usr/bin/env python3' > $$scr ; \
+	    echo "import sys, $$name" >> $$scr ; \
+	    echo "sys.exit($$name.main())" >> $$scr ; \
+	    chmod +x $$scr ; \
+	done
+
+.PHONY: install-modules
+install-modules: $(MODULES)
+	for f in $(LIBDIR)/* ; do \
+	    cp $$f $(INSTMODDIR) ; \
+	    chmod 0644 $(INSTMODDIR)/`basename $$f` ; \
 	done
 
 .PHONY: clean
