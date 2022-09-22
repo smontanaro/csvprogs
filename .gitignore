@@ -3,3 +3,5 @@
 bin
 share
 *.py.bak
+*/dist
+*/lib
