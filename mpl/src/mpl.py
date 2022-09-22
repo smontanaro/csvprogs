@@ -212,6 +212,11 @@ class Options:
     xtime: bool = True
     y_min_max: list = dataclasses.field(default_factory=list)
 
+    def debug_print(self):
+        print("fields:", file=sys.stderr)
+        for attr in self.__dataclass_fields__:
+            print(f"  {attr}: {getattr(self, attr)}", file=sys.stderr)
+
 @public
 def main():
     "see __doc__"
@@ -365,6 +370,9 @@ def main():
         reader = csv.reader
 
     rdr = reader(sys.stdin, delimiter=options.sep)
+
+    if options.verbose:
+        options.debug_print()
 
     # callable module function goes here...
 
