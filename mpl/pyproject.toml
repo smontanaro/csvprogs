@@ -1,12 +1,17 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = [
+    "setuptools>=61.0",
+    "trove-classifiers",
+    "wheel",
+]
+
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "csv-mpl-plot"
 version = "0.0.1"
 authors = [
-  { name="Skip Montanaro", email="skip.montanaro@gmail.com" },
+    { name="Skip Montanaro", email="skip.montanaro@gmail.com" },
 ]
 description = "Matplotlib-based CSV file plotter"
 readme = "README.md"
@@ -21,3 +26,6 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/smontanaro/csvprogs/tree/main/mpl"
 "Bug Tracker" = "https://github.com/smontanaro/csvprogs/issues"
+
+[project.scripts]
+    mpl = "csv_mpl_plot:main"
