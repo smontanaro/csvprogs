@@ -1,6 +1,9 @@
 [build-system]
 requires = [
-    "setuptools>=61.0",
+    "matplotlib>=3.5.2",
+    "atpublic>=3.1",
+    "numpy>=1.22",
+    "setuptools>=63.0",
     "trove-classifiers",
     "wheel",
 ]
@@ -8,7 +11,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "csv-mpl-plot"
+name = "csvplot"
 version = "0.0.1"
 authors = [
     { name="Skip Montanaro", email="skip.montanaro@gmail.com" },
@@ -28,4 +31,5 @@ classifiers = [
 "Bug Tracker" = "https://github.com/smontanaro/csvprogs/issues"
 
 [project.scripts]
-    mpl = "csv_mpl_plot:main"
+    mpl = "csvplot:main"
+    csvplot = "csvplot:main"
