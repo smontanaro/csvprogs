@@ -14,16 +14,11 @@ build-backend = "setuptools.build_meta"
 name = "csvplot"
 version = "1.0.0"
 authors = [
-    {
-    name = "Skip Montanaro",
-    email = "skip.montanaro@gmail.com",
-    },
+    { name = "Skip Montanaro", email = "skip.montanaro@gmail.com" },
 ]
 description = "Matplotlib-based CSV file plotter"
 readme = "README.md"
-license = {
-        file = "LICENSE",
-        }
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
