@@ -14,11 +14,16 @@ build-backend = "setuptools.build_meta"
 name = "csvplot"
 version = "0.0.1"
 authors = [
-    { name="Skip Montanaro", email="skip.montanaro@gmail.com" },
+    {
+    name = "Skip Montanaro",
+    email = "skip.montanaro@gmail.com",
+    },
 ]
 description = "Matplotlib-based CSV file plotter"
 readme = "README.md"
-license = { file="LICENSE" }
+license = {
+        file = "LICENSE",
+        }
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -31,5 +36,5 @@ classifiers = [
 "Bug Tracker" = "https://github.com/smontanaro/csvprogs/issues"
 
 [project.scripts]
-    mpl = "csvplot:main"
-    csvplot = "csvplot:main"
+    mpl = "csvplot.csvplot:main"
+    csvplot = "csvplot.csvplot:main"
