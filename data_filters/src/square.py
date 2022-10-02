@@ -138,7 +138,7 @@ def main(args):
         wtr = csv.writer(sys.stdout, delimiter=sep)
         if skip_header:
             wtr.writerow(next(rdr))
-    for row in square(remove_dups(rdr, keys, blank), 0, keys[-1], numeric):
+    for row in square(remove_dups(rdr, keys, blank), 0, keys, numeric):
         wtr.writerow(row)
 
 def remove_dups(iterator, keys, blank):
@@ -156,12 +156,13 @@ def remove_dups(iterator, keys, blank):
     if row is not None:
         yield row
 
-def square(iterator, t, y, numeric):
+def square(iterator, t, keys, numeric):
     r1 = next(iterator)
     yield r1
     for r2 in iterator:
         row = copy.copy(r2)
-        row[y] = r1[y]
+        for k in keys:
+            row[k] = r1[k]
         yield row
         yield r2
         r1 = r2
