@@ -156,9 +156,9 @@ import inspect
 
 PROG = os.path.basename(sys.argv[0])
 
-def main(args):
+def main():
     "see __doc__"
-    options = process_args(args)
+    options = process_args(sys.argv[1:])
 
     if options.xform is None:
         usage("-f or -F are required.")
@@ -369,4 +369,4 @@ def usage(msg=""):
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

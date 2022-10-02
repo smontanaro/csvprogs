@@ -52,8 +52,8 @@ import sys
 
 PROG = os.path.basename(sys.argv[0])
 
-def main(args):
-    opts, args = getopt.getopt(args, "a:f:s:h")
+def main():
+    opts, args = getopt.getopt(sys.argv[1:], "a:f:s:h")
 
     alpha = 0.1
     field = 1
@@ -103,4 +103,4 @@ def usage():
     print(__doc__.format(**globals()).strip(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

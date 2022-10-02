@@ -54,8 +54,8 @@ import getopt
 
 PROG = os.path.basename(sys.argv[0])
 
-def main(args):
-    opts, args = getopt.getopt(args, "f:s:m:M:hH",
+def main():
+    opts, args = getopt.getopt(sys.argv[1:], "f:s:m:M:hH",
                                ["fields=", "separator=", "minval=",
                                 "maxval=", "help", "skip-header"])
     x, y = [0, 2]
@@ -106,4 +106,4 @@ def usage():
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sys.exit(main())

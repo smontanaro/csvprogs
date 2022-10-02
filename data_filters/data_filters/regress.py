@@ -56,9 +56,9 @@ from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
-def main(args):
+def main():
     try:
-        opts, args = getopt.getopt(args, "f:s:ho:c")
+        opts, args = getopt.getopt(sys.argv[1:], "f:s:ho:c")
     except getopt.GetoptError:
         usage()
         return 1
@@ -134,4 +134,4 @@ def usage():
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

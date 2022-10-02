@@ -62,8 +62,8 @@ from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
-def main(args):
-    opts, args = getopt.getopt(args, "hs:t:d:")
+def main():
+    opts, args = getopt.getopt(sys.argv[1:], "hs:t:d:")
 
     digits = 0
     time_field = 0
@@ -109,4 +109,4 @@ def usage():
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
