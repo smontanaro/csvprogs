@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "data-filters"
+version = "0.1.0"
+description = "A series of data filters which read and write CSV files"
+authors = ["Skip Montanaro <skip.montanaro@gmail.com>"]
+license = "MPL"
+readme = "README.md"
+packages = [{include = "data_filters"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+scipy = "*"
+numpy = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+bars = 'data_filters.bars:main'
+ewma = 'data_filters.ewma:main'
+filter = 'data_filters.filter:main'
+hull = 'data_filters.hull:main'
+mean = 'data_filters.mean:main'
+mvavg = 'data_filters.mvavg:main'
+regress = 'data_filters.regress:main'
+roundtime = 'data_filters.roundtime:main'
+sharpe = 'data_filters.sharpe:main'
+shuffle = 'data_filters.shuffle:main'
+sigavg = 'data_filters.sigavg:main'
+spline = 'data_filters.spline:main'
+square = 'data_filters.square:main'
+take = 'data_filters.take:main'
+xform = 'data_filters.xform:main'
