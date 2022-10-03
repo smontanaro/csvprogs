@@ -2,7 +2,7 @@
 
 """
 ===========
-%(PROG)s
+{PROG}
 ===========
 
 ----------------------------------------------------
@@ -19,7 +19,7 @@ compute mean, median, stddev of a series of values
 SYNOPSIS
 ========
 
-  %(PROG)s [ -H ] -f x ] [ -s sep ] [ -m val ] [ -M val ] [ file ]
+  {PROG} [ -H ] -f x ] [ -s sep ] [ -m val ] [ -M val ] [ file ]
 
 OPTIONS
 =======
@@ -61,16 +61,15 @@ PROG = os.path.basename(sys.argv[0])
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "f:s:hm:M:H")
+        opts, args = getopt.getopt(sys.argv[1:], "f:s:hm:M:")
     except getopt.GetoptError:
         usage()
         return 1
 
-    field = 1
+    field = None
     sep = ","
     maxval = 1e308
     minval = -1e308
-    header = False
     for opt, arg in opts:
         if opt == "-f":
             field = arg
@@ -80,25 +79,23 @@ def main():
             maxval = float(arg)
         elif opt == "-s":
             sep = arg
-        elif opt == "-H":
-            header = True
         elif opt == "-h":
             usage()
             return 0
+
+    if field is None:
+        usage("-f is required")
+        return 1
 
     if len(args) > 1:
         usage()
         return 1
     if len(args) == 1:
-        inf = open(args[0], "rb")
+        inf = open(args[0], "r")
     else:
         inf = sys.stdin
     values = []
-    if header:
-        rdr = csv.DictReader(inf, delimiter=sep)
-    else:
-        rdr = csv.reader(inf, delimiter=sep)
-        field = int(field)
+    rdr = csv.DictReader(inf, delimiter=sep)
     for row in rdr:
         if row[field]:
             val = float(row[field])
@@ -112,8 +109,10 @@ def main():
     print("%d%s%f%s%f%s%f" % (len(values), sep, mean, sep, median, sep, std))
     return 0
 
-def usage():
-    print(__doc__ % globals(), file=sys.stderr)
+def usage(msg=""):
+    if msg:
+        print(msg, file=sys.stderr)
+    print(__doc__.format(**globals()), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())
