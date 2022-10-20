@@ -1,8 +1,5 @@
 [build-system]
 requires = [
-    "matplotlib>=3.5.2",
-    "atpublic>=3.1",
-    "numpy>=1.22",
     "setuptools>=63.0",
     "trove-classifiers",
     "wheel",
@@ -12,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "csvplot"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
     { name = "Skip Montanaro", email = "skip.montanaro@gmail.com" },
 ]
@@ -24,6 +21,11 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+]
+dependencies = [
+    "matplotlib>=3.5.2",
+    "atpublic>=3.1",
+    "numpy>=1.22",
 ]
 
 [project.urls]
