@@ -1,0 +1,49 @@
+[build-system]
+requires = [
+    "setuptools>=63.0",
+    "trove-classifiers",
+    "wheel",
+]
+
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "csvprogs"
+version = "1.0.0"
+authors = [
+    { name = "Skip Montanaro", email = "skip.montanaro@gmail.com" },
+]
+description = "Various CSV file transformers"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "atpublic>=3.1",
+    "numpy>=1.22",
+    "python-dateutil>=2.8.2",
+    "pandas>=1.5.2",
+    "xlrd>=2.0.1",
+    "xlwt>=1.3.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/smontanaro/csvprogs/tree/main/csvprogs"
+"Bug Tracker" = "https://github.com/smontanaro/csvprogs/issues"
+
+[project.scripts]
+    csv2csv = "csvprogs.csv2csv:main"
+    csv2json = "csvprogs.csv2json:main"
+    csv2xls = "csvprogs.csv2xls:main"
+    csvcollapse = "csvprogs.csvcollapse:main"
+    csvfill = "csvprogs.csvfill:main"
+    csvmerge = "csvprogs.csvmerge:main"
+    csvsort = "csvprogs.csvsort:main"
+    extractcsv = "csvprogs.extractcsv:main"
+    html2csv = "csvprogs.html2csv:main"
+    interp = "csvprogs.interp:main"
+    xml2csv = "csvprogs.xml2csv:main"
