@@ -175,6 +175,7 @@ import datetime
 import os
 import re
 import io
+import warnings
 
 import dateutil.parser
 import numpy
@@ -221,6 +222,14 @@ class Options:
 def main():
     "see __doc__"
     options = Options()
+
+    # ignore this:
+    #  .../csvplot.py:581: UserWarning: The label '_child0' of
+    #     <matplotlib.lines.Line2D object at 0x1195278b0> starts with '_'.
+    #     It is thus excluded from the legend.
+    if not sys.warnoptions:
+        import warnings
+        warnings.simplefilter("ignore")
 
     args = sys.argv[1:]
     opts, args = getopt.getopt(args, "B:F:LT:X:Y:b:d:f:hl:p:r:s:vx:",
