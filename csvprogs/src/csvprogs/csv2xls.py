@@ -53,8 +53,8 @@ import xlwt
 
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
-def main(args):
-    opts, args = getopt.getopt(args, "h")
+def main():
+    opts, args = getopt.getopt(sys.argv[1:], "h")
     for opt, _arg in opts:
         if opt == "-h":
             usage()
@@ -106,4 +106,4 @@ def usage(msg=""):
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

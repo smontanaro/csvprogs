@@ -47,11 +47,11 @@ def usage(msg=None):
         print(file=sys.stderr)
     print((__doc__.strip() % globals()), file=sys.stderr)
 
-def main(args):
+def main():
     keys = []
 
     try:
-        opts, args = getopt.getopt(args, "k:hs")
+        opts, args = getopt.getopt(sys.argv[1:], "k:hs")
     except getopt.GetoptError as msg:
         usage(msg)
         return 1
@@ -86,4 +86,4 @@ def main(args):
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

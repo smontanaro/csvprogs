@@ -50,10 +50,10 @@ from six.moves import range
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 EPOCH = datetime.datetime.fromtimestamp(0)
 
-def main(args):
+def main():
     sheet = 0
     try:
-        opts, args = getopt.getopt(args, "hs:")
+        opts, args = getopt.getopt(sys.argv[1:], "hs:")
     except getopt.GetoptError:
         usage()
         return 1
@@ -115,4 +115,4 @@ def cell_value(cell, datemode):
     return val
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

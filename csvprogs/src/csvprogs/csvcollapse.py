@@ -75,10 +75,10 @@ def usage(msg=None):
         print(file=sys.stderr)
     print((__doc__.strip() % globals()), file=sys.stderr)
 
-def main(args):
+def main():
     keys = ()
 
-    opts, _args = getopt.getopt(args, "k:h")
+    opts, _args = getopt.getopt(sys.argv[1:], "k:h")
     for opt, arg in opts:
         if opt == "-k":
             keys = tuple(arg.split(","))
@@ -110,4 +110,4 @@ def main(args):
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

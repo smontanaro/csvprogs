@@ -123,8 +123,8 @@ def usage(msg=None):
         print(file=sys.stderr)
     print((__doc__.strip() % globals()), file=sys.stderr)
 
-def main(args):
-    opts, args = getopt.getopt(args, "hv")
+def main():
+    opts, args = getopt.getopt(sys.argv[1:], "hv")
     verbose = False
     for opt, _arg in opts:
         if opt == "-h":
@@ -189,4 +189,4 @@ def eprint(*args, file=sys.stderr, **kwds):
     print(*args, file=file, **kwds)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

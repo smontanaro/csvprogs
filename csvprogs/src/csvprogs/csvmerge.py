@@ -75,12 +75,12 @@ def usage(msg=None):
         print(file=sys.stderr)
     print((__doc__.strip() % globals()), file=sys.stderr)
 
-def main(args):
+def main():
     keys = []
     readers = []
 
     try:
-        opts, args = getopt.getopt(args, "k:d:h")
+        opts, args = getopt.getopt(sys.argv[1:], "k:d:h")
     except getopt.GetoptError as msg:
         usage(msg)
         return 1
@@ -164,7 +164,7 @@ def construct_key(row, keys, date_keys):
 
 if __name__ == "__main__":
     try:
-        result = main(sys.argv[1:])
+        result = main()
     except BrokenPipeError:
         result = 0
     sys.exit(result)
