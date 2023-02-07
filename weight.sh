@@ -13,6 +13,12 @@ min () {
 LOOKBACK=${1:-365}
 LOOKBACK=$(min $LOOKBACK $(( $(wc -l < ~/misc/weight.csv) - 1 )) )
 
+if [ $LOOKBACK -gt 365 ] ; then
+    FMT=%m/%y
+else
+    FMT=%m/%d
+fi
+
 (head -1 ~/misc/weight.csv ;
  tail -$LOOKBACK ~/misc/weight.csv) \
     | mvavg -n 7 -f weight -o 'weight (7d avg)' \
