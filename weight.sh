@@ -16,7 +16,8 @@ weight [ -w ] [ -o ] [ -p ] [ LOOKBACK ]
 
 At least one of weight, O2 and HR must be plotted.
 
-Lookback is in days, defaulting to 365.
+Lookback is in days, defaulting to 365. Suffixes of "y" or "m" are
+understood to me years (365 days) or months (30 days).
 
 EOF
 }
@@ -33,6 +34,23 @@ strjoin () {
     local IFS="$1"
     shift
     echo "$*"
+}
+
+cvtdays () {
+    local days=1
+    case "${1}" in
+        *y)
+            days=365
+            ;;
+        *m)
+            days=30
+            ;;
+        *)
+            days=1
+            ;;
+    esac
+    coeff=$(sed -e 's/[a-z]*//g' <<< $1)
+    echo $((days * coeff))
 }
 
 O2="-f date,O2,r,blue,'',dotted -f date,'O2 (7d avg)',r,blue,'O2 (r)'"
@@ -70,7 +88,7 @@ if [ "x${O2}${WT}${HR}" = "x" ] ; then
     exit 1
 fi
 
-LOOKBACK=${1:-365}
+LOOKBACK=$(cvtdays ${1:-365})
 LOOKBACK=$(min $LOOKBACK $(( $(wc -l < ~/misc/weight.csv) - 1 )) )
 
 if [ $LOOKBACK -gt 365 ] ; then
