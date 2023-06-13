@@ -22,6 +22,8 @@ understood to me years (365 days) or months (30 days).
 EOF
 }
 
+WTCSV=$HOME/misc/weight.csv
+
 min () {
     if [ $1 -le $2 ] ; then
         echo $1
@@ -37,20 +39,24 @@ strjoin () {
 }
 
 cvtdays () {
-    local days=1
-    case "${1}" in
-        *y)
-            days=365
-            ;;
-        *m)
-            days=30
-            ;;
-        *)
-            days=1
-            ;;
-    esac
-    coeff=$(sed -e 's/[a-z]*//g' <<< $1)
-    echo $((days * coeff))
+    if [ "${1}" = "all" ] ; then
+        echo $(wc -l < $WTCSV)
+    else
+        local days=1
+        case "${1}" in
+            *y)
+                days=365
+                ;;
+            *m)
+                days=30
+                ;;
+            *)
+                days=1
+                ;;
+        esac
+        coeff=$(sed -e 's/[a-z]*//g' <<< $1)
+        echo $((days * coeff))
+    fi
 }
 
 O2="-f date,O2,r,blue,'',dotted -f date,'O2 (7d avg)',r,blue,'O2 (r)'"
@@ -89,7 +95,7 @@ if [ "x${O2}${WT}${HR}" = "x" ] ; then
 fi
 
 LOOKBACK=$(cvtdays ${1:-365})
-LOOKBACK=$(min $LOOKBACK $(( $(wc -l < ~/misc/weight.csv) - 1 )) )
+LOOKBACK=$(min $LOOKBACK $(( $(wc -l < $WTCSV) - 1 )) )
 
 if [ $LOOKBACK -gt 365 ] ; then
     FMT=%m/%y
@@ -114,7 +120,7 @@ mpl -T "${title}" \
            "$@"
 EOF
 
-(head -1 ~/misc/weight.csv ;
+(head -1 $WTCSV ;
  tail -$LOOKBACK ~/misc/weight.csv) \
     | mvavg -n 7 -f weight -o 'weight (7d avg)' \
     | mvavg -n 7 -f O2 -o 'O2 (7d avg)' \
