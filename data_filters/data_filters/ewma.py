@@ -19,7 +19,7 @@ Compute exponentially weighted moving average
 SYNOPSIS
 ========
 
-  {PROG} [ -f x ] [ -a val ] [ -s sep ]
+  {PROG} [ -o name ] [ -f x ] [ -a val ] [ -s sep ]
 
 OPTIONS
 =======
@@ -27,6 +27,7 @@ OPTIONS
 -a val   alpha of the ewma (default 0.1)
 -f x     average the values in column x (zero-based offset or name - default 1)
 -s sep   use sep as the field separator (default is comma)
+-o name  define output column name (default: "ewma")
 
 DESCRIPTION
 ===========
