@@ -53,14 +53,17 @@ import sys
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "a:f:s:h")
+    opts, args = getopt.getopt(sys.argv[1:], "a:f:s:o:h")
 
     alpha = 0.1
     field = 1
     sep = ","
+    outcol = "ewma"
     for opt, arg in opts:
         if opt == "-a":
             alpha = float(arg)
+        elif opt == "-o":
+            outcol = arg
         elif opt == "-f":
             try:
                 field = int(arg)
@@ -81,7 +84,7 @@ def main():
     rdr = reader(sys.stdin, delimiter=sep)
     if isinstance(field, str):
         fnames = rdr.fieldnames[:]
-        fnames.append("ewma")
+        fnames.append(outcol)
         wtr = writer(sys.stdout, delimiter=sep, fieldnames=fnames)
         wtr.writeheader()
     else:
@@ -93,7 +96,7 @@ def main():
             else:
                 val = alpha * float(row[field]) + (1-alpha) * val
             if isinstance(field, str):
-                row["ewma"] = val
+                row[outcol] = val
             else:
                 row.append(val)
         wtr.writerow(row)
@@ -103,4 +106,7 @@ def usage():
     print(__doc__.format(**globals()).strip(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except (OSError, KeyboardInterrupt):
+        sys.exit(0)
