@@ -7,12 +7,13 @@ cat <<EOF
 
 Plot, weight, O2 saturation, and/or resting heart rate.
 
-weight [ -w ] [ -o ] [ -p ] [ LOOKBACK ]
+weight [ -e ] [ -w ] [ -o ] [ -p ] [ LOOKBACK ]
 
 -w - exclude weight
 -o - exclude O2 saturation
 -p - exclude heart rate
 -h - print this message
+-e - use ewma instead of simple moving average
 
 At least one of weight, O2 and HR must be plotted.
 
@@ -59,15 +60,19 @@ cvtdays () {
     fi
 }
 
-O2="-f date,O2,r,blue,'',dotted -f date,'O2 (7d avg)',r,blue,'O2 (r)'"
-HR="-f date,hr,r,green,'',dotted -f date,'HR (7d avg)',r,green,'HR (r)'"
-WT="-f date,weight,l,red,'',dotted -f date,'weight (7d avg)',l,red,'Weight (l)'"
+O2="-f date,O2,r,blue,'',dotted -f date,'O2 (avg)',r,blue,'O2 (r)'"
+HR="-f date,hr,r,green,'',dotted -f date,'HR (avg)',r,green,'HR (r)'"
+WT="-f date,weight,l,red,'',dotted -f date,'weight (avg)',l,red,'Weight (l)'"
 tO2=O2
 tHR=HR
 tWT=Weight
+AVG="mvavg -n 7"
 
-while getopts 'opwh' OPTION; do
+while getopts 'eopwh' OPTION; do
     case "$OPTION" in
+        e)
+            AVG=ewma
+            ;;
         o)
             O2=
             tO2=
@@ -122,7 +127,7 @@ EOF
 
 (head -1 $WTCSV ;
  tail -$LOOKBACK ~/misc/weight.csv) \
-    | mvavg -n 7 -f weight -o 'weight (7d avg)' \
-    | mvavg -n 7 -f O2 -o 'O2 (7d avg)' \
-    | mvavg -n 7 -f hr -o 'HR (7d avg)' \
+    | ${AVG} -f weight -o 'weight (avg)' \
+    | ${AVG} -f O2 -o 'O2 (avg)' \
+    | ${AVG} -f hr -o 'HR (avg)' \
     | bash ${scr}
