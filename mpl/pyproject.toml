@@ -14,7 +14,7 @@ authors = [
     { name = "Skip Montanaro", email = "skip.montanaro@gmail.com" },
 ]
 description = "Matplotlib-based CSV file plotter"
-readme = "README.md"
+readme = { file = "README.md" }
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 classifiers = [
