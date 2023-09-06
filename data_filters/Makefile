@@ -4,7 +4,7 @@ INSTMANDIR = $(INSTDIR)/../share/man
 # Update this stuff to add/delete scripts
 SCRIPTS = mvavg.py ewma.py mean.py shuffle.py spline.py take.py \
 	  bars.py filter.py sigavg.py square.py roundtime.py xform.py \
-	  regress.py sharpe.sh hull.py
+	  regress.py sharpe.py hull.py
 RST_FILES = data_filters.rst
 
 ### Usage:
@@ -16,7 +16,7 @@ RST_FILES = data_filters.rst
 # Little, if anything, below here should need to be changed.
 
 BINDIR = bin
-SRCDIR = src
+SRCDIR = data_filters
 MANDIR = share/man/man1
 RSTDIR = share/man/rst1
 
@@ -50,30 +50,10 @@ $(BINDIR)/% : $(SRCDIR)/%.py
 	cp $< $@
 	chmod 0555 $@
 
-$(MANDIR)/%.1 : $(RSTDIR)/%.rst
-	mkdir -p $(MANDIR)
-	rm -f $@
-	rst2man.py < $< \
-	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
-	      -e '/^\.de1 INDENT/,/^\.\./d' \
-	      -e '/^\.de UNINDENT/,/^\.\./d' \
-	| egrep -v '^\.(UN)?INDENT' > $@
-	chmod 0444 $@
-
-$(MANDIR)/%.1 : $(SRCDIR)/%.sh
-	mkdir -p $(MANDIR)
-	rm -f $@
-	bash $< -h 2>&1 | rst2man.py \
-	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
-	      -e '/^\.de1 INDENT/,/^\.\./d' \
-	      -e '/^\.de UNINDENT/,/^\.\./d' \
-	| egrep -v '^\.(UN)?INDENT' > $@
-	chmod 0444 $@
-
 $(MANDIR)/%.1 : $(SRCDIR)/%.py
 	mkdir -p $(MANDIR)
 	rm -f $@
-	python $< -h 2>&1 | rst2man.py \
+	python3 $< -h 2>&1 | rst2man.py \
 	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
 	      -e '/^\.de1 INDENT/,/^\.\./d' \
 	      -e '/^\.de UNINDENT/,/^\.\./d' \
