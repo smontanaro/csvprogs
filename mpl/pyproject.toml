@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "csvplot"
-version = "1.0.2"
+version = "1.0.3"
 authors = [
     { name = "Skip Montanaro", email = "skip.montanaro@gmail.com" },
 ]
