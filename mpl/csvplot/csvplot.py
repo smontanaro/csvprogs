@@ -455,29 +455,26 @@ def plot(options, rdr):
             right.append(data)
             y_range = rt_y_range
         for values in raw:
-            try:
-                _, _ = (values[col1], values[col2])
-            except IndexError:
-                # Rows don't need to be completely filled.
+            x_val, y_val = (values.get(col1, ""), values.get(col2, ""))
+            # Rows don't need to be completely filled.
+            if x_val == "" or y_val == "":
                 continue
-            x_val = values[col1]
-            y_val = values[col2]
-            if x_val and y_val:
-                try:
-                    x_val = parse_x(x_val)
-                except ValueError as err:
-                    print(err, values, file=sys.stderr)
-                    raise
-                y_val = float(values[col2])
-                # If we get inputs with timezone info, convert. This
-                # is likely only to be executed once, as if one
-                # timestamp has tzinfo, all are likely to.
-                if options.xtime and x_range[0].tzinfo != x_val.tzinfo:
-                    zone = x_val.tzinfo
-                    x_range = [dt.replace(tzinfo=zone) for dt in x_range]
-                y_range[:] = [min(y_range[0], y_val),
-                              max(y_range[1], y_val)]
-                data[0].append((x_val, y_val))
+            try:
+                x_val = parse_x(x_val)
+            except ValueError as err:
+                print(err, values, file=sys.stderr)
+                raise
+            # floats might contain separators
+            y_val = float(re.sub("[_, ]", "", y_val))
+            # If we get inputs with timezone info, convert. This
+            # is likely only to be executed once, as if one
+            # timestamp has tzinfo, all are likely to.
+            if options.xtime and x_range[0].tzinfo != x_val.tzinfo:
+                zone = x_val.tzinfo
+                x_range = [dt.replace(tzinfo=zone) for dt in x_range]
+            y_range[:] = [min(y_range[0], y_val),
+                          max(y_range[1], y_val)]
+            data[0].append((x_val, y_val))
         if data[0]:
             x_range = [min([x for (x, _y) in data[0]]+[x_range[0]]),
                        max([x for (x, _y) in data[0]]+[x_range[1]])]
@@ -589,36 +586,33 @@ def plot(options, rdr):
     return 0
 
 @private
-def color_bkgd(bkgds, plot, y_range, raw_data, parse_x):
+def color_bkgd(bkgds, plot_, y_range, raw_data, parse_x):
     "Add background fill colors."
     if not bkgds:
         return
 
     for col1, col2, low, high, color in bkgds:
-        data = []
+        xdata = []
+        ydata = []
         for values in raw_data:
-            try:
-                _, _ = (values[col1], values[col2])
-            except IndexError:
-                # Rows don't need to be completely filled.
+            x_val, y_val = (values.get(col1, ""), values.get(col2, ""))
+            if x_val == "" or y_val == "":
                 continue
-            if values[col1] and values[col2]:
-                try:
-                    values[col1] = parse_x(values[col1])
-                except ValueError as err:
-                    print(err, values, file=sys.stderr)
-                    raise
-                values[col2] = float(values[col2])
-                data.append((values[col1], values[col2]))
-        xdata = [x for (x, y) in data]
-        ydata = [y for (x, y) in data]
+            try:
+                x_val = parse_x(x_val)
+            except ValueError as err:
+                print(err, values, file=sys.stderr)
+                raise
+            y_val = float(re.sub("[_, ]", "", y_val))
+            xdata.append(x_val)
+            ydata.append(y_val)
         if low == high:
-            mask = (low == numpy.array(ydata))
+            mask = low == numpy.array(ydata)
         else:
-            mask = (low <= numpy.array(ydata) < high)
-        plot.fill_between(xdata, y_range[0], y_range[1],
-                          edgecolor=color, facecolor=color,
-                          where=mask)
+            mask = low <= numpy.array(ydata) < high
+        plot_.fill_between(xdata, y_range[0], y_range[1],
+                           edgecolor=color, facecolor=color,
+                           where=mask)
 
 @private
 def usage():
