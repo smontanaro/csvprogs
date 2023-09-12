@@ -175,6 +175,7 @@ import datetime
 import os
 import re
 import io
+import warnings
 
 import dateutil.parser
 import numpy
@@ -493,12 +494,16 @@ def plot(options, rdr):
     left_plot.set_axisbelow(True)
     left_plot.yaxis.set_major_formatter(pylab.FormatStrFormatter('%g'))
     left_plot.xaxis.set_major_formatter(formatter)
-    # Use a light, but solid, grid for the X axis and the left Y
-    # axis. No grid for right Y axis.
-    left_plot.xaxis.grid(True, linestyle='solid', which='major',
-                         color='lightgrey', alpha=0.5)
-    left_plot.yaxis.grid(True, linestyle='solid', which='major',
-                         color='lightgrey', alpha=0.5)
+    # Somebody below me generates a label named "_child0", which causes
+    # Matplotlib (I think) to spit out a warning.  Suppress that.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=UserWarning)
+        # Use a light, but solid, grid for the X axis and the left Y axis.  No
+        # grid for right Y axis.
+        left_plot.xaxis.grid(True, linestyle='solid', which='major',
+                            color='lightgrey', alpha=0.5)
+        left_plot.yaxis.grid(True, linestyle='solid', which='major',
+                            color='lightgrey', alpha=0.5)
 
     lines = []
     if left:
@@ -572,10 +577,14 @@ def plot(options, rdr):
 
     if options.do_legend:
         labels = [line.get_label() for line in lines]
-        if right:
-            right_plot.legend(lines, labels, loc='best').set_draggable(True)
-        else:
-            left_plot.legend(lines, labels, loc='best').set_draggable(True)
+        # Somebody below me generates a label named "_child0", which causes
+        # Matplotlib (I think) to spit out a warning.  Suppress that.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            if right:
+                right_plot.legend(lines, labels, loc='best').set_draggable(True)
+            else:
+                left_plot.legend(lines, labels, loc='best').set_draggable(True)
 
     figure.tight_layout()
     if options.plot_file:
