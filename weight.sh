@@ -42,6 +42,8 @@ strjoin () {
 cvtdays () {
     if [ "${1}" = "all" ] ; then
         echo $(wc -l < $WTCSV)
+    elif [ "${1}" = "ytd" ] ; then
+        echo $(date +%j)
     else
         local days=1
         case "${1}" in
