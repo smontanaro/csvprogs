@@ -6,3 +6,4 @@ share
 */dist
 */lib
 *.egg-info
+*/build
