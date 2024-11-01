@@ -66,6 +66,7 @@ install: all
 	    rm -f $(INSTDIR)/`basename $$f` ; \
 	    cp -p $$f $(INSTDIR) ; \
 	done
+	mkdir -p $(INSTMANDIR)
 	for d in share/man/man? ; do \
 	    cp -fr $$d $(INSTMANDIR) ; \
 	done
