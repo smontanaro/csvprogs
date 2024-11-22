@@ -466,7 +466,7 @@ def plot(options, rdr):
                 print(err, values, file=sys.stderr)
                 raise
             # floats might contain separators
-            y_val = float(re.sub("[_, ]", "", y_val))
+            y_val = float(re.sub("[_, ]", "", y_val or 'nan'))
             # If we get inputs with timezone info, convert. This
             # is likely only to be executed once, as if one
             # timestamp has tzinfo, all are likely to.
