@@ -48,16 +48,19 @@ SEE ALSO
 
 import csv
 import getopt
+import math
 import os
 import sys
 
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "a:f:s:o:h")
+    opts, _args = getopt.getopt(sys.argv[1:], "a:f:s:o:h")
 
     alpha = 0.1
     field = 1
+    reader = csv.reader
+    writer = csv.writer
     sep = ","
     outcol = "ewma"
     for opt, arg in opts:
@@ -81,7 +84,8 @@ def main():
             usage()
             raise SystemExit
 
-    val = None
+    nan = float('nan')
+    val = nan
     rdr = reader(sys.stdin, delimiter=sep)
     if isinstance(field, str):
         fnames = rdr.fieldnames[:]
@@ -91,15 +95,17 @@ def main():
     else:
         wtr = writer(sys.stdout, delimiter=sep)
     for row in rdr:
-        if row[field]:
-            if val is None:
+        if not row[field] or math.isnan(float(row[field])):
+            val = nan
+        else:
+            if math.isnan(val):
                 val = float(row[field])
             else:
                 val = alpha * float(row[field]) + (1-alpha) * val
-            if isinstance(field, str):
-                row[outcol] = val
-            else:
-                row.append(val)
+        if isinstance(field, str):
+            row[outcol] = val
+        else:
+            row.append(val)
         wtr.writerow(row)
     return 0
 
