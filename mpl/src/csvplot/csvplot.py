@@ -458,15 +458,16 @@ def plot(options, rdr):
         for values in raw:
             x_val, y_val = (values.get(col1, ""), values.get(col2, ""))
             # Rows don't need to be completely filled.
-            if x_val == "" or y_val == "":
+            if x_val == "":
                 continue
+            y_val = 'nan' if y_val.strip() == "" else y_val
             try:
                 x_val = parse_x(x_val)
             except ValueError as err:
                 print(err, values, file=sys.stderr)
                 raise
             # floats might contain separators
-            y_val = float(re.sub("[_, ]", "", y_val or 'nan'))
+            y_val = float(re.sub("[_, ]", "", y_val))
             # If we get inputs with timezone info, convert. This
             # is likely only to be executed once, as if one
             # timestamp has tzinfo, all are likely to.
