@@ -86,6 +86,7 @@ def main():
         usage("field name is required.")
         return 1
 
+    nan = float('nan')
     outcol = outcol if outcol else ("wma" if weighted else "mean")
     elts = [None] * length
     rdr = csv.DictReader(sys.stdin, delimiter=sep)
@@ -98,10 +99,13 @@ def main():
         if row[field]:
             elts.append(float(row[field]))
             del elts[0]
+        else:
+            # restart mv avg calc
+            elts = [None] * length
         if None not in elts:
             val = avg(elts, coeffs)
         else:
-            val = ""
+            val = nan
         row[outcol] = val
         wtr.writerow(row)
     return 0
