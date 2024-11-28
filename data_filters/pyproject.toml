@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "data-filters"
-version = "0.1.2"
+version = "0.1.3"
 description = "A series of data filters which read and write CSV files"
 authors = ["Skip Montanaro <skip.montanaro@gmail.com>"]
 license = "MPL"
