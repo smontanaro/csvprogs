@@ -28,6 +28,7 @@ OPTIONS
 -f x     average the values in column x (zero-based offset or name - default 1)
 -s sep   use sep as the field separator (default is comma)
 -o name  define output column name (default: "ewma")
+-m N     reset moving average after N missing values
 
 DESCRIPTION
 ===========
@@ -54,8 +55,32 @@ import sys
 
 PROG = os.path.basename(sys.argv[0])
 
+def ewma(rdr, field, outcol, alpha, gap):
+    "core moving average calculation: outcol = ewma(field)"
+    nan = float('nan')
+    val = nan
+    missing = 0
+    result = []
+    for row in rdr:
+        if not row[field] or math.isnan(float(row[field])):
+            missing += 1
+            if missing >= gap:
+                val = nan
+        else:
+            missing = 0
+            if math.isnan(val):
+                val = float(row[field])
+            else:
+                val = alpha * float(row[field]) + (1-alpha) * val
+        if isinstance(field, str):
+            row[outcol] = val
+        else:
+            row.append(val)
+        result.append(row)
+    return result
+
 def main():
-    opts, _args = getopt.getopt(sys.argv[1:], "a:f:s:o:h")
+    opts, _args = getopt.getopt(sys.argv[1:], "a:f:s:o:m:h")
 
     alpha = 0.1
     field = 1
@@ -63,6 +88,7 @@ def main():
     writer = csv.writer
     sep = ","
     outcol = "ewma"
+    gap = 5
     for opt, arg in opts:
         if opt == "-a":
             alpha = float(arg)
@@ -80,12 +106,13 @@ def main():
                 writer = csv.DictWriter
         elif opt == "-s":
             sep = arg
+        elif opt == "-m":
+            gap = int(arg)
+            assert gap > 0
         elif opt == "-h":
             usage()
             raise SystemExit
 
-    nan = float('nan')
-    val = nan
     rdr = reader(sys.stdin, delimiter=sep)
     if isinstance(field, str):
         fnames = rdr.fieldnames[:]
@@ -94,19 +121,9 @@ def main():
         wtr.writeheader()
     else:
         wtr = writer(sys.stdout, delimiter=sep)
-    for row in rdr:
-        if not row[field] or math.isnan(float(row[field])):
-            val = nan
-        else:
-            if math.isnan(val):
-                val = float(row[field])
-            else:
-                val = alpha * float(row[field]) + (1-alpha) * val
-        if isinstance(field, str):
-            row[outcol] = val
-        else:
-            row.append(val)
-        wtr.writerow(row)
+
+    result = ewma(rdr, field, outcol, alpha, gap)
+    wtr.writerows(result)
     return 0
 
 def usage():
