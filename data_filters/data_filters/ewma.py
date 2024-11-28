@@ -9,7 +9,7 @@
 Compute exponentially weighted moving average
 ----------------------------------------------------
 
-:Author: skipm@trdlnk.com
+:Author: skip.montanaro@gmail.com
 :Date: 2013-03-15
 :Copyright: TradeLink LLC 2013
 :Version: 0.1
@@ -19,7 +19,7 @@ Compute exponentially weighted moving average
 SYNOPSIS
 ========
 
-  {PROG} [ -o name ] [ -f x ] [ -a val ] [ -s sep ]
+  {PROG} [ -o name ] [ -f x ] [ -a val ] [ -s sep ] [ -m N ]
 
 OPTIONS
 =======
@@ -39,13 +39,14 @@ the values, then printed to stdout.
 SEE ALSO
 ========
 
-* pt
 * bars
-* ptwin
 * take
 * mpl
-* avg
+* mvavg
 """
+
+
+__all__ = ["ewma"]
 
 import csv
 import getopt
