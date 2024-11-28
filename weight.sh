@@ -9,11 +9,11 @@ Plot, weight, O2 saturation, and/or resting heart rate.
 
 weight [ -e ] [ -w ] [ -o ] [ -p ] [ LOOKBACK ]
 
--w - exclude weight
--o - exclude O2 saturation
--p - exclude heart rate
--h - print this message
--e - use ewma instead of simple moving average
+-w   - exclude weight
+-o   - exclude O2 saturation
+-p   - exclude heart rate
+-h   - print this message
+-e N - use ewma with N-day max gap instead of simple moving average
 
 At least one of weight, O2 and HR must be plotted.
 
@@ -70,10 +70,10 @@ tHR=HR
 tWT=Weight
 AVG="mvavg -n 7"
 
-while getopts 'eopwh' OPTION; do
+while getopts 'e:opwh' OPTION; do
     case "$OPTION" in
         e)
-            AVG=ewma
+            AVG="ewma -m ${OPTARG}"
             ;;
         o)
             O2=
