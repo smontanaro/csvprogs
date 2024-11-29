@@ -25,7 +25,7 @@ OPTIONS
 =======
 
 -a val   alpha of the ewma (default 0.1)
--f x     average the values in column x (zero-based offset or name - default 1)
+-f x     average the values in column x (no default)
 -s sep   use sep as the field separator (default is comma)
 -o name  define output column name (default: "ewma")
 -m N     reset moving average after N missing values
@@ -84,7 +84,7 @@ def main():
     opts, _args = getopt.getopt(sys.argv[1:], "a:f:s:o:m:h")
 
     alpha = 0.1
-    field = 1
+    field = None
     reader = csv.reader
     writer = csv.writer
     sep = ","
@@ -96,15 +96,9 @@ def main():
         elif opt == "-o":
             outcol = arg
         elif opt == "-f":
-            try:
-                field = int(arg)
-                reader = csv.reader
-                writer = csv.writer
-            except ValueError:
-                # Dict key
-                field = arg
-                reader = csv.DictReader
-                writer = csv.DictWriter
+            field = arg
+            reader = csv.DictReader
+            writer = csv.DictWriter
         elif opt == "-s":
             sep = arg
         elif opt == "-m":
@@ -113,6 +107,10 @@ def main():
         elif opt == "-h":
             usage()
             raise SystemExit
+
+    if field is None:
+        usage()
+        return 1
 
     rdr = reader(sys.stdin, delimiter=sep)
     if isinstance(field, str):
