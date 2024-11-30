@@ -97,8 +97,6 @@ def main():
             outcol = arg
         elif opt == "-f":
             field = arg
-            reader = csv.DictReader
-            writer = csv.DictWriter
         elif opt == "-s":
             sep = arg
         elif opt == "-m":
@@ -112,14 +110,11 @@ def main():
         usage()
         return 1
 
-    rdr = reader(sys.stdin, delimiter=sep)
-    if isinstance(field, str):
-        fnames = rdr.fieldnames[:]
-        fnames.append(outcol)
-        wtr = writer(sys.stdout, delimiter=sep, fieldnames=fnames)
-        wtr.writeheader()
-    else:
-        wtr = writer(sys.stdout, delimiter=sep)
+    rdr = csv.DictReader(sys.stdin, delimiter=sep)
+    fnames = rdr.fieldnames[:]
+    fnames.append(outcol)
+    wtr = csv.DictWriter(sys.stdout, delimiter=sep, fieldnames=fnames)
+    wtr.writeheader()
 
     result = ewma(rdr, field, outcol, alpha, gap)
     wtr.writerows(result)
