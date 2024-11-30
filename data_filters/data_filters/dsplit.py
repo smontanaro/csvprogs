@@ -126,10 +126,7 @@ def main():
                 args.output: rowname,
             }
         major[rowname][colname] = row[args.value]
-    fieldnames = rdr.fieldnames
-    fieldnames.remove(args.value)
-    index = fieldnames.index(args.field)
-    fieldnames[index] = args.output
+    fieldnames = [args.output]
     fieldnames.extend(sorted(columns))
     wtr = csv.DictWriter(sys.stdout, fieldnames=fieldnames,
         delimiter=args.delimiter)
