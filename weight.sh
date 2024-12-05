@@ -62,6 +62,7 @@ cvtdays () {
     fi
 }
 
+COLORS=( "black" "orange" "cyan" "magenta" "red" "green" "blue" )
 O2="-f date,O2,r,blue,'',dotted -f date,'O2 (avg)',r,blue,'O2 (r)'"
 HR="-f date,hr,r,green,'',dotted -f date,'HR (avg)',r,green,'HR (r)'"
 WT="-f date,weight,l,red,'',dotted -f date,'weight (avg)',l,red,'Weight (l)'"
@@ -128,8 +129,26 @@ mpl -T "${title}" \
 EOF
 
 (head -1 $WTCSV ;
- tail -$LOOKBACK ~/misc/weight.csv) \
+ tail -$LOOKBACK $WTCSV) \
     | ${AVG} -f weight -o 'weight (avg)' \
     | ${AVG} -f O2 -o 'O2 (avg)' \
     | ${AVG} -f hr -o 'HR (avg)' \
     | bash ${scr}
+
+MA="cat$(for y in $(csv2csv -n -H -f date < ${WTCSV} | awk -F- '{print $1}' | sort -u) ; do echo -n " | ewma -m 5 -f ${y} -o e${y}" ; done)"
+
+years=( $(for y in $(csv2csv -n -H -f date < ${WTCSV} | awk -F- '{print $1}' | sort -u) ; do
+echo -n "$y "
+done) )
+
+MPL="mpl -T 'Stacked Weights' $(for ((i=0; i<${#years[@]}; i++)); do
+    printf " -f day,e${years[i]},l,${COLORS[i]}"
+done)"
+
+cat > ${scr} <<EOF
+dsplit -v weight < ${WTCSV} \
+    | ${MA} \
+    | ${MPL}
+EOF
+
+bash ${scr}
