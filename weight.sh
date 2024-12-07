@@ -70,11 +70,13 @@ tO2=O2
 tHR=HR
 tWT=Weight
 AVG="mvavg -n 7"
+MISSING=2
 
 while getopts 'e:opwh' OPTION; do
     case "$OPTION" in
         e)
-            AVG="ewma -m ${OPTARG}"
+            MISSING=${OPTARG}
+            AVG="ewma -m ${MISSING}"
             ;;
         o)
             O2=
@@ -118,37 +120,44 @@ title="$(strjoin / ${tWT} ${tHR} ${tO2}) Progression"
 # temp file which is then executed at the end of the pipeline.
 
 scr=$(mktemp /tmp/mpltmp.XXXXX)
-trap "rm -f ${scr}" EXIT
+csv=$(mktemp /tmp/mpltmp.XXXXX)
+trap "rm -f ${scr} ${csv}" EXIT
+
+# The data we want to plot...
+(head -1 $WTCSV ; tail -$LOOKBACK $WTCSV) > ${csv}
+
+# The years present in the data...
+years=( $(for y in $( csv2csv -n -H -f date < ${csv} | awk -F- '{print $1}' | sort -u) ; do
+printf "$y "
+done) )
 
 cat > ${scr} <<EOF
-mpl -T "${title}" \
+${AVG} -f weight -o 'weight (avg)' < ${csv} \
+    | ${AVG} -f O2 -o 'O2 (avg)' \
+    | ${AVG} -f hr -o 'HR (avg)' \
+    | mpl -T "${title}" \
            ${WT} ${O2} ${HR} \
            -Y 165:200,40:100 \
            -F $FMT \
-           "$@"
+           "$@" &
 EOF
 
-(head -1 $WTCSV ;
- tail -$LOOKBACK $WTCSV) \
-    | ${AVG} -f weight -o 'weight (avg)' \
-    | ${AVG} -f O2 -o 'O2 (avg)' \
-    | ${AVG} -f hr -o 'HR (avg)' \
-    | bash ${scr}
+# EWMA for each of the years to be plotted...
+MA="$(for ((i=0; i<${#years[@]}; i++)); do
+    printf " | ewma -m ${MISSING} -f ${years[i]} -o e${years[i]}"
+done)"
 
-MA="cat$(for y in $(csv2csv -n -H -f date < ${WTCSV} | awk -F- '{print $1}' | sort -u) ; do echo -n " | ewma -m 5 -f ${y} -o e${y}" ; done)"
-
-years=( $(for y in $(csv2csv -n -H -f date < ${WTCSV} | awk -F- '{print $1}' | sort -u) ; do
-echo -n "$y "
-done) )
-
-MPL="mpl -T 'Stacked Weights' $(for ((i=0; i<${#years[@]}; i++)); do
+# Plot one line for each year...
+MPL="mpl -T 'Stacked Weight' $(for ((i=0; i<${#years[@]}; i++)); do
     printf " -f day,e${years[i]},l,${COLORS[i]}"
 done)"
 
-cat > ${scr} <<EOF
-dsplit -v weight < ${WTCSV} \
-    | ${MA} \
-    | ${MPL}
+cat >> ${scr} <<EOF
+dsplit -v weight < ${csv} \
+    ${MA} \
+    | ${MPL} &
+
+wait
 EOF
 
 bash ${scr}
