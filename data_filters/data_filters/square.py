@@ -19,7 +19,7 @@ Convert data from point-to-point to square movements
 SYNOPSIS
 ========
 
- %(PROG)s [ -n ] [ -k n ] [ -s sep ] [ -h ] [ -b ] [ -H ]
+ %(PROG)s [ -k n ] [ -s sep ] [ -h ] [ -b ] [ -H ]
 
 OPTIONS
 =======
@@ -28,8 +28,6 @@ OPTIONS
 multiple times to build compound key.  Last value of n is used as
 the 'squared' value.  The first field is assumed to be the datetime
 (x axis). The key may be a column name as well.
-
--n   X axis is numeric, not time.
 
 -s sep Use sep as the field separator (default is comma).
 
@@ -84,62 +82,42 @@ SEE ALSO
 * mpl
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import csv
 import getopt
 import os
-import datetime
 import copy
-
-import dateutil.parser
-from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "hk:s:nbH")
+    opts, _args = getopt.getopt(sys.argv[1:], "hk:s:b")
 
     keys = []
-    numeric = False
     sep = ','
     blank = False
-    skip_header = False
     for opt, arg in opts:
         if opt == "-h":
             usage()
-            raise SystemExit
-        elif opt == "-s":
+            return 0
+        if opt == "-s":
             sep = arg
-        elif opt == "-n":
-            numeric = True
         elif opt == "-k":
-            try:
-                keys.append(int(arg))
-            except ValueError:
-                # Non-int implies use of dictionaries later
-                keys.append(arg)
+            keys.append(arg)
         elif opt == "-b":
             blank = True
-        elif opt == "-H":
-            skip_header = True
     if not keys:
-        keys.append(1)
+        usage("At least one key field is required.")
+        return 1
 
-    if str in set(type(k) for k in keys):
-        # At least one key is a string - use DictReader/DictWriter
-        rdr = csv.DictReader(sys.stdin, delimiter=sep)
-        wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames,
-                             delimiter=sep)
-        wtr.writerow(dict(list(zip(wtr.fieldnames, wtr.fieldnames))))
-    else:
-        rdr = csv.reader(sys.stdin, delimiter=sep)
-        wtr = csv.writer(sys.stdout, delimiter=sep)
-        if skip_header:
-            wtr.writerow(next(rdr))
-    for row in square(remove_dups(rdr, keys, blank), 0, keys, numeric):
+    rdr = csv.DictReader(sys.stdin, delimiter=sep)
+    wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames,
+        delimiter=sep)
+    wtr.writeheader()
+    for row in square(remove_dups(rdr, keys, blank), keys):
         wtr.writerow(row)
+
+    return 0
 
 def remove_dups(iterator, keys, blank):
     last = []
@@ -156,10 +134,13 @@ def remove_dups(iterator, keys, blank):
     if row is not None:
         yield row
 
-def square(iterator, t, keys, numeric):
-    r1 = next(iterator)
+def square(rows, keys):
+    try:
+        r1 = next(rows)
+    except StopIteration:
+        return
     yield r1
-    for r2 in iterator:
+    for r2 in rows:
         row = copy.copy(r2)
         for k in keys:
             row[k] = r1[k]
@@ -167,7 +148,10 @@ def square(iterator, t, keys, numeric):
         yield r2
         r1 = r2
 
-def usage():
+def usage(msg=""):
+    if msg:
+        print(msg, file=sys.stderr)
+        print(file=sys.stderr)
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
