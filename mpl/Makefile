@@ -1,5 +1,5 @@
 # Update this stuff to add/delete scripts
-PY_SCRIPTS = mpl.py
+PY_SCRIPTS = csvplot.py
 RST_FILES =
 
 INSTDIR = $(shell for p in `echo $$PATH | sed -e 's/:/ /g'` ; do if test `echo $$p | egrep $$HOME | wc -l` -eq 1 ; then echo $$p ; break ; fi ; done)
@@ -22,8 +22,8 @@ LIBDIR = lib
 MANDIR = share/man/man1
 RSTDIR = share/man/rst1
 
-BIN_SCRIPTS = $(BINDIR)/mpl
-MODULES = $(LIBDIR)/mpl.py
+BIN_SCRIPTS = $(BINDIR)/csvplot
+MODULES = $(LIBDIR)/csvplot.py
 SRC_SCRIPTS = $(foreach s,$(SCRIPTS),$(SRCDIR)/$(s))
 MAN_FILES = $(foreach s,$(SCRIPTS),$(MANDIR)/$(basename $(s)).1) \
 	$(foreach s,$(RST_FILES),$(MANDIR)/$(basename $(s)).1)
