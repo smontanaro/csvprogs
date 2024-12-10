@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "data-filters"
-version = "0.1.6"
+version = "0.1.9"
 description = "A series of data filters which read and write CSV files"
 authors = ["Skip Montanaro <skip.montanaro@gmail.com>"]
 license = "MPL"
@@ -18,11 +18,13 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
+atr = 'data_filters.atr:main'
 bars = 'data_filters.bars:main'
 dsplit = 'data_filters.dsplit:main'
 ewma = 'data_filters.ewma:main'
 filter = 'data_filters.filter:main'
 hull = 'data_filters.hull:main'
+keltner = 'data_filters.keltner:main'
 mean = 'data_filters.mean:main'
 mvavg = 'data_filters.mvavg:main'
 regress = 'data_filters.regress:main'
