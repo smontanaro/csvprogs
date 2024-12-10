@@ -106,13 +106,12 @@ def main():
         tr_today = max(hl, lc, hc)
         atrs.append(tr_today)
         atrs.pop(0)
-        if None in atrs:
-            continue
-        if tr is None:
-            tr = sum(atrs) / len(atrs)
-        else:
-            tr = (tr * (len(atrs) - 1) + tr_today) / len(atrs)
-        row[outcol] = tr
+        if None not in atrs:
+            if tr is None:
+                tr = sum(atrs) / len(atrs)
+            else:
+                tr = (tr * (len(atrs) - 1) + tr_today) / len(atrs)
+            row[outcol] = tr
         wtr.writerow(row)
     return 0
 
