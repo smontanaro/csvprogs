@@ -111,7 +111,7 @@ def main():
         if tr is None:
             tr = sum(atrs) / len(atrs)
         else:
-            tr = (tr + tr_today) / len(atrs)
+            tr = (tr * (len(atrs) - 1) + tr_today) / len(atrs)
         row[outcol] = tr
         wtr.writerow(row)
     return 0
