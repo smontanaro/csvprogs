@@ -57,7 +57,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--key", "-k", required=True,
                         help="key field for the merge operation")
-    parser.add_argument("files", action="append", help="list of input files")
+    parser.add_argument("files", nargs="+", help="list of input files")
     args = parser.parse_args()
 
     cat(args.files, args.key)
