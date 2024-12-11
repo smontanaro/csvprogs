@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "csvprogs"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
     { name = "Skip Montanaro", email = "skip.montanaro@gmail.com" },
 ]
@@ -39,6 +39,7 @@ dependencies = [
     csv2csv = "csvprogs.csv2csv:main"
     csv2json = "csvprogs.csv2json:main"
     csv2xls = "csvprogs.csv2xls:main"
+    csvcat = "csvprogs.csvcat:main"
     csvcollapse = "csvprogs.csvcollapse:main"
     csvfill = "csvprogs.csvfill:main"
     csvmerge = "csvprogs.csvmerge:main"
