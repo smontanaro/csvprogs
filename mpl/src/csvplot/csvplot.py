@@ -394,8 +394,13 @@ def plot(options, rdr):
         def parse_x(x_val):
             try:
                 return dateutil.parser.parse(x_val)
-            except ValueError:
-                print(f"Can't parse {x_val!r} as a timestamp.", file=sys.stderr)
+            except dateutil.parser.ParserError as err:
+                if err.args and err.args[0].startswith("day is out of range for month"):
+                    # Maybe Feb 29 in non-leap year? Unfortunately, I can't
+                    # tell more about the date's structure.
+                    if re.search(r"\b29\b", x_val) is not None:
+                        return ""
+                    print(f"Can't parse {x_val!r} as a timestamp.", file=sys.stderr)
                 raise
 
         def fmt_date(tick_val, _=None, xfmt=options.xfmt):
@@ -461,11 +466,9 @@ def plot(options, rdr):
             if x_val == "":
                 continue
             y_val = 'nan' if y_val.strip() == "" else y_val
-            try:
-                x_val = parse_x(x_val)
-            except ValueError as err:
-                print(err, values, file=sys.stderr)
-                raise
+            x_val = parse_x(x_val)
+            if x_val == "":
+                continue
             # floats might contain separators
             y_val = float(re.sub("[_, ]", "", y_val))
             # If we get inputs with timezone info, convert. This
