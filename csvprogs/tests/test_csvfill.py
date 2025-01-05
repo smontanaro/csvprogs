@@ -55,7 +55,7 @@ class _CSVTest(unittest.TestCase):
                 writer = csv.writer(second.file)
                 writer.writerows(SECOND)
                 second.file.flush()
-                p = spawn_python('csvprogs/src/csvmerge.py',
+                p = spawn_python('src/csvprogs/csvmerge.py',
                                  '-k', 'time', first.name, second.name)
                 return kill_python(p)
 
@@ -70,7 +70,7 @@ class CSVFillTest(_CSVTest):
         with tempfile.NamedTemporaryFile(mode="w+") as merged:
             merged.file.write(data)
             merged.file.flush()
-            p = spawn_python('csvprogs/src/csvfill.py',
+            p = spawn_python('src/csvprogs/csvfill.py',
                              '-k', 'position', merged.name)
             data = kill_python(p)
             self.assertEqual(data, FILLED)
