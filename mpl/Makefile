@@ -17,7 +17,7 @@ INSTMODDIR = $(shell python -c 'import sys ; print(f"{sys.prefix}/lib/python{sys
 SCRIPTS = $(PY_SCRIPTS)
 
 BINDIR = bin
-SRCDIR = src
+SRCDIR = src/csvplot
 LIBDIR = lib
 MANDIR = share/man/man1
 RSTDIR = share/man/rst1

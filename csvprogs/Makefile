@@ -18,7 +18,7 @@ RST_FILES =
 SCRIPTS = $(PY_SCRIPTS)
 
 BINDIR = bin
-SRCDIR = src
+SRCDIR = src/csvprogs
 MANDIR = share/man/man1
 RSTDIR = share/man/rst1
 
