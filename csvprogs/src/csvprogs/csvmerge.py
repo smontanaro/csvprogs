@@ -101,9 +101,10 @@ def main():
 
     all_fields = set()
     for fname in args:
-        rdr = csv.DictReader(open(fname))
-        all_fields |= set(rdr.fieldnames)
-        readers.append(rdr)
+        with open(fname, encoding="utf-8") as fp:
+            rdr = csv.DictReader(fp)
+            all_fields |= set(rdr.fieldnames)
+            readers.append(iter(list(rdr)))
 
     rest = sorted(all_fields - set(keys))
 
