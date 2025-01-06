@@ -55,16 +55,15 @@ def main():
                         action="store_true")
     (options, args) = parser.parse_known_args()
 
-    inf = open(args[0]) if len(args) >= 1 else sys.stdin
-    outf = open(args[1], "w") if len(args) == 2 else sys.stdout
-
-    tbl_parser = TableParser(options.table, options.verbose)
-    for line in inf:
-        tbl_parser.feed(line)
-    tbl_parser.close()
-    wrtr = csv.writer(outf)
-    for row in tbl_parser.rows:
-        wrtr.writerow(row)
+    with (open(args[0], "r", encoding="utf-8") if len(args) >= 1 else sys.stdin as inf,
+          open(args[1], "w", encoding="utf-8") if len(args) == 2 else sys.stdout as outf):
+        tbl_parser = TableParser(options.table, options.verbose)
+        for line in inf:
+            tbl_parser.feed(line)
+        tbl_parser.close()
+        wrtr = csv.writer(outf)
+        for row in tbl_parser.rows:
+            wrtr.writerow(row)
     return 0
 
 class TableParser(HTMLParser):
