@@ -11,6 +11,8 @@ PY_SCRIPTS = \
 
 RST_FILES = data_filters.rst
 
+RST2MAN = $(shell which rst2man || which rst2man.py 2>/dev/null)
+
 ### Usage:
 #
 # Source files are stored in SRCDIR.  If you have hand-written ReST
@@ -53,7 +55,7 @@ $(BINDIR)/% : $(SRCDIR)/%.py
 $(MANDIR)/%.1 : $(RSTDIR)/%.rst
 	mkdir -p $(MANDIR)
 	rm -f $@
-	rst2man < $< \
+	$(RST2MAN) < $< \
 	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
 	      -e '/^\.de1 INDENT/,/^\.\./d' \
 	      -e '/^\.de UNINDENT/,/^\.\./d' \
@@ -63,7 +65,7 @@ $(MANDIR)/%.1 : $(RSTDIR)/%.rst
 $(MANDIR)/%.1 : $(SRCDIR)/%.py
 	mkdir -p $(MANDIR)
 	rm -f $@
-	python $< -h 2>&1 | rst2man \
+	python $< -h 2>&1 | $(RST2MAN) \
 	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
 	      -e '/^\.de1 INDENT/,/^\.\./d' \
 	      -e '/^\.de UNINDENT/,/^\.\./d' \
