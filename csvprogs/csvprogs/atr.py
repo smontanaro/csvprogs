@@ -57,7 +57,7 @@ import dateutil.parser
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    parser = argparse.ArgumentParser(prog=f"{PROG}")
+    parser = argparse.ArgumentParser(prog=f"{PROG}", usage=usage())
     parser.add_argument("--days", "-n", default=14,
                         help="length of the atr calculation")
     parser.add_argument("--outcol", "-o", default="atr",
