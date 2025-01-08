@@ -2,10 +2,14 @@ INSTDIR = $(shell for p in `echo $$PATH | sed -e 's/:/ /g'` ; do if test `echo $
 INSTMANDIR = $(INSTDIR)/../share/man
 
 # Update this stuff to add/delete scripts
-PY_SCRIPTS = csvmerge.py csvsort.py xls2csv.py csv2csv.py extractcsv.py \
-	     csv2json.py csvfill.py csvcollapse.py csv2xls.py interp.py \
-	     html2csv.py
-RST_FILES =
+PY_SCRIPTS = \
+    atr.py bars.py csv2csv.py csv2json.py csv2xls.py csvcat.py \
+    csvcollapse.py csvfill.py csvmerge.py csvplot.py csvsort.py dsplit.py \
+    ewma.py extractcsv.py filter.py html2csv.py hull.py interp.py \
+    keltner.py mean.py mvavg.py regress.py roundtime.py sharpe.py \
+    shuffle.py sigavg.py spline.py square.py take.py xform.py xls2csv.py
+
+RST_FILES = data_filters.rst
 
 ### Usage:
 #
@@ -18,7 +22,7 @@ RST_FILES =
 SCRIPTS = $(PY_SCRIPTS)
 
 BINDIR = bin
-SRCDIR = src/csvprogs
+SRCDIR = csvprogs
 MANDIR = share/man/man1
 RSTDIR = share/man/rst1
 
@@ -49,7 +53,7 @@ $(BINDIR)/% : $(SRCDIR)/%.py
 $(MANDIR)/%.1 : $(RSTDIR)/%.rst
 	mkdir -p $(MANDIR)
 	rm -f $@
-	rst2man.py < $< \
+	rst2man < $< \
 	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
 	      -e '/^\.de1 INDENT/,/^\.\./d' \
 	      -e '/^\.de UNINDENT/,/^\.\./d' \
@@ -59,7 +63,7 @@ $(MANDIR)/%.1 : $(RSTDIR)/%.rst
 $(MANDIR)/%.1 : $(SRCDIR)/%.py
 	mkdir -p $(MANDIR)
 	rm -f $@
-	python $< -h 2>&1 | rst2man.py \
+	python $< -h 2>&1 | rst2man \
 	| sed -e '/^\.de1 rstReportMargin/,/^\.\./d' \
 	      -e '/^\.de1 INDENT/,/^\.\./d' \
 	      -e '/^\.de UNINDENT/,/^\.\./d' \
