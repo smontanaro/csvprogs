@@ -2,8 +2,6 @@
 *.py[co]
 bin
 share
+dist
 *.py.bak
-*/dist
-*/lib
 *.egg-info
-*/build
