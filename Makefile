@@ -1,8 +1,12 @@
-SUBDIRS = csvprogs data_filters mpl
+SUBDIRS = csvprogs
 
 .PHONY: all
 all: FORCE
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d all ; done
+
+.PHONY: man
+man: FORCE
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d man ; done
 
 .PHONY: install
 install: FORCE
