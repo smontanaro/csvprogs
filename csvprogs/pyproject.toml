@@ -9,11 +9,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "csvprogs"
-version = "1.0.2"
+version = "1.1.0"
 authors = [
     { name = "Skip Montanaro", email = "skip.montanaro@gmail.com" },
 ]
-description = "Various CSV file transformers"
+description = "Various programs operating on CSV files"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -23,6 +23,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "matplotlib>=3.5.2",
     "atpublic>=3.1",
     "numpy>=1.22",
     "python-dateutil>=2.8.2",
@@ -48,3 +49,23 @@ dependencies = [
     html2csv = "csvprogs.html2csv:main"
     interp = "csvprogs.interp:main"
     xml2csv = "csvprogs.xml2csv:main"
+    mpl = "csvprogs.csvplot:main"
+    csvplot = "csvprogs.csvplot:main"
+    atr = "csvprogs.atr:main"
+    bars = "csvprogs.bars:main"
+    dsplit = "csvprogs.dsplit:main"
+    ewma = "csvprogs.ewma:main"
+    filter = "csvprogs.filter:main"
+    hull = "csvprogs.hull:main"
+    keltner = "csvprogs.keltner:main"
+    mean = "csvprogs.mean:main"
+    mvavg = "csvprogs.mvavg:main"
+    regress = "csvprogs.regress:main"
+    roundtime = "csvprogs.roundtime:main"
+    sharpe = "csvprogs.sharpe:main"
+    shuffle = "csvprogs.shuffle:main"
+    sigavg = "csvprogs.sigavg:main"
+    spline = "csvprogs.spline:main"
+    square = "csvprogs.square:main"
+    take = "csvprogs.take:main"
+    xform = "csvprogs.xform:main"
