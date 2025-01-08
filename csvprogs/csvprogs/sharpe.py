@@ -76,5 +76,11 @@ def main():
     std = float(fields[3])
     print(mean / std * math.sqrt(days))
 
+def usage(msg=None):
+    if msg is not None:
+        print(msg, file=sys.stderr)
+        print(file=sys.stderr)
+    print((__doc__.strip() % globals()), file=sys.stderr)
+
 if __name__ == "__main__":
     sys.exit(main())
