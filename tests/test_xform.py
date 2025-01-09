@@ -76,7 +76,7 @@ time,close\r
             modname = os.path.splitext(os.path.split(xfile.name)[1])[0]
             env = dict(os.environ)
             env["PYTHONPATH"] = "/tmp"
-            p = spawn_python(f"{cwd}/data_filters/src/xform.py",
+            p = spawn_python(f"{cwd}/csvprogs/xform.py",
                              "-F", f"{modname}.xform", env=env)
             p.stdin.write(raw_input)
             data = kill_python(p)

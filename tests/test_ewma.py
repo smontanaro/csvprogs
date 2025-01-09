@@ -6,7 +6,7 @@ import io
 import math
 import unittest
 
-from data_filters.ewma import ewma
+from csvprogs.ewma import ewma
 
 
 class EWMATest(unittest.TestCase):

@@ -2,7 +2,7 @@
 
 import datetime
 
-from data_filters.square import square
+from csvprogs.square import square
 
 def test_dict_square():
     rows = [
