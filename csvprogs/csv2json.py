@@ -86,9 +86,9 @@ def usage(msg=None):
 
 def datetime(s):
     dt = dateutil.parser.parse(s)
-    return "new Date(%d, %d, %d, %d, %d, %d, %d)" % (
-        dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
-        int(round(dt.microsecond / 1000)))
+    milli = int(round(dt.microsecond / 1000))
+    return (f"new Date({dt.year}, {dt.month}, {dt.day}, "
+            f"{dt.hour}, {dt.minute}, {dt.second}, {milli})")
 date = time = datetime
 
 TYPES = {
