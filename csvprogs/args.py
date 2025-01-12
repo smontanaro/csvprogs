@@ -17,9 +17,13 @@ class CSVArgParser(argparse.ArgumentParser):
 
     def add_common_args(self):
         "Add arguments to the parser which are common to all tools"
-        self.add_argument("-i", "--insep", dest="insep", default=",")
-        self.add_argument("-o", "--outsep", dest="outsep", default=",")
-        self.add_argument("-f", "--fields", dest="fields", default=None)
+        self.add_argument("-i", "--insep", dest="insep", default=",",
+                          help="input field delimiter")
+        self.add_argument("-o", "--outsep", dest="outsep", default=",",
+                          help="output field delimiter")
+        self.add_argument("-f", "--fields", dest="fields", default=None,
+                          help="fields to copy from input to output")
         self.add_argument("-v", "--verbose", dest="verbose", default=False,
-                          action="store_true")
-        self.add_argument("-e", "--encoding", dest="encoding", default="utf-8")
+                          action="store_true", help="be more chatty")
+        self.add_argument("-e", "--encoding", dest="encoding", default="utf-8",
+                          help="encoding of both input and output files")
