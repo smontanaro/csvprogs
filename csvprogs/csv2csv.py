@@ -26,13 +26,10 @@ OPTIONS
 =======
 
 -f names   comma-separated list of field names to dump
--F names   comma-separated list of field names to use for files without a header line
--o sep     alternate output field separator (default is a comma)
--i sep     alternate input field separator (default is a comma)
 -n [style] with no argument, don't quote fields, otherwise use the specified
            value
 -D         don't use DOS/Windows line endings
--H         do not emit the header line
+-a         append rows to output file (no header is written)
 
 if given, infile specifies the input CSV file (default: stdin)
 if given, outfile specifies the output CSV file (default: stdout)
@@ -47,13 +44,12 @@ EXAMPLE
 =======
 
 Extract just the time and price fields from a larger input file,
-stripping the header, using Unix line endings, and leaving fields
-unquoted::
+using Unix line endings, and leaving fields unquoted::
 
-  csv2csv -n -H -D -f time,price < somefile.csv > anotherfile.csv
+  csv2csv -n -D -f time,price < somefile.csv > anotherfile.csv
 
-If a field name is present in the argument to -f or -F, but not
-present in the infile, it will still be emitted to the output, but all
+If a field name is present in the argument to -f, but not present
+in the infile, it will still be emitted to the output, but all
 values will be blank.
 
 SEE ALSO
@@ -69,6 +65,8 @@ import argparse
 import csv
 import os
 import sys
+
+from csvprogs.common import CSVArgParser
 
 PROG = os.path.split(sys.argv[0])[1]
 
@@ -105,35 +103,34 @@ class QuoteAction(argparse.Action):
         val = self.quotes[value] if value else csv.QUOTE_NONE
         setattr(namespace, self.dest, val)
 
+def csv2csv(reader, writer, fields):
+    "copy the named fields from the CSV reader to the CSV writer"
+    try:
+        for inrow in reader:
+            outrow = {}
+            for field in fields:
+                outrow[field] = inrow.get(field, "")
+            writer.writerow(outrow)
+    except IOError:
+        pass
+
+
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--fields", dest="fields", default=None)
-    parser.add_argument("-F", "--headers", dest="headers", default=None)
-    parser.add_argument("-i", "--insep", dest="insep", default=",")
-    parser.add_argument("-o", "--outsep", dest="outsep", default=",")
-    parser.add_argument("-H", "--noheader", dest="emitheader",
-                        action="store_false", default=True)
+    parser = CSVArgParser()
+    parser.add_argument("-a", "--append", default=False, action='store_true',
+                        help="append rows to output (no header is written)")
     parser.add_argument("-n", "--quote", dest="quote_style", nargs='?',
                         action=QuoteAction, default=csv.QUOTE_ALL,
-                        const=csv.QUOTE_NONE)
+                        const=csv.QUOTE_NONE,
+                        help="quoting style used when writing output")
     parser.add_argument("-D", "--newline", dest="terminator", default="\r\n",
-                        action="store_const", const="\n")
-    parser.add_argument("-e", "--encoding", dest="encoding", default="utf-8")
+                        action="store_const", const="\n",
+                        help="use Unix line endings instead of Windows")
     (options, args) = parser.parse_known_args()
     options.fields = options.fields.split(",") if options.fields else []
-    options.headers = options.headers.split(",") if options.headers else []
 
     if len(args) > 2:
         usage(args[0])
-
-    if len(args) >= 1:
-        inf = open(args[0], "r", encoding=options.encoding)
-    else:
-        inf = sys.stdin
-    if len(args) == 2:
-        outf = open(args[1], "w")
-    else:
-        outf = sys.stdout
 
     # pylint: disable=too-few-public-methods
     class outdialect(csv.excel):
@@ -143,26 +140,21 @@ def main():
         escapechar = '\\'
         lineterminator = options.terminator
 
-    reader = csv.DictReader(inf, delimiter=options.insep)
-    if not options.fields:
-        # All by default
-        options.fields = reader.fieldnames
-    writer = csv.DictWriter(outf, options.fields, dialect=outdialect,
-                            extrasaction='ignore')
-    if options.emitheader:
-        writer.writeheader()
+    mode = "a" if options.append else "a"
+    with ((open(args[0], "r", encoding=options.encoding)
+           if len(args) >= 1 else sys.stdin) as inf,
+          (open(args[1], mode, encoding=options.encoding)
+           if len(args) == 2 else sys.stdout) as outf):
 
-    try:
-        for inrow in reader:
-            if options.fields != reader.fieldnames:
-                outrow = {}
-                for field in options.fields:
-                    outrow[field] = inrow.get(field, "")
-            else:
-                outrow = inrow
-            writer.writerow(outrow)
-    except IOError:
-        pass
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        if not options.fields:
+            # All by default
+            options.fields = reader.fieldnames
+        writer = csv.DictWriter(outf, options.fields, dialect=outdialect,
+            extrasaction='ignore')
+        if not options.append:
+            writer.writeheader()
+        csv2csv(reader, writer, options.fields)
 
     return 0
 
