@@ -66,7 +66,7 @@ import csv
 import os
 import sys
 
-from csvprogs.common import CSVArgParser
+from csvprogs.common import CSVArgParser, openio
 
 PROG = os.path.split(sys.argv[0])[1]
 
@@ -141,11 +141,9 @@ def main():
         lineterminator = options.terminator
 
     mode = "a" if options.append else "a"
-    with ((open(args[0], "r", encoding=options.encoding)
-           if len(args) >= 1 else sys.stdin) as inf,
-          (open(args[1], mode, encoding=options.encoding)
-           if len(args) == 2 else sys.stdout) as outf):
-
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
         reader = csv.DictReader(inf, delimiter=options.insep)
         if not options.fields:
             # All by default
