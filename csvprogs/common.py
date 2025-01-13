@@ -7,6 +7,9 @@ Common arg processing for this group of CSV programs
 __all__ = ["CSVArgParser",]
 
 import argparse
+from contextlib import contextmanager
+from functools import partial
+import os
 
 class CSVArgParser(argparse.ArgumentParser):
     "ArgumentParser with some behavior common to all CSV progs/data filters"
@@ -27,3 +30,19 @@ class CSVArgParser(argparse.ArgumentParser):
                           action="store_true", help="be more chatty")
         self.add_argument("-e", "--encoding", dest="encoding", default="utf-8",
                           help="encoding of both input and output files")
+
+@contextmanager
+def openio(infile, imode, outfile, omode, encoding="utf-8"):
+    "open infile and outfile, guaranteeing automatic closure."
+    if hasattr(infile, "fileno"):
+        # need to reopen this file object
+        iopen = partial(os.fdopen, infile.fileno(), imode, encoding=encoding)
+    else:
+        iopen = partial(open, infile, imode, encoding=encoding)
+    if hasattr(outfile, "fileno"):
+        # need to reopen this file object
+        oopen = partial(os.fdopen, outfile.fileno(), omode, encoding=encoding)
+    else:
+        oopen = partial(open, outfile, omode, encoding=encoding)
+    with (iopen() as inf, oopen() as outf):
+        yield (inf, outf)
