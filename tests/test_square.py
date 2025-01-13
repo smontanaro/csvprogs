@@ -2,7 +2,7 @@
 
 import datetime
 
-from csvprogs.square import square
+from csvprogs.square import square, remove_dups
 
 def test_dict_square():
     rows = [
@@ -53,11 +53,11 @@ def test_dict_square():
             "y": 1.90,
             },
         ]
-    result = list(square(iter(rows), ["time"]))
+    result = list(square(remove_dups(iter(rows), "time", ["y"]), "time", ["y"]))
     assert result == exp_rows, result
 
 def test_empty_square():
     rows = []
     exp_rows = []
-    result = list(square(iter(rows), ["y"]))
+    result = list(square(iter(rows), "time", ["y"]))
     assert result == exp_rows, result

@@ -19,22 +19,13 @@ Convert data from point-to-point to square movements
 SYNOPSIS
 ========
 
- %(PROG)s [ -k n ] [ -s sep ] [ -h ] [ -b ] [ -H ]
+ %(PROG)s -x name -f name[,name...]
 
 OPTIONS
 =======
 
--k n use field n as a key field (default: 1) - may be given
-multiple times to build compound key.  Last value of n is used as
-the 'squared' value.  The first field is assumed to be the datetime
-(x axis). The key may be a column name as well.
-
--s sep Use sep as the field separator (default is comma).
-
--b   Instead of removing entire rows, just blank duplicate fields.
-
--H   Skip header at start of input - ignored if any element of the key is
-     non-numeric.
+-x name          - use name as the X axis value.
+-f name,name,... - use these names as the Y values.
 
 DESCRIPTION
 ===========
@@ -47,6 +38,7 @@ before the new price is received.
 
 Consider a simple CSV file:
 
+time,symbol,price
 2012-10-25T09:18:15.593480,F:C6Z12,10057
 2012-10-25T09:18:38.796756,F:C6Z12,10058
 2012-10-25T09:18:38.796769,F:C6Z12,10058
@@ -62,14 +54,15 @@ value of 10058 cause useless work for downstream filters.
 
 Given the above input, this filter emits the following:
 
+time,symbol,price
 2012-10-25T09:18:15.593480,F:C6Z12,10057
-2012-10-25T09:18:38.796755,F:C6Z12,10057
+2012-10-25T09:18:38.796756,F:C6Z12,10057
 2012-10-25T09:18:38.796756,F:C6Z12,10058
-2012-10-25T09:18:38.796929,F:C6Z12,10058
+2012-10-25T09:18:38.796930,F:C6Z12,10058
 2012-10-25T09:18:38.796930,F:C6Z12,10059
 
 That is, it elides all duplicate y values and inserts a single
-duplicate just before each price change to 'square up' the plot.
+row just before each price change to 'square up' the plot.
 
 The net effect is that plots look square and are generally rendered
 much faster because they contain many fewer points.
@@ -84,67 +77,62 @@ SEE ALSO
 
 import sys
 import csv
-import getopt
 import os
 import copy
+
+from csvprogs.common import CSVArgParser
 
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, _args = getopt.getopt(sys.argv[1:], "hk:s:b")
+    parser = CSVArgParser()
+    parser.add_argument("-x", default="time",
+                        help="column to use as the X value")
+    options, _args = parser.parse_known_args()
 
-    keys = []
-    sep = ','
-    blank = False
-    for opt, arg in opts:
-        if opt == "-h":
-            usage()
-            return 0
-        if opt == "-s":
-            sep = arg
-        elif opt == "-k":
-            keys.append(arg)
-        elif opt == "-b":
-            blank = True
-    if not keys:
-        usage("At least one key field is required.")
-        return 1
-
-    rdr = csv.DictReader(sys.stdin, delimiter=sep)
+    rdr = csv.DictReader(sys.stdin, delimiter=options.insep)
     wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames,
-        delimiter=sep)
+        delimiter=options.outsep)
     wtr.writeheader()
-    for row in square(remove_dups(rdr, keys, blank), keys):
+    yvals = rdr.fieldnames[:]
+    yvals.remove(options.x)
+    for row in square(remove_dups(rdr, options.x, yvals), options.x, yvals):
         wtr.writerow(row)
 
     return 0
 
-def remove_dups(iterator, keys, blank):
+def remove_dups(iterator, x, yvals):
+    assert x not in yvals
     last = []
     row = None
     for row in iterator:
-        value = [row[k] for k in keys]
+        value = [row[y] for y in yvals]
         if value != last:
+            # some y value changed - not a duplicate
             yield row
-        elif blank:
-            for k in keys:
-                row[k] = ""
-            yield row
-        last = value
+            row = None
+            # remember...
+            last = value
     if row is not None:
+        # keep the last row, even if it was a duplicate, so we preserve the
+        # last x value.
         yield row
 
-def square(rows, keys):
+def square(rows, x, yvals):
+    assert x not in yvals
     try:
         r1 = next(rows)
     except StopIteration:
         return
     yield r1
+
     for r2 in rows:
         row = copy.copy(r2)
-        for k in keys:
-            row[k] = r1[k]
+        for y in yvals:
+            row[y] = r1[y]
+        # retain the previous y values, but don't mess with x
         yield row
+        # now the new values at the same x value
         yield r2
         r1 = r2
 
