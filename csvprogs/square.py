@@ -80,7 +80,7 @@ import csv
 import os
 import copy
 
-from csvprogs.common import CSVArgParser
+from csvprogs.common import CSVArgParser, openio
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -88,16 +88,19 @@ def main():
     parser = CSVArgParser()
     parser.add_argument("-x", default="time",
                         help="column to use as the X value")
-    options, _args = parser.parse_known_args()
+    options, args = parser.parse_known_args()
 
-    rdr = csv.DictReader(sys.stdin, delimiter=options.insep)
-    wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames,
-        delimiter=options.outsep)
-    wtr.writeheader()
-    yvals = rdr.fieldnames[:]
-    yvals.remove(options.x)
-    for row in square(remove_dups(rdr, options.x, yvals), options.x, yvals):
-        wtr.writerow(row)
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, "w",
+                encoding=options.encoding) as (inf, outf):
+        rdr = csv.DictReader(inf, delimiter=options.insep)
+        wtr = csv.DictWriter(outf, fieldnames=rdr.fieldnames,
+            delimiter=options.outsep)
+        wtr.writeheader()
+        yvals = rdr.fieldnames[:]
+        yvals.remove(options.x)
+        for row in square(remove_dups(rdr, options.x, yvals), options.x, yvals):
+            wtr.writerow(row)
 
     return 0
 
