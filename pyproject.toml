@@ -32,6 +32,11 @@ dependencies = [
     "xlwt>=1.3.0",
 ]
 
+[tool.setuptools.packages.find]
+    where = ["."]
+    include = ["csvprogs"]
+    namespaces = false
+
 [project.urls]
 "Homepage" = "https://github.com/smontanaro/csvprogs/tree/main/csvprogs"
 "Bug Tracker" = "https://github.com/smontanaro/csvprogs/issues"
