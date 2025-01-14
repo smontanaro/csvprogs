@@ -46,6 +46,17 @@ man : $(MAN_FILES)
 lint : FORCE
 	pylint $(SRC_SCRIPTS)
 
+.PHONY: test
+test : venv
+	pytest
+
+venv : FORCE
+	if [ ! -d ./venv ] ; then \
+	  python -m venv --symlinks ./venv ; \
+	  python -m pip install build pytest ; \
+	  python -m pip install `ls -tr dist/*.whl | tail -1` ; \
+	fi
+
 $(BINDIR)/% : $(SRCDIR)/%.py
 	mkdir -p $(BINDIR)
 	rm -f $@
