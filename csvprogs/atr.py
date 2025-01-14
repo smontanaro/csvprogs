@@ -28,7 +28,6 @@ OPTIONS
 -d name  column containing date/time (default "Date")
 -c cols  columns for high,low,close (comma-separated, default: High,Low,Close)
 -o name  name of output column (default "atr")
--s sep   use sep as the field separator (default is comma)
 
 DESCRIPTION
 ===========
@@ -47,78 +46,81 @@ SEE ALSO
 * ewma
 """
 
-import argparse
 import csv
+import io
 import os
 import sys
 
 import dateutil.parser
 
+from csvprogs.common import CSVArgParser, openio, usage
+
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    parser = argparse.ArgumentParser(prog=f"{PROG}", usage=usage())
+    parser = CSVArgParser(prog=f"{PROG}", usage=usage())
     parser.add_argument("--days", "-n", default=14,
                         help="length of the atr calculation")
-    parser.add_argument("--outcol", "-o", default="atr",
+    parser.add_argument("--outcol", default="atr",
                         help="Output column")
     parser.add_argument("--date", "-d", default="Date",
                         help="Date column")
     parser.add_argument("--columns", "-c", default="High,Low,Close",
                         help="columns containing high, low & close prices")
-    parser.add_argument("--delimiter", "-s", default=",",
-                        help="input and output field delimiter")
-    args = parser.parse_args()
+    (options, args) = parser.parse_known_args()
 
-    outcol = args.outcol
-    datecol = args.date
-    length = args.days
-    sep = args.delimiter
-    cols = args.columns.split(",")
+    outcol = options.outcol
+    datecol = options.date
+    length = options.days
+    insep = options.insep
+    outsep = options.outsep
+    cols = options.columns.split(",")
     assert len(cols) == 3
 
     date = None
     atrs = [None] * length
     high = low = close = None
     tr = None
-    rdr = csv.DictReader(sys.stdin, delimiter=sep)
-    fnames = rdr.fieldnames[:]
-    fnames.append(outcol)
-    wtr = csv.DictWriter(sys.stdout, delimiter=sep, fieldnames=fnames)
-    wtr.writeheader()
-    for row in rdr:
-        if date is None:
-            # first record, just save the close price
-            close = float(row[cols[2]])
-        else:
-            high = float(row[cols[0]])
-            low = float(row[cols[1]])
-        date = dateutil.parser.parse(row[datecol]).date()
-        if high is None:
-            continue
-        hl = high - low
-        lc = abs(low - close)
-        hc = abs(high - close)
-
-        # today's close is tomorrow's prev close
-        close = float(row[cols[2]])
-
-        tr_today = max(hl, lc, hc)
-        atrs.append(tr_today)
-        atrs.pop(0)
-        if None not in atrs:
-            if tr is None:
-                tr = sum(atrs) / len(atrs)
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, "w",
+                encoding=options.encoding) as (inf, outf):
+        rdr = csv.DictReader(inf, delimiter=insep)
+        fnames = rdr.fieldnames[:]
+        fnames.append(outcol)
+        wtr = csv.DictWriter(outf, delimiter=outsep, fieldnames=fnames)
+        wtr.writeheader()
+        for row in rdr:
+            if date is None:
+                # first record, just save the close price
+                close = float(row[cols[2]])
             else:
-                tr = (tr * (len(atrs) - 1) + tr_today) / len(atrs)
-            row[outcol] = tr
-        wtr.writerow(row)
+                high = float(row[cols[0]])
+                low = float(row[cols[1]])
+            date = dateutil.parser.parse(row[datecol]).date()
+            if high is None:
+                continue
+            hl = high - low
+            lc = abs(low - close)
+            hc = abs(high - close)
+
+            # today's close is tomorrow's prev close
+            close = float(row[cols[2]])
+
+            tr_today = max(hl, lc, hc)
+            atrs.append(tr_today)
+            atrs.pop(0)
+            if None not in atrs:
+                if tr is None:
+                    tr = sum(atrs) / len(atrs)
+                else:
+                    tr = (tr * (len(atrs) - 1) + tr_today) / len(atrs)
+                row[outcol] = tr
+            wtr.writerow(row)
     return 0
 
-def usage(msg=None):
-    if msg:
-        print(msg, file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
-
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        result = main()
+    except BrokenPipeError:
+        result = 0
+    sys.exit(result)
