@@ -27,6 +27,7 @@ BINDIR = bin
 SRCDIR = csvprogs
 MANDIR = share/man/man1
 RSTDIR = share/man/rst1
+VENVDIR = ./venv
 
 BIN_SCRIPTS = $(foreach s,$(SCRIPTS),$(BINDIR)/$(basename $(s)))
 SRC_SCRIPTS = $(foreach s,$(SCRIPTS),$(SRCDIR)/$(s))
@@ -48,13 +49,21 @@ lint : FORCE
 
 .PHONY: test
 test : venv
-	pytest
+	. $(VENVDIR)/bin/activate && pytest --cov=csvprogs --cov-report=html
 
 venv : FORCE
-	if [ ! -d ./venv ] ; then \
-	  python -m venv --symlinks ./venv ; \
-	  python -m pip install build pytest ; \
-	  python -m pip install `ls -tr dist/*.whl | tail -1` ; \
+	if [ ! -d $(VENVDIR) ] ; then \
+	  v=`python --version | awk '{print $$2}' | awk -F . '{printf("%2d%02d\n", $$1, $$2)}'` ; \
+	  if [ $${v} -ge 310 ] ; then \
+	    python -m venv $(VENVDIR) ; \
+	    . $(VENVDIR)/bin/activate ; \
+	    python -m pip install build pytest pytest-cov ; \
+	    python -m pip install `ls -tr dist/*.whl | tail -1` ; \
+	    python -m pip install -U pip ; \
+	  else \
+	    echo "Python version $${v} isn't new enough" 1>&2 ; \
+	    exit 1 ; \
+	  fi ; \
 	fi
 
 $(BINDIR)/% : $(SRCDIR)/%.py
@@ -98,6 +107,8 @@ install: all
 clean: FORCE
 	rm -f $(BIN_SCRIPTS)
 	rm -f $(MAN_FILES)
+	rm -fr $(VENVDIR)
+	rm -fr .coverage
 
 .PHONY: FORCE
 FORCE:
