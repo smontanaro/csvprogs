@@ -157,4 +157,8 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        result = main()
+    except BrokenPipeError:
+        result = 0
+    sys.exit(result)
