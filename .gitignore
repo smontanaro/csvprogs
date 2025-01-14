@@ -3,5 +3,6 @@
 bin
 share
 dist
+venv
 *.py.bak
 *.egg-info
