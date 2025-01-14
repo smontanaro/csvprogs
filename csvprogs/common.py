@@ -9,6 +9,7 @@ __all__ = ["CSVArgParser",]
 import argparse
 from contextlib import contextmanager
 from functools import partial
+import io
 import os
 
 class CSVArgParser(argparse.ArgumentParser):
@@ -46,3 +47,11 @@ def openio(infile, imode, outfile, omode, encoding="utf-8"):
         oopen = partial(open, outfile, omode, encoding=encoding)
     with (iopen() as inf, oopen() as outf):
         yield (inf, outf)
+
+def usage(msg=None):
+    "common extraction of __doc__"
+    output = io.StringIO()
+    if msg:
+        print(msg, file=output)
+    print(__doc__ % globals(), file=output)
+    return output.getvalue()
