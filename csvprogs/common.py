@@ -25,8 +25,6 @@ class CSVArgParser(argparse.ArgumentParser):
                           help="input field delimiter")
         self.add_argument("-o", "--outsep", dest="outsep", default=",",
                           help="output field delimiter")
-        self.add_argument("-f", "--fields", dest="fields", default=None,
-                          help="fields to copy from input to output")
         self.add_argument("-v", "--verbose", dest="verbose", default=False,
                           action="store_true", help="be more chatty")
         self.add_argument("-e", "--encoding", dest="encoding", default="utf-8",
