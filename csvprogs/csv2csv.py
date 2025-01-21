@@ -119,8 +119,6 @@ def main():
     parser = CSVArgParser()
     parser.add_argument("-f", "--fields", dest="fields", default=None,
                         help="fields to copy from input to output")
-    parser.add_argument("-a", "--append", default=False, action='store_true',
-                        help="append rows to output (no header is written)")
     parser.add_argument("-n", "--quote", dest="quote_style", nargs='?',
                         action=QuoteAction, default=csv.QUOTE_ALL,
                         const=csv.QUOTE_NONE,
