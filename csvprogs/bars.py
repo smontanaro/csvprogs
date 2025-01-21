@@ -45,63 +45,83 @@ SEE ALSO
 * mpl
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
+import csv
 import sys
-import getopt
 import datetime
 import os
+import re
 
 import dateutil.parser
+import unum.units
+
+from csvprogs.common import CSVArgParser, openio
 
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "hb:s:f:t:")
+    parser = CSVArgParser()
+    parser.add_argument("-b", "--barlen", dest="barlen", default="60s",
+                        help="bar length (seconds)")
+    parser.add_argument("-a", "--append", default=False, action='store_true',
+                        help="append rows to output (no header is written)")
+    parser.add_argument("-n", "--name", dest="name", default="bar",
+                        help="name of bar output column")
+    parser.add_argument("-t", "--time", dest="time", default="time",
+                        help="name of time column")
+    parser.add_argument("-p", "--price", dest="price", default="close",
+                        help="column used to construct bars")
+    (options, args) = parser.parse_known_args()
 
-    barlen = 60                         # seconds
-    field = 1
-    time_field = 0
-    sep = ","
-    for opt, arg in opts:
-        if opt == "-b":
-            barlen = int(arg)
-        elif opt == "-f":
-            field = int(arg)
-        elif opt == "-s":
-            sep = arg
-        elif opt == "-t":
-            time_field = int(arg)
-        elif opt == "-h":
-            usage()
-            raise SystemExit
+    # Use time units to allow smaller magnitudes for longer bars. For example,
+    # you can give "1h" instead of "3600s" for one-hour bars.
+
+    mat = re.match(r"([0-9]+)\s*([a-z]*)", options.barlen.strip())
+    val = int(mat.group(1))
+    units = getattr(unum.units, mat.group(2) or "s")
+    barlen = int((val * units).asNumber(unum.units.s))
+
     interval = datetime.timedelta(seconds=barlen)
 
-    barstart = None
-    prev_last = last = None
+    barstart = ""
+    prev_last = last = ""
     close = ""
-    for line in sys.stdin:
-        fields = line.strip().split(sep)
-        dt = dateutil.parser.parse(fields[time_field])
-        prev_last = last
-        last = float(fields[field])
-        if barstart is None:
-            offset = (dt.hour * 60 * 60) + dt.minute * 60 + dt.second
-            barstart = offset // barlen * barlen
-            hour = barstart // 3600
-            minute = barstart % 3600 // 60
-            second = barstart % 3600 % 60
-            barstart = dt.replace(hour=hour, minute=minute, second=second,
-                                  microsecond=0)
-        if dt - barstart >= interval:
-            close = prev_last
-            barstart += interval
-        fields.append(str(close))
-        print(sep.join(fields))
-    return 0
 
-def usage():
-    print(__doc__ % globals(), file=sys.stderr)
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        rdr = csv.DictReader(inf, delimiter=options.insep)
+        wtr = csv.DictWriter(outf, delimiter=options.outsep,
+            fieldnames=rdr.fieldnames + [options.name])
+        wtr.writeheader()
+        for row in rdr:
+            dt = dateutil.parser.parse(row[options.time])
+            prev_last = last
+            if row[options.price]:
+                last = float(row[options.price])
+            if barstart == "":
+                offset = (dt.hour * 60 * 60) + dt.minute * 60 + dt.second
+                barstart = offset // barlen * barlen
+                hour = barstart // 3600
+                minute = barstart % 3600 // 60
+                second = barstart % 3600 % 60
+                barstart = dt.replace(hour=hour, minute=minute, second=second,
+                                      microsecond=0)
+                nextbar = barstart + interval
+            close = prev_last
+            if dt >= nextbar:
+                # emit a new row with just the bar
+                barstart += interval
+                wtr.writerow({
+                    options.time: barstart,
+                    options.name: str(close),
+                })
+                nextbar += interval
+            else:
+                row[options.name] = ""
+            wtr.writerow(row)
+            outf.flush()
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())
