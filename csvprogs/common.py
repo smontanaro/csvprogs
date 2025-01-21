@@ -29,6 +29,8 @@ class CSVArgParser(argparse.ArgumentParser):
                           action="store_true", help="be more chatty")
         self.add_argument("-e", "--encoding", dest="encoding", default="utf-8",
                           help="encoding of both input and output files")
+        self.add_argument("-a", "--append", default=False, action='store_true',
+                          help="append rows to output (no header is written)")
 
 @contextmanager
 def openio(infile, imode, outfile, omode, encoding="utf-8"):
