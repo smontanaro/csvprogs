@@ -62,8 +62,6 @@ def main():
     parser = CSVArgParser()
     parser.add_argument("-b", "--barlen", dest="barlen", default="60s",
                         help="bar length (seconds)")
-    parser.add_argument("-a", "--append", default=False, action='store_true',
-                        help="append rows to output (no header is written)")
     parser.add_argument("-n", "--name", dest="name", default="bar",
                         help="name of bar output column")
     parser.add_argument("-t", "--time", dest="time", default="time",
@@ -93,7 +91,8 @@ def main():
         rdr = csv.DictReader(inf, delimiter=options.insep)
         wtr = csv.DictWriter(outf, delimiter=options.outsep,
             fieldnames=rdr.fieldnames + [options.name])
-        wtr.writeheader()
+        if not options.append:
+            wtr.writeheader()
         for row in rdr:
             dt = dateutil.parser.parse(row[options.time])
             prev_last = last
