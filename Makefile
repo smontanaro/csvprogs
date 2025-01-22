@@ -57,9 +57,9 @@ venv : FORCE
 	  if [ $${v} -ge 310 ] ; then \
 	    python -m venv $(VENVDIR) ; \
 	    . $(VENVDIR)/bin/activate ; \
+	    python -m pip install -U pip ; \
 	    python -m pip install build pytest pytest-cov ; \
 	    python -m pip install `ls -tr dist/*.whl | tail -1` ; \
-	    python -m pip install -U pip ; \
 	  else \
 	    echo "Python version $${v} isn't new enough" 1>&2 ; \
 	    exit 1 ; \
@@ -109,6 +109,7 @@ clean: FORCE
 	rm -f $(MAN_FILES)
 	rm -fr $(VENVDIR)
 	rm -fr .coverage
+	find . -name __pycache__ | xargs rm -rf
 
 .PHONY: FORCE
 FORCE:
