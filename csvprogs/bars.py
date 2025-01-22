@@ -73,17 +73,6 @@ def main():
     # Use time units to allow smaller magnitudes for longer bars. For example,
     # you can give "1h" instead of "3600s" for one-hour bars.
 
-    mat = re.match(r"([0-9]+)\s*([a-z]*)", options.barlen.strip())
-    val = int(mat.group(1))
-    units = getattr(unum.units, mat.group(2) or "s")
-    barlen = int((val * units).asNumber(unum.units.s))
-
-    interval = datetime.timedelta(seconds=barlen)
-
-    barstart = ""
-    prev_last = last = ""
-    close = ""
-
     mode = "a" if options.append else "w"
     with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
                 args[1] if len(args) == 2 else sys.stdout, mode,
@@ -93,11 +82,28 @@ def main():
             fieldnames=rdr.fieldnames + [options.name])
         if not options.append:
             wtr.writeheader()
+
+        mat = re.match(r"([0-9]+)\s*([a-z]*)", options.barlen.strip())
+        val = int(mat.group(1))
+        units = getattr(unum.units, mat.group(2) or "s")
+        barlen = int((val * units).asNumber(unum.units.s))
+
+        generate_bars(rdr, wtr, options.time, options.price, options.name, barlen)
+
+    return 0
+
+def generate_bars(rdr, wtr, time, price, barname, barlen):
+        interval = datetime.timedelta(seconds=barlen)
+
+        barstart = ""
+        prev_last = last = ""
+        close = ""
+
         for row in rdr:
-            dt = dateutil.parser.parse(row[options.time])
+            dt = dateutil.parser.parse(row[time])
             prev_last = last
-            if row[options.price]:
-                last = float(row[options.price])
+            if row[price]:
+                last = float(row[price])
             if barstart == "":
                 offset = (dt.hour * 60 * 60) + dt.minute * 60 + dt.second
                 barstart = offset // barlen * barlen
@@ -112,15 +118,13 @@ def main():
                 # emit a new row with just the bar
                 barstart += interval
                 wtr.writerow({
-                    options.time: barstart,
-                    options.name: str(close),
+                    time: barstart,
+                    barname: str(close),
                 })
                 nextbar += interval
             else:
-                row[options.name] = ""
+                row[barname] = ""
             wtr.writerow(row)
-            outf.flush()
-    return 0
 
 if __name__ == "__main__":
     sys.exit(main())
