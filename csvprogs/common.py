@@ -48,10 +48,10 @@ def openio(infile, imode, outfile, omode, encoding="utf-8"):
     with (iopen() as inf, oopen() as outf):
         yield (inf, outf)
 
-def usage(msg=None):
+def usage(docstring, global_dict, msg=None):
     "common extraction of __doc__"
     output = io.StringIO()
     if msg:
         print(msg, file=output)
-    print(__doc__ % globals(), file=output)
+    print(docstring % global_dict, file=output)
     return output.getvalue()

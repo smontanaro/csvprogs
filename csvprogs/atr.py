@@ -58,7 +58,7 @@ from csvprogs.common import CSVArgParser, openio, usage
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    parser = CSVArgParser(prog=f"{PROG}", usage=usage())
+    parser = CSVArgParser(prog=f"{PROG}", usage=usage(__doc__, globals()))
     parser.add_argument("--days", "-n", default=14,
                         help="length of the atr calculation")
     parser.add_argument("--outcol", default="atr",

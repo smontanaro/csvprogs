@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
+"usage..."
+
 import atexit
 import os
 import subprocess
 import tempfile
+
+from csvprogs.common import usage
 
 INPUT = b"""\
 time,close,position\r
@@ -52,3 +56,7 @@ def test_openio_files():
     finally:
         os.unlink(inf)
         os.unlink(outf)
+
+def test_usage():
+    usage_msg = usage(__doc__, globals(), msg="msg")
+    assert "usage..." in usage_msg and "msg" in usage_msg
