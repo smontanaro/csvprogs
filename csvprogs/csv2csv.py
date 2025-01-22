@@ -140,7 +140,7 @@ def main():
         escapechar = '\\'
         lineterminator = options.terminator
 
-    mode = "a" if options.append else "a"
+    mode = "a" if options.append else "w"
     with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
                 args[1] if len(args) == 2 else sys.stdout, mode,
                 encoding=options.encoding) as (inf, outf):
