@@ -66,15 +66,9 @@ import csv
 import os
 import sys
 
-from csvprogs.common import CSVArgParser, openio
+from csvprogs.common import CSVArgParser, openio, usage
 
 PROG = os.path.split(sys.argv[0])[1]
-
-def usage(msg=None):
-    if msg is not None:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print((__doc__.strip() % globals()), file=sys.stderr)
 
 # pylint: disable=too-few-public-methods
 class QuoteAction(argparse.Action):
@@ -130,7 +124,8 @@ def main():
     options.fields = options.fields.split(",") if options.fields else []
 
     if len(args) > 2:
-        usage(args[0])
+        print(usage(__doc__, globals(), msg=args[0]), file=sys.stderr)
+        return 1
 
     # pylint: disable=too-few-public-methods
     class outdialect(csv.excel):

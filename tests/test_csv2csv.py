@@ -66,3 +66,8 @@ def test_append():
         NVDA], stdout=subprocess.PIPE, stderr=None)
     rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
     assert rdr.fieldnames == ["time", "ask", "bid", "last"]
+
+def test_bad_cli():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
+        "-a", NVDA, NVDA, NVDA], stdout=subprocess.PIPE, stderr=None)
+    assert result.returncode != 0
