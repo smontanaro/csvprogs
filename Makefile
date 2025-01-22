@@ -59,6 +59,7 @@ venv : FORCE
 	    . $(VENVDIR)/bin/activate ; \
 	    python -m pip install -U pip ; \
 	    python -m pip install build pytest pytest-cov ; \
+	    python -m build ; \
 	    python -m pip install `ls -tr dist/*.whl | tail -1` ; \
 	  else \
 	    echo "Python version $${v} isn't new enough" 1>&2 ; \
@@ -108,7 +109,7 @@ clean: FORCE
 	rm -f $(BIN_SCRIPTS)
 	rm -f $(MAN_FILES)
 	rm -fr $(VENVDIR)
-	rm -fr .coverage
+	rm -fr .coverage htmlcov dist
 	find . -name __pycache__ | xargs rm -rf
 
 .PHONY: FORCE
