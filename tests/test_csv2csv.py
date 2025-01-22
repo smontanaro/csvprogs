@@ -1,7 +1,9 @@
 import csv
 import io
+import subprocess
 
 from csvprogs.csv2csv import csv2csv
+from tests import NVDA
 
 INPUT = """\
 time,close,position\r
@@ -53,3 +55,14 @@ def test_csv2csv():
     wtr.writeheader()
     csv2csv(rdr, wtr, wtr.fieldnames)
     assert out.getvalue() == TAB_EXPECTED
+
+def test_append():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
+        "-a", NVDA], stdout=subprocess.PIPE, stderr=None)
+    rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
+    assert rdr.fieldnames != ["time", "ask", "bid", "last"]
+
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
+        NVDA], stdout=subprocess.PIPE, stderr=None)
+    rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
+    assert rdr.fieldnames == ["time", "ask", "bid", "last"]
