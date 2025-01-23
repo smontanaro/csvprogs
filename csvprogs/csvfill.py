@@ -88,13 +88,9 @@ import csv
 import os
 import sys
 
-PROG = os.path.splitext(os.path.split(sys.argv[0])[1])[0]
+from csvprogs.common import usage
 
-def usage(msg=None):
-    if msg is not None:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print((__doc__.strip() % globals()), file=sys.stderr)
+PROG = os.path.splitext(os.path.split(sys.argv[0])[1])[0]
 
 def main():
     parser = argparse.ArgumentParser()
@@ -104,7 +100,8 @@ def main():
         options.keys = options.keys.split(",")
 
     if len(args) > 2:
-        usage("Too many input files")
+        print(usage(__doc__, globals(), msg="Too many input files"),
+              file=sys.stderr)
         return 1
 
     inf = open((args[0] if args else "/dev/stdin"), "r")
