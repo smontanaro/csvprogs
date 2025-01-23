@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 
 import csv
+import subprocess
 import tempfile
-from test.support.script_helper import (spawn_python, kill_python)
 import unittest
 
-FIRST = [
-    ["time", "close"],
-    ["2015-04-15T15:00", "26.98"],
-    ["2015-04-16T15:00", "27.04"],
-    ["2015-04-17T15:00", "27.77"],
-]
+FIRST = """\
+time,close\r
+2015-04-15T15:00,26.98\r
+2015-04-16T15:00,27.04\r
+2015-04-17T15:00,27.77\r
+"""
 
-SECOND = [
-    ["time", "position"],
-    ["2015-04-15T12:00", "1"],
-    ["2015-04-15T12:30", "-1"],
-    ["2015-04-15T12:45", "1"],
-    ["2015-04-15T14:45", "-1"],
-    ["2015-04-16T09:30", "1"],
-]
+SECOND = """\
+time,position\r
+2015-04-15T12:00,1\r
+2015-04-15T12:30,-1\r
+2015-04-15T12:45,1\r
+2015-04-15T14:45,-1\r
+2015-04-16T09:30,1\r
+"""
 
 MERGED = b"""\
 time,close,position\r
@@ -47,17 +47,16 @@ time,close,position\r
 
 class _CSVTest(unittest.TestCase):
     def _merge_helper(self, first, second):
-        with tempfile.NamedTemporaryFile(mode="w+") as first:
-            with tempfile.NamedTemporaryFile(mode="w+") as second:
-                writer = csv.writer(first.file)
-                writer.writerows(FIRST)
-                first.file.flush()
-                writer = csv.writer(second.file)
-                writer.writerows(SECOND)
-                second.file.flush()
-                p = spawn_python('csvprogs/csvmerge.py',
-                                 '-k', 'time', first.name, second.name)
-                return kill_python(p)
+        with tempfile.NamedTemporaryFile(mode="w+") as file1:
+            with tempfile.NamedTemporaryFile(mode="w+") as file2:
+                file1.write(first)
+                file2.write(second)
+                file1.seek(0)
+                file2.seek(0)
+                result = subprocess.run(["./venv/bin/python", "-m",
+                    "csvprogs.csvmerge", "-k", "time", file1.name, file2.name],
+                    stdout=subprocess.PIPE, stderr=None)
+                return result.stdout
 
 class CSVMergeTest(_CSVTest):
     def test_merge(self):
@@ -70,10 +69,10 @@ class CSVFillTest(_CSVTest):
         with tempfile.NamedTemporaryFile(mode="w+") as merged:
             merged.file.write(data)
             merged.file.flush()
-            p = spawn_python('csvprogs/csvfill.py',
-                             '-k', 'position', merged.name)
-            data = kill_python(p)
-            self.assertEqual(data, FILLED)
+            result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvfill",
+                "-k", "position", merged.name], stdout=subprocess.PIPE,
+                stderr=None)
+            self.assertEqual(result.stdout, FILLED)
 
 if __name__ == "__main__":
     unittest.main()
