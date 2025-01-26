@@ -61,42 +61,35 @@ SEE ALSO
 import datetime
 import sys
 import csv
-import getopt
 import os
 
 import dateutil.parser
 
+from csvprogs.common import CSVArgParser, usage
+
+
 PROG = os.path.split(sys.argv[0])[1]
 EPOCH = datetime.datetime.fromtimestamp(0)
 
-def usage(msg=None):
-    if msg is not None:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print((__doc__.strip() % globals()), file=sys.stderr)
 
 def main():
-    keys = []
+    parser = CSVArgParser()
+    parser.add_argument("-k", "--keys", dest="keys", default="",
+                        help="merge fields")
+    parser.add_argument("-d", "--date-keys", dest="date_keys", action="append",
+                        default="", help="normalize fields as dates")
+    (options, args) = parser.parse_known_args()
+
+    keys = options.keys.split(",")
     readers = []
-
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "k:d:h")
-    except getopt.GetoptError as msg:
-        usage(msg)
-        return 1
-
     date_keys = set()
-    for opt, arg in opts:
-        if opt == "-k":
-            keys = arg.split(",")
-        elif opt == "-d":
-            date_keys |= set(arg.split(","))
-        elif opt == "-h":
-            usage()
-            return 0
+
+    for dk in options.date_keys:
+        date_keys.add(dk.split(","))
 
     if len(args) < 1:
-        usage("At least one input file is required.")
+        print(usage(__doc__, globals(), "At least one input file is required."),
+              file=sys.stderr)
         return 1
 
     all_fields = set()
