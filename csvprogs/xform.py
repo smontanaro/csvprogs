@@ -148,31 +148,35 @@ SEE ALSO
 
 """
 
-import sys
-import getopt
-import os
 import csv
 import inspect
+import os
+import sys
+
+from csvprogs.common import CSVArgParser, usage
 
 PROG = os.path.basename(sys.argv[0])
 
 def main():
     "see __doc__"
-    options = process_args(sys.argv[1:])
+    options = process_args()
 
     if options.xform is None:
-        usage("-f or -F are required.")
+        print(usage(__doc__, globals(), "-f or -F are required."),
+              file=sys.stderr)
         return 1
 
-    rdr = csv.DictReader(sys.stdin, delimiter=options.sep)
+    rdr = csv.DictReader(sys.stdin, delimiter=options.insep)
     # Treat first row as a header.
     out_fields = rdr.fieldnames[:]
     for name in options.extra_names:
         if name not in rdr.fieldnames:
             out_fields.append(name)
     indexes = enumerate(rdr.fieldnames)
-    wtr = csv.DictWriter(sys.stdout, fieldnames=out_fields)
-    wtr.writeheader()
+    wtr = csv.DictWriter(sys.stdout, fieldnames=out_fields,
+        delimiter=options.outsep)
+    if not options.append:
+        wtr.writeheader()
 
     inject_globals(options.xform, options.vars)
 
@@ -230,62 +234,60 @@ def inject_globals(func, vrbls):
             # Try again...
             continue
         else:
-            raise TypeError("Don't know how to find globals from %s objects" %
-                            type(func))
+            raise TypeError("Don't know how to find globals "
+                            f"from {type(func)} objects")
         break
     else:
-        raise TypeError("Don't know how to find globals from %s objects" %
-                        type(func))
+        raise TypeError("Don't know how to find globals "
+                        f"from {type(func)} objects")
     func_globals.update(vrbls)
 
-def process_args(args):
-    "getopt wrapper"
-    opts, args = getopt.getopt(args, "f:F:s:hc:p:v")
+def process_args():
+    parser = CSVArgParser()
+    parser.add_argument("-f", "--function", dest="function", default="",
+                        help="user-defined function to execute")
+    parser.add_argument("-F", "--external-function", dest="ext_func", default="",
+                        help="user-defined external function to execute")
+    parser.add_argument("-c", "--extra-args", dest="extra_names", default=[],
+                        action="append",
+                        help="arguments guaranteed to be in the output")
+    parser.add_argument("-p", "--variable-pair", dest="vars", default="",
+                        help="global variable name/value pairs")
+    (options, _args) = parser.parse_known_args()
+    if options.function and options.ext_func:
+        print(usage(__doc__, globals(), "only one of -f or -F may be given"))
+        return 1
 
-    options = Options()
-    for opt, arg in opts:
-        if opt == "-s":
-            options.sep = arg
-        elif opt == "-f":
-            d = {}
-            exec(arg, {}, d)
-            if "__xform__" in d:
-                options.xform = d[d["__xform__"]]
-            else:
-                # Better only define a single object!
-                options.xform = d[list(d.keys())[0]]
-            if "__xform_names__" in d:
-                options.extra_names.extend(d["__xform_names__"])
-        elif opt == "-F":
-            modname, funcname = arg.split(".")
-            mod = __import__(modname)
-            options.xform = getattr(mod, funcname)
-            if hasattr(mod, "__xform_names__"):
-                options.extra_names.extend(getattr(mod, "__xform_names__"))
-        elif opt == "-v":
-            options.verbose = True
-        elif opt == "-c":
-            options.extra_names.extend(arg.split(","))
-        elif opt == "-p":
-            keys = [x.split("=")[0].strip() for x in arg.split(",")]
-            vals = [x.split("=")[1].strip() for x in arg.split(",")]
-            type_convert(vals)
-            options.vars = dict(list(zip(keys, vals)))
-        elif opt == "-h":
-            usage()
-            raise SystemExit
+    for (i, extra) in enumerate(options.extra_names):
+        options.extra_names[i] = extra.split(",")
+
+    if options.function:
+        d = {}
+        # pylint: disable=W0122
+        exec(options.function, {}, d)
+        if "__xform__" in d:
+            options.xform = d[d["__xform__"]]
+        else:
+            # Better only define a single object!
+            options.xform = d[list(d.keys())[0]]
+        if "__xform_names__" in d:
+            options.extra_names.extend(d["__xform_names__"])
+    elif options.ext_func:
+        modname, funcname = options.ext_func.split(".")
+        mod = __import__(modname)
+        options.xform = getattr(mod, funcname)
+        if hasattr(mod, "__xform_names__"):
+            options.extra_names.extend(getattr(mod, "__xform_names__"))
+
+    if options.vars:
+        keys = [x.split("=")[0].strip() for x in options.vars.split(",")]
+        vals = [x.split("=")[1].strip() for x in options.vars.split(",")]
+        type_convert(vals)
+        options.vars = dict(list(zip(keys, vals)))
 
     options.extra_names = sorted(set(options.extra_names))
     return options
 
-class Options:
-    "holder for processed cmdline options."
-    def __init__(self):
-        self.xform = lambda _: None
-        self.sep = ","
-        self.extra_names = []
-        self.vars = {}
-        self.verbose = False
 
 class ListyDict:
     """Dictish objects which also support some list-style numeric indexing."""
@@ -325,7 +327,7 @@ class ListyDict:
         return len(self.data)
 
     def __str__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.data)
+        return f"<{self.__class__.__name__} {self.data}>"
 
     def __getattr__(self, k):
         "delegate to self.data"
@@ -348,8 +350,8 @@ def type_convert(row):
         for k in row:
             row[k] = make_number(row[k])
     else:
-        for i in range(len(row)):
-            row[i] = make_number(row[i])
+        for (i, val) in enumerate(row):
+            row[i] = make_number(val)
 
 def make_number(val):
     "Convert val to the most specific kind of number we can."
@@ -362,11 +364,6 @@ def make_number(val):
             pass
     return val
 
-def usage(msg=""):
-    "display user help"
-    if msg:
-        print(msg, file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())
