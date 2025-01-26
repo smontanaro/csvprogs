@@ -139,11 +139,5 @@ def square(rows, x, yvals):
         yield r2
         r1 = r2
 
-def usage(msg=""):
-    if msg:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
-
 if __name__ == "__main__":
     sys.exit(main())
