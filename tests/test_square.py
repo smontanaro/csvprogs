@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 import datetime
+import subprocess
 
 from csvprogs.square import square, remove_dups
+from tests import NVDA
+
 
 def test_dict_square():
     rows = [
@@ -61,3 +64,8 @@ def test_empty_square():
     exp_rows = []
     result = list(square(iter(rows), "time", ["y"]))
     assert result == exp_rows, result
+
+def test_cli():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.square",
+        "-a", NVDA], stdout=subprocess.PIPE, stderr=None)
+    assert result.returncode == 0
