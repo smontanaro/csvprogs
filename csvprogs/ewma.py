@@ -49,10 +49,12 @@ SEE ALSO
 __all__ = ["ewma"]
 
 import csv
-import getopt
 import math
 import os
 import sys
+
+from csvprogs.common import CSVArgParser, usage
+
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -73,55 +75,36 @@ def ewma(rdr, field, outcol, alpha, gap):
                 val = float(row[field])
             else:
                 val = alpha * float(row[field]) + (1-alpha) * val
-        if isinstance(field, str):
-            row[outcol] = val
-        else:
-            row.append(val)
+        row[outcol] = val
         result.append(row)
     return result
 
 def main():
-    opts, _args = getopt.getopt(sys.argv[1:], "a:f:s:o:m:h")
+    parser = CSVArgParser()
+    parser.add_argument("--alpha", type=float, default=0.1)
+    parser.add_argument("--outcol", default="ewma")
+    parser.add_argument("-f", "--field", required=True)
+    parser.add_argument("-m", "--gap", "--missing", dest="gap", default=5,
+                        type=int)
+    options, _args = parser.parse_known_args()
 
-    alpha = 0.1
-    field = None
-    reader = csv.reader
-    writer = csv.writer
-    sep = ","
-    outcol = "ewma"
-    gap = 5
-    for opt, arg in opts:
-        if opt == "-a":
-            alpha = float(arg)
-        elif opt == "-o":
-            outcol = arg
-        elif opt == "-f":
-            field = arg
-        elif opt == "-s":
-            sep = arg
-        elif opt == "-m":
-            gap = int(arg)
-            assert gap > 0
-        elif opt == "-h":
-            usage()
-            raise SystemExit
-
-    if field is None:
-        usage()
+    if options.gap <= 0:
+        print(usage(__doc__, globals(), "gap must be greater than zero"),
+              file=sys.stderr)
         return 1
 
-    rdr = csv.DictReader(sys.stdin, delimiter=sep)
+    rdr = csv.DictReader(sys.stdin, delimiter=options.insep)
     fnames = rdr.fieldnames[:]
-    fnames.append(outcol)
-    wtr = csv.DictWriter(sys.stdout, delimiter=sep, fieldnames=fnames)
+    fnames.append(options.outcol)
+    wtr = csv.DictWriter(sys.stdout, delimiter=options.outsep,
+        fieldnames=fnames)
     wtr.writeheader()
 
-    result = ewma(rdr, field, outcol, alpha, gap)
+    result = ewma(rdr, options.field, options.outcol, options.alpha,
+        options.gap)
     wtr.writerows(result)
     return 0
 
-def usage():
-    print(__doc__.format(**globals()).strip(), file=sys.stderr)
 
 if __name__ == "__main__":
     try:

@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 
+"ewma tests"
 
 import csv
 import io
 import math
+import subprocess
 import unittest
 
 from csvprogs.ewma import ewma
 
 
 class EWMATest(unittest.TestCase):
-    def test_basic_ewma(self):
-        input_csv = io.StringIO("""date,weight,hr,O2
+    "test"
+    input_data = """\
+date,weight,hr,O2
 2024-09-07,179.8,50,95
 2024-09-08,180.4,48,96
 2024-09-09,181.4,51,96
@@ -79,17 +82,34 @@ class EWMATest(unittest.TestCase):
 2024-11-10,182.0,46,96
 2024-11-11,183.0,45,97
 2024-11-12,181.8,46,96
-""")
+"""
 
-
-        rdr = csv.DictReader(input_csv)
+    def test_basic_ewma(self):
+        input_file = io.StringIO(self.input_data)
+        rdr = csv.DictReader(input_file)
         result = ewma(rdr, "weight", "ewma", 0.1, 1)
         assert math.isnan(result[8]["ewma"])
 
-        input_csv.seek(0)
-        rdr = csv.DictReader(input_csv)
+        input_file.seek(0)
+        rdr = csv.DictReader(input_file)
         result = ewma(rdr, "weight", "ewma", 0.1, 2)
         assert not math.isnan(result[8]["ewma"])
+
+    def test_cli(self):
+        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+            "-f", "weight"], check=True,
+            stdout=subprocess.PIPE, stderr=None,
+            input=bytes(self.input_data, encoding="utf-8"))
+        result = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))
+        assert result[8]["ewma"] != "nan"
+
+    def test_bad_gap(self):
+        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+            "-f", "weight", "--gap=-1"], check=False,
+            stdout=subprocess.PIPE, stderr=None,
+            input=bytes(self.input_data, encoding="utf-8"))
+        assert result.returncode != 0
+
 
 if __name__ == "__main__":
     unittest.main()
