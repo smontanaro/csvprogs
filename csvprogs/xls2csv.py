@@ -37,14 +37,13 @@ SEE ALSO
 
 import sys
 import tempfile
-import getopt
 import csv
 import os
 import datetime
 
 import xlrd
 
-from csvprogs.common import usage
+from csvprogs.common import CSVArgParser, usage
 
 
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
@@ -52,24 +51,15 @@ EPOCH = datetime.datetime.fromtimestamp(0)
 
 
 def main():
-    sheet = 0
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hs:")
-    except getopt.GetoptError as err:
-        print(usage(__doc__, globals()), err, file=sys.stderr)
-        return 1
-
-    for opt, arg in opts:
-        if opt == "-h":
-            print(usage(__doc__, globals()), file=sys.stderr)
-            return 0
-        if opt == "-s":
-            sheet = int(arg)
+    parser = CSVArgParser()
+    parser.add_argument("-s", "--sheet", dest="sheet", type=int,
+                        default=0, help="sheet number to extract from workbook")
+    (options, args) = parser.parse_known_args()
 
     if args:
-        print(usage(__doc__, globals()), f"unexpected cmdline arg: {sys.argv[1:]}",
+        print(usage(__doc__, globals()), f"unexpected cmdline args: {args}",
               file=sys.stderr)
-        return 2
+        return 1
 
     wrtr = csv.writer(sys.stdout)
 
@@ -80,7 +70,7 @@ def main():
             os.close(fd)
             xls.write(xlsin.read())
 
-        rows = xls2csv(xlsf, sheet)
+        rows = xls2csv(xlsf, options.sheet)
         wrtr.writerows(rows)
     finally:
         os.unlink(xlsf)
