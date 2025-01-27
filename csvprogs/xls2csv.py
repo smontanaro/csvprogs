@@ -35,8 +35,6 @@ SEE ALSO
 * csv2csv
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import tempfile
 import getopt
@@ -45,52 +43,61 @@ import os
 import datetime
 
 import xlrd
-from six.moves import range
+
+from csvprogs.common import usage
+
 
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 EPOCH = datetime.datetime.fromtimestamp(0)
+
 
 def main():
     sheet = 0
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:")
-    except getopt.GetoptError:
-        usage()
+    except getopt.GetoptError as err:
+        print(usage(__doc__, globals()), err, file=sys.stderr)
         return 1
 
     for opt, arg in opts:
         if opt == "-h":
-            usage()
+            print(usage(__doc__, globals()), file=sys.stderr)
             return 0
         if opt == "-s":
             sheet = int(arg)
 
     if args:
-        usage()
-        return 1
+        print(usage(__doc__, globals()), f"unexpected cmdline arg: {sys.argv[1:]}",
+              file=sys.stderr)
+        return 2
 
     wrtr = csv.writer(sys.stdout)
-    tmpf = tempfile.mktemp()
-    f = open(tmpf, "wb")
-    f.write(sys.stdin.read())
-    f.close()
 
     try:
-        book = xlrd.open_workbook(tmpf)
-        worksheet = book.sheet_by_index(sheet)
+        (fd, xlsf) = tempfile.mkstemp()
+        with (open(xlsf, "wb") as xls,
+              os.fdopen(sys.stdin.fileno(), "rb") as xlsin):
+            os.close(fd)
+            xls.write(xlsin.read())
 
-        for i in range(worksheet.nrows):
-            wrtr.writerow([cell_value(x, book.datemode)
-                               for x in worksheet.row(i)])
+        rows = xls2csv(xlsf, sheet)
+        wrtr.writerows(rows)
     finally:
-        os.unlink(tmpf)
+        os.unlink(xlsf)
 
     return 0
 
-def usage(msg=""):
-    if msg:
-        print(msg.rstrip(), file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
+
+def xls2csv(xlsf, sheet):
+    book = xlrd.open_workbook(xlsf)
+    worksheet = book.sheet_by_index(sheet)
+
+    rows = []
+    for i in range(worksheet.nrows):
+        rows.append([cell_value(x, book.datemode)
+                     for x in worksheet.row(i)])
+    return rows
+
 
 def cell_value(cell, datemode):
     if cell.ctype == xlrd.XL_CELL_DATE:
