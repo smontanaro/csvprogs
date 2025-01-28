@@ -48,60 +48,58 @@ SEE ALSO
 import sys
 import os
 import csv
-import getopt
+
+import dateutil.parser
+
+from csvprogs.common import CSVArgParser, openio, usage
+
 
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, _args = getopt.getopt(sys.argv[1:], "f:s:m:M:hH",
-        ["fields=", "separator=", "minval=",
-         "maxval=", "help", "skip-header"])
-    x, y = [0, 2]
-    sep = ","
-    maxval = 1e308
-    minval = -1e308
-    skip_header = False
-    for opt, arg in opts:
-        if opt in ("-f", "--fields"):
-            x, y = [int(val.strip()) for val in arg.split(",")]
-        elif opt in ("-s", "--separator"):
-            sep = arg
-        elif opt in ("-m", "--minval"):
-            minval = float(arg)
-        elif opt in ("-M", "--maxval"):
-            maxval = float(arg)
-        elif opt in ("-h", "--help"):
-            usage()
-            raise SystemExit
-        elif opt == "-H":
-            skip_header = True
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-x", help="x axis", required=True)
+    parser.add_argument("-y", help="y axis", required=True)
+    parser.add_argument("-m", "--minval", help="lower threshold",
+                        default=-1e308, type=float)
+    parser.add_argument("-M", "--maxval", help="upper threshold",
+                        default=1e308, type=float)
+    options, args = parser.parse_known_args()
 
     times = {}
-    rdr = csv.reader(sys.stdin, delimiter=sep)
-    wtr = csv.writer(sys.stdout, delimiter=sep)
-    if skip_header:
-        row = next(rdr)
-        row.extend(["mean", "sum", "n"])
-        wtr.writerow(row)
-    for row in rdr:
-        try:
-            val = float(row[y])
-            if val < minval or val > maxval:
-                continue
-            now = row[x].split("T")[-1].split(".")[0]
-            total, n = times.get(now, (0.0, 0))
-            total += val
-        except IndexError:
-            print("failed to process row:", row, file=sys.stderr)
-        else:
-            n += 1
-            times[now] = (total, n)
-    for t in sorted(times):
-        total, n = times[t]
-        wtr.writerow((t, total/n, total, n))
 
-def usage():
-    print(__doc__ % globals(), file=sys.stderr)
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        writer = csv.DictWriter(outf, delimiter=options.outsep,
+            fieldnames=["time", "mean", "sum", "n"])
+        if not options.append:
+            writer.writeheader()
+        for row in reader:
+            try:
+                val = float(row[options.y])
+                if val < options.minval or val > options.maxval:
+                    continue
+                now = dateutil.parser.parse(row[options.x]).time()
+                total, n = times.get(now, (0.0, 0))
+                total += val
+            except IndexError:
+                print("failed to process row:", row, file=sys.stderr)
+            else:
+                n += 1
+                times[now] = (total, n)
+        for t in sorted(times):
+            total, n = times[t]
+            writer.writerow(
+                {
+                 "time": t,
+                 "mean": total/n,
+                 "sum": total,
+                 "n": n,
+                })
+
 
 if __name__ == "__main__":
     sys.exit(main())
