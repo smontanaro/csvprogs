@@ -45,8 +45,6 @@ SEE ALSO
 * mpl
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import os
 import csv
@@ -55,9 +53,9 @@ import getopt
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "f:s:m:M:hH",
-                               ["fields=", "separator=", "minval=",
-                                "maxval=", "help", "skip-header"])
+    opts, _args = getopt.getopt(sys.argv[1:], "f:s:m:M:hH",
+        ["fields=", "separator=", "minval=",
+         "maxval=", "help", "skip-header"])
     x, y = [0, 2]
     sep = ","
     maxval = 1e308
