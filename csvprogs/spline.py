@@ -66,12 +66,14 @@ import numpy
 from scipy import interpolate
 import dateutil.parser
 
+from csvprogs.common import usage
+
 PROG = os.path.basename(sys.argv[0])
 
 def main():
     opts, args = getopt.getopt(sys.argv[1:], "f:s:hm:M:TtS:F:")
 
-    field = 1
+    field = None
     sep = ","
     maxval = 1e308
     minval = -1e308
@@ -96,8 +98,13 @@ def main():
         elif opt == "-F":
             xfmt = arg
         elif opt == "-h":
-            usage()
-            raise SystemExit
+            print(usage(__doc__, globals()), file=sys.stderr)
+            return 0
+
+    if field is None:
+        print(usage(__doc__, globals(), msg="field number is required"),
+                    file=sys.stderr)
+        return 1
 
     rows = list(csv.reader(sys.stdin, delimiter=sep))
     if xtime:
@@ -127,9 +134,6 @@ def parse_timestamp(stamp, xfmt=""):
 def to_timestamp(dt):
     """Convert a datetime object into seconds since the Unix epoch."""
     return time.mktime(dt.timetuple()) + dt.microsecond/1e6
-
-def usage():
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())
