@@ -55,8 +55,6 @@ SEE ALSO
 * sigavg
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import getopt
 import os
@@ -67,7 +65,6 @@ import datetime
 import numpy
 from scipy import interpolate
 import dateutil.parser
-from six.moves import zip
 
 PROG = os.path.basename(sys.argv[0])
 
