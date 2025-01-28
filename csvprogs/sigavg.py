@@ -78,18 +78,14 @@ def main():
         if not options.append:
             writer.writeheader()
         for row in reader:
-            try:
-                val = float(row[options.y])
-                if val < options.minval or val > options.maxval:
-                    continue
-                now = dateutil.parser.parse(row[options.x]).time()
-                total, n = times.get(now, (0.0, 0))
-                total += val
-            except IndexError:
-                print("failed to process row:", row, file=sys.stderr)
-            else:
-                n += 1
-                times[now] = (total, n)
+            val = float(row[options.y])
+            if val < options.minval or val > options.maxval:
+                continue
+            now = dateutil.parser.parse(row[options.x]).time()
+            total, n = times.get(now, (0.0, 0))
+            total += val
+            n += 1
+            times[now] = (total, n)
         for t in sorted(times):
             total, n = times[t]
             writer.writerow(
