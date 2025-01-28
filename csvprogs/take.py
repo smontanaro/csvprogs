@@ -36,34 +36,27 @@ SEE ALSO
 * mpl
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import getopt
 import os
 
+from csvprogs.common import CSVArgParser
+
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "n:h")
-
-    n = 10
-    for opt, arg in opts:
-        if opt == "-n":
-            n = int(arg)
-        elif opt == "-h":
-            usage()
-            raise SystemExit
+    parser = CSVArgParser()
+    parser.add_argument("-n", type=int, default=10,
+                        help="print every n'th line from the input")
+    options = parser.parse_args()
 
     i = 0
     for line in sys.stdin:
-        if not i % n:
+        if not i % options.n:
             print(line.strip())
         i += 1
     return 0
 
-def usage():
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())
