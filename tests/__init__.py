@@ -7,3 +7,6 @@ SPY_ATR = "./tests/data/SPY-atr.csv"
 SPY_XLS = "./tests/data/SPY.xls"
 SPY_PCK = "./tests/data/SPY.pck"
 SPY_CSV = "./tests/data/SPY.csv"
+
+# Excel file with date column explicitly defined as dates
+XLS_DATE = "./tests/data/xl-date.xls"
