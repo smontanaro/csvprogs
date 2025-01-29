@@ -55,3 +55,13 @@ def usage(docstring, global_dict, msg=None):
         print(msg, file=output)
     print(docstring % global_dict, file=output)
     return output.getvalue()
+
+@contextmanager
+def swallow_exceptions(exceptions):
+    "catch and swallow the tuple of exceptions"
+    try:
+        yield None
+    except exceptions:
+        pass
+    finally:
+        pass
