@@ -25,7 +25,7 @@ def test_cli_c():
 def test_cli_csv():
     with open(NVDA, "rb") as nvda:
         result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.regress",
-            "-f", "bid,ask", "--column", "reg"], check=True,
+            "-f", "bid,ask", "--column", "reg", "--verbose"], check=True,
             stdout=subprocess.PIPE, stderr=None,
             input=nvda.read())
     assert result.returncode == 0
