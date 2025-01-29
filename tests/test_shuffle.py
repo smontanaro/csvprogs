@@ -15,3 +15,9 @@ def test_cli():
         assert (len(output.split("\n")) == len(input.split("\n")) and
                 output != input and
                 sorted(output.split("\n")) == sorted(input.split("\n")))
+
+def test_bad_cli():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.shuffle",
+        SPY_CSV, SPY_CSV, SPY_CSV, SPY_CSV],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode == 1
