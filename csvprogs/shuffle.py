@@ -19,56 +19,42 @@ Shuffle lines from standard input
 SYNOPSIS
 ========
 
-  $(PROG)s
+  $(PROG)s [input [output]]
 
 DESCRIPTION
 ===========
 
-Write stdin to stdout, shuffling the lines.  Note: The entire contents
-of stdin must be read first, so it is not a good idea to use this
-filter with very large files.
+Write input (default stdin) to output (default stdout), shuffling the lines.
+Note: The entire contents of the input must be read first, so it is not a good
+idea to use this filter with very large files.
 """
 
-import contextlib
-import getopt
 import os
 import random
 import sys
 
+from csvprogs.common import CSVArgParser, openio, usage, swallow_exceptions
+
 PROG = os.path.basename(sys.argv[0])
 
-@contextlib.contextmanager
-def swallow(exceptions):
-    "catch and swallow the named exceptions"
-    try:
-        yield None
-    except exceptions:
-        pass
-    finally:
-        pass
-
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "h")
-    for opt, _arg in opts:
-        if opt == "-h":
-            usage()
-            return 0
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    options, args = parser.parse_known_args()
 
-    if args:
-        usage("spurious command line arguments")
+    if len(args) > 2:
+        print(usage(__doc__, globals(), msg="spurious command line arguments"),
+              file=sys.stderr)
         return 1
 
-    with swallow((BrokenPipeError, KeyboardInterrupt)):
-        lines = list(sys.stdin)
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, "w",
+                encoding=options.encoding) as (inf, outf):
+        lines = list(inf)
         random.shuffle(lines)
-        sys.stdout.writelines(lines)
+        outf.writelines(lines)
     return 0
 
-def usage(msg=""):
-    if msg:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    with swallow_exceptions((BrokenPipeError, KeyboardInterrupt)):
+        sys.exit(main())
