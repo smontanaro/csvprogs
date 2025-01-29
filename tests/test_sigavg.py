@@ -15,13 +15,13 @@ def test_cli():
     inf = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
     rows = list(inf)
     assert rows[0] == {
-        "time": "13:30:00",
+        "time": "13:30",
         "mean": "447.94",
         "sum": "895.88",
         "n": "2",
         }
     assert rows[-1] == {
-        "time": "19:50:00",
+        "time": "19:50",
         "mean": "447.95",
         "sum": "447.95",
         "n": "1",
