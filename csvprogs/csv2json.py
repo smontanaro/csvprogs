@@ -71,6 +71,7 @@ SEE ALSO
 import argparse
 import csv
 import json
+import locale
 import os
 import sys
 
@@ -92,8 +93,8 @@ def datetime(s):
 date = time = datetime
 
 TYPES = {
-    'int': int,
-    'float': float,
+    'int': locale.atoi,
+    'float': locale.atof,
     'date': date,
     'time': time,
     'datetime': datetime,
@@ -119,7 +120,10 @@ def main():
                         help="when emitting arrays, also emit a header array")
     parser.add_argument("--fullhelp", dest="full_help", action="store_true",
                         default=False, help="display full usage")
+    parser.add_argument("--locale", default='en_US.UTF-8',
+                        help="locale for type converting numbers")
     (options, args) = parser.parse_known_args()
+
     if options.full_help:
         usage()
         return 0
@@ -129,6 +133,8 @@ def main():
     options.typenames = (options.typenames.split(",")
                                if options.typenames
                                else [])
+
+    locale.setlocale(locale.LC_ALL, options.locale)
 
     if len(args) > 2:
         usage(sys.argv[0])
