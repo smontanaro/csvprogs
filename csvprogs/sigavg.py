@@ -82,7 +82,7 @@ def main():
             val = float(row[options.y])
             if val < options.minval or val > options.maxval:
                 continue
-            now = dateutil.parser.parse(row[options.x]).time()
+            now = dateutil.parser.parse(row[options.x])
             nowfmt = now.strftime(options.format)
             total, n = times.get(nowfmt, (0.0, 0))
             total += val
