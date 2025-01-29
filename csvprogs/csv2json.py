@@ -187,33 +187,32 @@ def generate_type_converters(options):
 def translate(reader, options, outf):
     "Convert reader input to JSON output."
 
-    try:
-        outf.write("[\n")
-        if options.emit_arrays and options.array_header:
-            outf.write(" " * 4)
-            json.dump(options.inputfields, outf)
-            outf.write(",\n")
-        for row in reader:
-            if options.typenames:
-                for k in options.inputfields:
-                    (typ, dflt) = options.typenames[k]
-                    try:
-                        row[k] = typ(row[k])
-                    except ValueError:
-                        if dflt is NO_DEFAULT:
-                            raise
-                        row[k] = dflt
-            outrow = dict((k, v)
-                              for (k, v) in row.items()
-                                  if k in options.inputfields)
-            if options.emit_arrays:
-                outrow = [outrow[k] for k in options.inputfields]
-            outf.write(" " * 4)
-            json.dump(outrow, outf)
-            outf.write(",\n")
-        outf.write("]\n")
-    except IOError:
-        pass
+    result = []
+    result.append("[\n    ")
+    if options.emit_arrays and options.array_header:
+        result.append(json.dumps(options.inputfields))
+        result.append(",\n    ")
+    rows = []
+    for row in reader:
+        if options.typenames:
+            for k in options.inputfields:
+                (typ, dflt) = options.typenames[k]
+                try:
+                    row[k] = typ(row[k])
+                except ValueError:
+                    if dflt is NO_DEFAULT:
+                        raise
+                    row[k] = dflt
+        outrow = dict((k, v)
+                          for (k, v) in row.items()
+                              if k in options.inputfields)
+        if options.emit_arrays:
+            outrow = [outrow[k] for k in options.inputfields]
+        rows.append(json.dumps(outrow))
+    result.append(",\n    ".join(rows))
+    result.append("\n]\n")
+    outf.write("".join(result))
+
     return 0
 
 if __name__ == "__main__":
