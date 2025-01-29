@@ -45,90 +45,65 @@ SEE ALSO
 """
 
 import sys
-import getopt
 import os
 import csv
 
 import scipy.stats
 
+from csvprogs.common import CSVArgParser, usage, openio
+
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "f:s:ho:c")
-    except getopt.GetoptError:
-        usage()
-        return 1
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-c", "--corr", default=False, action="store_true",
+                        help="only print correlation coefficient to stdout")
+    parser.add_argument("--column", default="reg",
+                        help="output column name for regression")
+    parser.add_argument("-f", "--fields", required=True,
+                        help="fields input to regression")
+    options, args = parser.parse_known_args()
 
-    corr = False
-    sep = ","
-    field1 = 0
-    field2 = 1
-    field3 = 2
-    for opt, arg in opts:
-        if opt == "-f":
-            try:
-                field1, field2 = [int(x) for x in arg.split(",")]
-            except ValueError:
-                # Must have given names
-                field1, field2 = arg.split(",")
-        elif opt == "-o":
-            try:
-                field3 = int(arg)
-            except ValueError:
-                # Must have given names
-                field3 = arg
-        elif opt == "-c":
-            corr = True
-        elif opt == "-s":
-            sep = arg
-        elif opt == "-h":
-            usage()
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        writer = csv.DictWriter(outf, delimiter=options.outsep,
+            fieldnames=reader.fieldnames+[options.column])
+
+        x = []
+        y = []
+
+        field1, field2 = options.fields.split(",")
+        rows = list(reader)
+        for row in rows:
+            if row[field1] and row[field2]:
+                row[field1] = float(row[field1])
+                row[field2] = float(row[field2])
+                x.append(row[field1])
+                y.append(row[field2])
+
+        (slope, intercept, r, p, stderr) = scipy.stats.linregress(x, y)
+
+        if options.corr:
+            print(r)
             return 0
 
-    writer_type = type(csv.writer(sys.stdout))
-    if isinstance(field1, int):
-        reader = csv.reader(sys.stdin, delimiter=sep)
-        writer = csv.writer(sys.stdout, delimiter=sep)
-    else:
-        reader = csv.DictReader(sys.stdin, delimiter=sep)
-        names = reader.fieldnames[:]
-        names.append(str(field3))
-        writer = csv.DictWriter(sys.stdout, fieldnames=names, delimiter=sep)
+        if options.verbose:
+            print("slope:", slope, "intercept:", intercept, file=sys.stderr)
+            print("corr coeff:", r, "p:", p, "err:", stderr, file=sys.stderr)
 
-    x = []
-    y = []
+        if not options.append:
+            writer.writeheader()
+        for row in rows:
+            if row[field1]:
+                val = slope * float(row[field1]) + intercept
+                row[options.column] = val
+            writer.writerow(row)
 
-    rows = list(reader)
-    for row in rows:
-        if row[field1] and row[field2]:
-            row[field1] = float(row[field1])
-            row[field2] = float(row[field2])
-            x.append(row[field1])
-            y.append(row[field2])
-
-    (slope, intercept, r, p, stderr) = scipy.stats.linregress(x, y)
-
-    if corr:
-        print(r)
-        return 0
-
-    print("slope:", slope, "intercept:", intercept, file=sys.stderr)
-    print("corr coeff:", r, "p:", p, "err:", stderr, file=sys.stderr)
-
-    writer.writeheader()
-    for row in rows:
-        if row[field1]:
-            val = slope * float(row[field1]) + intercept
-            if isinstance(writer, writer_type):
-                row.append(val)
-            else:
-                row[field3] = val
-        writer.writerow(row)
     return 0
 
-def usage():
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())
