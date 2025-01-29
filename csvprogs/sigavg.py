@@ -64,6 +64,7 @@ def main():
                         default=-1e308, type=float)
     parser.add_argument("-M", "--maxval", help="upper threshold",
                         default=1e308, type=float)
+    parser.add_argument("--format", help="time format", default="%H:%M")
     options, args = parser.parse_known_args()
 
     times = {}
@@ -82,10 +83,11 @@ def main():
             if val < options.minval or val > options.maxval:
                 continue
             now = dateutil.parser.parse(row[options.x]).time()
-            total, n = times.get(now, (0.0, 0))
+            nowfmt = now.strftime(options.format)
+            total, n = times.get(nowfmt, (0.0, 0))
             total += val
             n += 1
-            times[now] = (total, n)
+            times[nowfmt] = (total, n)
         for t in sorted(times):
             total, n = times[t]
             writer.writerow(
