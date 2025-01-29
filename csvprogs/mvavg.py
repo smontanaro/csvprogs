@@ -52,73 +52,63 @@ SEE ALSO
 * mpl
 """
 
-import sys
-import getopt
-import os
 import csv
+import os
+import sys
+
+from csvprogs.common import CSVArgParser, openio, usage
+
 
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "n:f:s:o:hw")
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-c", "--column", default="mean",
+                        help="output column name")
+    parser.add_argument("-f", "--field", help="input column name",
+                        required=True)
+    parser.add_argument("-w", "--weighted", default=False, action="store_true",
+                        help="weight more recent values")
+    parser.add_argument("-n", "--length", default=5, type=int,
+                        help="length of moving average window")
+    options, args = parser.parse_known_args()
 
-    outcol = ""
-    weighted = False
-    length = 5
-    field = None
-    sep = ","
-    for opt, arg in opts:
-        if opt == "-n":
-            length = int(arg)
-        elif opt == "-f":
-            field = arg
-        elif opt == "-s":
-            sep = arg
-        elif opt == "-o":
-            outcol = arg
-        elif opt == "-w":
-            weighted = True
-        elif opt == "-h":
-            usage()
-            return 0
-
-    if field is None:
-        usage("field name is required.")
-        return 1
 
     nan = float('nan')
-    outcol = outcol if outcol else ("wma" if weighted else "mean")
-    elts = [None] * length
-    rdr = csv.DictReader(sys.stdin, delimiter=sep)
-    fnames = rdr.fieldnames[:]
-    fnames.append(outcol)
-    wtr = csv.DictWriter(sys.stdout, delimiter=sep, fieldnames=fnames)
-    wtr.writeheader()
-    coeffs = [1] * length if not weighted else list(range(length, 0, -1))
-    for row in rdr:
-        if row[field]:
-            elts.append(float(row[field]))
-            del elts[0]
-        else:
-            # restart mv avg calc
-            elts = [None] * length
-        if None not in elts:
-            val = avg(elts, coeffs)
-        else:
-            val = nan
-        row[outcol] = val
-        wtr.writerow(row)
+    elts = [None] * options.length
+
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        rdr = csv.DictReader(inf, delimiter=options.insep)
+        wtr = csv.DictWriter(outf, delimiter=options.outsep,
+            fieldnames=rdr.fieldnames+[options.column])
+        if not options.append:
+            wtr.writeheader()
+        coeffs = ([1] * options.length
+            if not options.weighted
+            else list(range(options.length, 0, -1)))
+        for row in rdr:
+            if row[options.field]:
+                elts.append(float(row[options.field]))
+                del elts[0]
+            else:
+                # restart mv avg calc
+                elts = [None] * options.length
+            if None not in elts:
+                val = avg(elts, coeffs)
+            else:
+                val = nan
+            row[options.column] = val
+            wtr.writerow(row)
     return 0
 
 def avg(elts, coeffs):
-    num = sum([c * e for (c, e) in zip(coeffs, elts)])
+    num = sum(c * e for (c, e) in zip(coeffs, elts))
     den = sum(coeffs[:len(elts)])
     return num / den
 
-def usage(msg=None):
-    if msg:
-        print(msg, file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())

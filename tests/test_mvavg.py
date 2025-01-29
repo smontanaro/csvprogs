@@ -84,7 +84,7 @@ date,weight,hr,O2
 
     def test_cli(self):
         result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.mvavg",
-            "-f", "weight", "-n", "5", "-o", "mean"], check=True,
+            "-f", "weight", "-n", "5", "--column", "mean"], check=True,
             stdout=subprocess.PIPE, stderr=None,
             input=bytes(self.input_data, encoding="utf-8"))
         assert result.returncode == 0
