@@ -169,7 +169,7 @@ def build_compare_func(args, verbose=False, keys=()):
         if args[1] == "match":
             # args[0] must match args[2], e.g.:
             #    re.match(args[2], row[args[0]], re.I) is not None
-            func.append(f"(re.match({args[2]!r}, row[{args[0]!r}], re.I) is not None)")
+            func.append(f"(re.match(str({args[2]!r}), str(row[{args[0]!r}]), re.I) is not None)")
             if verbose:
                 eprint(repr(func[-1]))
             del args[0:3]
