@@ -1,4 +1,7 @@
 
+import glob
+
+
 # All files relative to top of git repo
 NVDA = "./tests/data/NVDA.csv"
 SPY_ATR = "./tests/data/SPY-atr.csv"
@@ -13,3 +16,5 @@ RANDOM_CSV = "./tests/data/RANDOM.csv"
 
 # Excel file with date column explicitly defined as dates
 XLS_DATE = "./tests/data/xl-date.xls"
+
+IWY_CSVS = glob.glob("./tests/data/IWY-?.csv")
