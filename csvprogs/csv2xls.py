@@ -42,14 +42,14 @@ SEE ALSO
 """
 
 import csv
-from locale import setlocale, LC_ALL, atof, atoi
+from locale import setlocale, LC_ALL
 import os
 import sys
 
-import dateutil.parser
 import openpyxl
 
-from csvprogs.common import CSVArgParser, usage
+from csvprogs.common import CSVArgParser, usage, type_convert
+
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
 def main():
@@ -82,27 +82,9 @@ def populate_sheet_from_csv(sheet, csvf, encoding):
         for row in rdr:
             sheet_row = []
             for cell in row:
-                sheet_row.append(type_convert(cell))
+                sheet_row.append(type_convert(cell, keep_tz=False))
             sheet.append(sheet_row)
 
-def type_convert(cell):
-    """Try to coerce a cell's value into various Python types.
-
-    The order of attack is: int, float, datetime. If all attempts
-    to convert the cell value fail, it is returned unchanged.
-    """
-
-    for cvt in (atoi, atof, dateutil.parser.parse):
-        try:
-            result = cvt(cell)
-        except ValueError:
-            pass
-        else:
-            if hasattr(result, "tzinfo"):
-                result = result.replace(tzinfo=None)
-            return result
-    # nothing matched, punt...
-    return cell
 
 
 if __name__ == "__main__":
