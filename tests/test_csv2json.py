@@ -28,9 +28,9 @@ def test_cli():
 def test_cli_array():
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
         "-t", "datetime,float,float,float,float,float,float,int",
-        "-a", "-H", VRTX_CSV],
+        "--array", "-H", VRTX_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert result.returncode == 0
     converted = json.loads(result.stdout.decode("utf-8"))
-    assert converted[0][3] == "Low"
-    assert converted[-1][-1] == 790881
+    assert converted[0][3] == "Low", converted[0]
+    assert converted[-1][-1] == 790881, converted[-1]

@@ -20,13 +20,12 @@ Extract fields from a CSV file, output JSON
 SYNOPSIS
 ========
 
- %(PROG)s -f f1,f2,f3,... [ options ] [ infile [ outfile ] ]
+ %(PROG)s [ -f f1,f2,f3,... ] [ options ] [ infile [ outfile ] ]
 
 OPTIONS
 =======
 
 -f names   comma-separated list of field names to dump
--i sep     alternate input field separator (default is a comma)
 -t types   comma-separated list of types for the input data - valid
            values are 'int', 'float', 'date', 'time', 'datetime', 'str'.
            If given, length of this list must match the length of the
@@ -34,14 +33,14 @@ OPTIONS
            types may also offer a default value, for instance, "float:0". If
            the type converter raises an exception, the default value will be
            returned.
--a         emit rows as arrays, not dicts - array elements will be ordered
+--array    emit rows as arrays, not dicts - array elements will be ordered
            by order of field names on input.
--H         emit header if -a was given.
+-H         emit header if --array was given.
 
 If -f isn't given, all fields in the CSV file will be dumped.
 
 if given, infile specifies the input CSV file (default: stdin)
-if given, outfile specifies the output CSV file (default: stdout)
+if given, outfile specifies the output JSON file (default: stdout)
 
 DESCRIPTION
 ===========
@@ -57,7 +56,7 @@ Extract just the time and price fields from a CSV file.
 
 Generate a Python list of lists from the input CSV file.
 
-  csv2json -a -H < somefile.csv
+  csv2json --array -H < somefile.csv
 
 (This might be handy for generating unit test data from CSV
 files. Just sayin'...)
@@ -68,7 +67,6 @@ SEE ALSO
 * csv2csv
 """
 
-import argparse
 import csv
 import json
 import locale
@@ -77,13 +75,10 @@ import sys
 
 import dateutil.parser
 
+from csvprogs.common import CSVArgParser, openio, usage
+
 PROG = os.path.split(sys.argv[0])[1]
 
-def usage(msg=None):
-    if msg is not None:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print((__doc__.strip() % globals()), file=sys.stderr)
 
 def datetime(s):
     dt = dateutil.parser.parse(s)
@@ -105,28 +100,21 @@ TYPES = {
 NO_DEFAULT = object()
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
     parser.add_argument("-f", "--fields", dest="inputfields", default=None,
                         help="fields to emit (default all fields)")
     parser.add_argument("-t", "--types", dest="typenames", default=None,
                         help="type converters for emitted fields")
-    parser.add_argument("-i", "--insep", dest="insep", default=",",
-                        help="input field separator (default ',')")
-    parser.add_argument("-a", "--array", dest="emit_arrays", default=False,
+    parser.add_argument("--array", dest="emit_arrays", default=False,
                         action="store_true",
                         help="emit arrays instead of objects")
     parser.add_argument("-H", "--header", dest="array_header", default=False,
                         action="store_true",
                         help="when emitting arrays, also emit a header array")
-    parser.add_argument("--fullhelp", dest="full_help", action="store_true",
-                        default=False, help="display full usage")
     parser.add_argument("--locale", default='en_US.UTF-8',
                         help="locale for type converting numbers")
     (options, args) = parser.parse_known_args()
 
-    if options.full_help:
-        usage()
-        return 0
     options.inputfields = (options.inputfields.split(",")
                                if options.inputfields
                                else [])
@@ -136,30 +124,22 @@ def main():
 
     locale.setlocale(locale.LC_ALL, options.locale)
 
-    if len(args) > 2:
-        usage(sys.argv[0])
-        return 1
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) ==2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
 
-    if len(args) >= 1:
-        inf = open(args[0], "r")
-    else:
-        inf = sys.stdin
-    if len(args) == 2:
-        outf = open(args[1], "w")
-    else:
-        outf = sys.stdout
+        if not options.inputfields:
+            options.inputfields = reader.fieldnames
 
-    reader = csv.DictReader(inf, delimiter=options.insep)
-    if not options.inputfields:
-        options.inputfields = reader.fieldnames
+        try:
+            generate_type_converters(options)
+        except ValueError as exc:
+            print(usage(__doc__, globals(), msg=exc.args), file=sys.stderr)
+            return 1
 
-    try:
-        generate_type_converters(options)
-    except ValueError as exc:
-        usage(exc.args)
-        return 1
-
-    return translate(reader, options, outf)
+        return translate(reader, options, outf)
 
 def generate_type_converters(options):
     "parse typename:default information"
@@ -180,8 +160,8 @@ def generate_type_converters(options):
             types[field] = typ
             defaults[field] = dflt
         result = {}
-        for field in types:
-            result[field] = (types[field], defaults[field])
+        for field, value in types.items():
+            result[field] = (value, defaults[field])
         options.typenames = result
 
 def translate(reader, options, outf):
