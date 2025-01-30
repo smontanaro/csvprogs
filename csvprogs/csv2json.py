@@ -69,7 +69,7 @@ SEE ALSO
 
 import csv
 import json
-import locale
+from locale import setlocale, LC_ALL, atoi, atof
 import os
 import sys
 
@@ -88,8 +88,8 @@ def datetime(s):
 date = time = datetime
 
 TYPES = {
-    'int': locale.atoi,
-    'float': locale.atof,
+    'int': atoi,
+    'float': atof,
     'date': date,
     'time': time,
     'datetime': datetime,
@@ -111,8 +111,6 @@ def main():
     parser.add_argument("-H", "--header", dest="array_header", default=False,
                         action="store_true",
                         help="when emitting arrays, also emit a header array")
-    parser.add_argument("--locale", default='en_US.UTF-8',
-                        help="locale for type converting numbers")
     (options, args) = parser.parse_known_args()
 
     options.inputfields = (options.inputfields.split(",")
@@ -122,7 +120,7 @@ def main():
                                if options.typenames
                                else [])
 
-    locale.setlocale(locale.LC_ALL, options.locale)
+    setlocale(LC_ALL, options.locale)
 
     mode = "a" if options.append else "w"
     with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
