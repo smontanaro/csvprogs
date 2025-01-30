@@ -10,7 +10,14 @@ import argparse
 from contextlib import contextmanager
 from functools import partial
 import io
+from locale import getlocale, atoi, atof
 import os
+
+import dateutil.parser
+
+
+LOCALE = ".".join(getlocale())
+
 
 class CSVArgParser(argparse.ArgumentParser):
     "ArgumentParser with some behavior common to all CSV progs/data filters"
@@ -21,7 +28,7 @@ class CSVArgParser(argparse.ArgumentParser):
 
     def add_common_args(self):
         "Add arguments to the parser which are common to all tools"
-        self.add_argument("-l", "--locale", dest="locale", default="en_US.UTF-8",
+        self.add_argument("-l", "--locale", dest="locale", default=LOCALE,
                           help="input field delimiter")
         self.add_argument("-i", "--insep", dest="insep", default=",",
                           help="input field delimiter")
@@ -67,3 +74,25 @@ def swallow_exceptions(exceptions):
         pass
     finally:
         pass
+
+def type_convert(string, keep_tz=True):
+    """Try to coerce a string value into various Python types.
+
+    The order of attack is: int, float, datetime. If all attempts
+    to convert the cell value fail, it is returned unchanged.
+
+    If keep_tz is True and the result is a datetime object, the tzinfo
+    field will be cleared.
+    """
+
+    for cvt in (atoi, atof, dateutil.parser.parse):
+        try:
+            result = cvt(string)
+        except ValueError:
+            pass
+        else:
+            if hasattr(result, "tzinfo") and not keep_tz:
+                result = result.replace(tzinfo=None)
+            return result
+    # nothing matched, punt...
+    return string
