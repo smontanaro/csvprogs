@@ -29,9 +29,10 @@ SEE ALSO
 
 """
 
-import argparse
 import csv
 import sys
+
+from csvprogs.common import CSVArgParser, usage, swallow_exceptions
 
 
 def cat(files, key):
@@ -53,16 +54,16 @@ def cat(files, key):
 
 def main():
     "see __doc__"
-    parser = argparse.ArgumentParser(description=__doc__.strip(),
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
     parser.add_argument("--key", "-k", required=True,
                         help="key field for the merge operation")
     parser.add_argument("files", nargs="+", help="list of input files")
-    args = parser.parse_args()
+    options = parser.parse_args()
 
-    cat(args.files, args.key)
+    cat(options.files, options.key)
 
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    with swallow_exceptions((BrokenPipeError, KeyboardInterrupt)):
+        sys.exit(main())
