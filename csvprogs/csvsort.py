@@ -36,54 +36,39 @@ To sort stdin by date and time::
 
 import sys
 import csv
-import getopt
 import os
 
-PROG = os.path.splitext(os.path.split(sys.argv[0])[1])[0]
+from csvprogs.common import CSVArgParser, openio, usage, swallow_exceptions
 
-def usage(msg=None):
-    if msg is not None:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print((__doc__.strip() % globals()), file=sys.stderr)
+
+PROG = os.path.basename(sys.argv[0])
+
 
 def main():
-    keys = []
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-k", "--keys", required=True,
+                        help="sort keys")
+    parser.add_argument("-s", "--strip", default=False, action='store_true',
+                        help="strip values in key function")
+    options, args = parser.parse_known_args()
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "k:hs")
-    except getopt.GetoptError as msg:
-        usage(msg)
-        return 1
-
-    strip = False
-    for opt, arg in opts:
-        if opt == "-k":
-            keys = arg.split(",")
-        elif opt == "-h":
-            usage()
-            return 0
-        if opt == "-s":
-            strip = True
-
-    if len(args) > 1:
-        usage("Too many input files")
-        return 1
+    options.keys = options.keys.split(",")
 
     def keyfunc(x):
-        return [(x[k].strip() if strip else x[k]) for k in keys]
+        return [(x[k].strip() if options.strip else x[k]) for k in options.keys]
 
-    with open(args[0] if args else "/dev/stdin", encoding="utf-8") as fobj:
-        reader = csv.DictReader(fobj)
-        fields = reader.fieldnames
-        try:
-            writer = csv.DictWriter(sys.stdout, fieldnames=fields, restval="")
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        writer = csv.DictWriter(outf, fieldnames=reader.fieldnames, delimiter=options.outsep)
+        if not options.append:
             writer.writeheader()
-            writer.writerows(sorted(reader, key=keyfunc))
-        except (KeyboardInterrupt, BrokenPipeError):
-            pass
+        writer.writerows(sorted(reader, key=keyfunc))
 
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    with swallow_exceptions((BrokenPipeError, KeyboardInterrupt)):
+        sys.exit(main())
