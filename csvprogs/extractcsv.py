@@ -111,33 +111,50 @@ SEE ALSO
 """
 
 import csv
-import getopt
+from locale import setlocale, LC_ALL
 import os
 import sys
 
+from csvprogs.common import CSVArgParser, usage, type_convert
+
+
 PROG = os.path.split(sys.argv[0])[1]
 
-def usage(msg=None):
-    if msg is not None:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print((__doc__.strip() % globals()), file=sys.stderr)
-
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "hv")
-    verbose = False
-    for opt, _arg in opts:
-        if opt == "-h":
-            usage()
-            return 0
-        if opt == "-v":
-            verbose = True
+    parser = CSVArgParser(usage=usage("__doc__", globals()))
+    options, args = parser.parse_known_args()
 
+    setlocale(LC_ALL, options.locale)
 
-    # Build a comparison function from the remaining cmdline args
+    rdr = csv.DictReader(sys.stdin)
+    func = build_compare_func(args, verbose=options.verbose, keys=rdr.fieldnames)
+    wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames)
+    if not options.append:
+        wtr.writeheader()
+    for row in rdr:
+        mods = {}
+        for key in row:
+            cvt = type_convert(row[key])
+            if cvt != row[key]:
+                mods[key] = cvt
+        row.update(mods)
+        if options.verbose:
+            eprint(row, func(row))
+        if func(row):
+            wtr.writerow(row)
+
+    return 0
+
+def build_compare_func(args, verbose=False, keys=()):
+    "Build a comparison function from cmdline args"
+
+    keys = set(keys)
     func = ["def compare_func(row):\n",
             "    import re\n",
             "    return ( "]
+
+    for (i, arg) in enumerate(args):
+        args[i] = type_convert(arg)
 
     while args:
         # Expect the start of a constraint, a paren or the words "and"
@@ -160,30 +177,28 @@ def main():
 
         # Now we know we must find a constraint.  It must consume the
         # next three tokens.
-        func.append(f"(row[{args[0]!r}] {args[1]} {args[2]!r})")
+        if args[0] in keys:
+            args[0] = f"row[{args[0]!r}]"
+        if args[2] in keys:
+            args[2] = f"row[{args[2]!r}]"
+
+        func.append(f"({args[0]} {args[1]} {args[2]})")
         if verbose:
             eprint(repr(func[-1]))
         del args[0:3]
 
     func.append(" )\n")
     func = "".join(func)
+    if verbose:
+        eprint(func)
     # We've now built a function.  Compile the code and proceed.
 
     glbls = {}
     # pylint: disable=exec-used
     exec(func, glbls)
-    func = glbls["compare_func"]
 
-    rdr = csv.DictReader(sys.stdin)
-    wtr = csv.DictWriter(sys.stdout, fieldnames=rdr.fieldnames)
-    wtr.writeheader()
-    for row in rdr:
-        if verbose:
-            eprint(row, func(row))
-        if func(row):
-            wtr.writerow(row)
+    return glbls["compare_func"]
 
-    return 0
 
 def eprint(*args, file=sys.stderr, **kwds):
     print(*args, file=file, **kwds)
