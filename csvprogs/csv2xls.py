@@ -41,50 +41,49 @@ SEE ALSO
 * csv2csv
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import csv
-import getopt
+from locale import setlocale, LC_ALL, atof, atoi
 import os
 import sys
 
 import dateutil.parser
-import xlwt
+import openpyxl
 
+from csvprogs.common import CSVArgParser, usage
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "h")
-    for opt, _arg in opts:
-        if opt == "-h":
-            usage()
-            return 0
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    options, csvfiles = parser.parse_known_args()
 
-    csvfiles = args
     if not csvfiles:
-        usage("At least one CSV file is required.")
+        print(usage(__doc__, globals(), msg="At least one CSV file is required."),
+              file=sys.stderr)
         return 1
 
-    book = xlwt.Workbook(encoding="utf-8")
+    setlocale(LC_ALL, options.locale)
+
+    book = openpyxl.Workbook()
+    # creating a workbook creates an empty initial worksheet named "Sheet". Get rid of it.
+    del book["Sheet"]
     for csvf in csvfiles:
-        append_sheet_from_csv(book, csvf)
-    book.save(sys.stdout)
+        append_sheet_from_csv(book, csvf, options.encoding)
+    book.save("/dev/stdout")
 
     return 0
 
-def append_sheet_from_csv(book, csvf):
-    sheet = book.add_sheet(csvf.replace("/", "_"))
-    populate_sheet_from_csv(sheet, csvf)
+def append_sheet_from_csv(book, csvf, encoding):
+    sheet = book.create_sheet(title=os.path.basename(csvf).replace("/", "_"))
+    populate_sheet_from_csv(sheet, csvf, encoding)
 
-def populate_sheet_from_csv(sheet, csvf):
-    rdr = csv.reader(open(csvf, "r"))
-    r = 0
-    for row in rdr:
-        c = 0
-        for cell in row:
-            sheet.write(r, c, label=type_convert(cell))
-            c += 1
-        r += 1
+def populate_sheet_from_csv(sheet, csvf, encoding):
+    with open(csvf, "r", encoding=encoding) as inf:
+        rdr = csv.reader(inf)
+        for row in rdr:
+            sheet_row = []
+            for cell in row:
+                sheet_row.append(type_convert(cell))
+            sheet.append(sheet_row)
 
 def type_convert(cell):
     """Try to coerce a cell's value into various Python types.
@@ -93,17 +92,18 @@ def type_convert(cell):
     to convert the cell value fail, it is returned unchanged.
     """
 
-    for cvt in (int, float, dateutil.parser.parse):
+    for cvt in (atoi, atof, dateutil.parser.parse):
         try:
-            return cvt(cell)
+            result = cvt(cell)
         except ValueError:
             pass
+        else:
+            if hasattr(result, "tzinfo"):
+                result = result.replace(tzinfo=None)
+            return result
+    # nothing matched, punt...
     return cell
 
-def usage(msg=""):
-    if msg:
-        print(msg.rstrip(), file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())
