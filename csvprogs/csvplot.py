@@ -180,9 +180,10 @@ import warnings
 import dateutil.parser
 import numpy
 import matplotlib.dates
+from  matplotlib import pyplot
 import matplotlib.ticker
 from public import public, private
-import pylab
+
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -359,7 +360,7 @@ def main():
 
     if options.use_xkcd:
         try:
-            matplotlib.pyplot.xkcd()
+            pyplot.xkcd()
         except AttributeError:
             print("XKCD style not available.", file=sys.stderr)
         else:
@@ -377,10 +378,10 @@ def main():
 
     # callable module function goes here...
 
-    plot(options, rdr)
+    plot(options, rdr, block=True)
 
 @public
-def plot(options, rdr):
+def plot(options, rdr, block=False):
     "guts of the plotter"
     raw = list(rdr)
     left = []
@@ -408,7 +409,7 @@ def plot(options, rdr):
             if not xfmt:
                 # Calculate X format dynamically based on the visible
                 # range.
-                left, right = [matplotlib.dates.num2date(x) for x in pylab.xlim()]
+                left, right = [matplotlib.dates.num2date(x) for x in pyplot.xlim()]
                 x_delta = right - left
                 if x_delta > int(5 * 365) * ONE_DAY:
                     xfmt = "%Y"
@@ -489,14 +490,14 @@ def plot(options, rdr):
         print("No points to plot!", file=sys.stderr)
         return 1
 
-    figure = pylab.figure(figsize=options.dims)
+    figure = pyplot.figure(figsize=options.dims)
     if options.xtime:
         figure.autofmt_xdate()
 
     left_plot = figure.add_subplot(111)
     left_plot.set_title(options.title)
     left_plot.set_axisbelow(True)
-    left_plot.yaxis.set_major_formatter(pylab.FormatStrFormatter('%g'))
+    left_plot.yaxis.set_major_formatter(pyplot.FormatStrFormatter('%g'))
     left_plot.xaxis.set_major_formatter(formatter)
     # Somebody below me generates a label named "_child0", which causes
     # Matplotlib (I think) to spit out a warning.  Suppress that.
@@ -538,7 +539,7 @@ def plot(options, rdr):
     if right:
         right_plot = left_plot.twinx()
         right_plot.set_axisbelow(True)
-        right_plot.yaxis.set_major_formatter(pylab.FormatStrFormatter('%g'))
+        right_plot.yaxis.set_major_formatter(pyplot.FormatStrFormatter('%g'))
         right_plot.xaxis.set_major_formatter(formatter)
         if options.right_label:
             right_plot.set_ylabel(options.right_label, color=right[0][1])
@@ -592,9 +593,9 @@ def plot(options, rdr):
 
     figure.tight_layout()
     if options.plot_file:
-        pylab.savefig(options.plot_file)
+        pyplot.savefig(options.plot_file)
     else:
-        pylab.show()
+        pyplot.show(block=block)
 
     return 0
 
