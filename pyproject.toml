@@ -24,7 +24,6 @@ classifiers = [
 ]
 dependencies = [
     "atpublic>=3.1",
-    "click>=8.1.8",
     "matplotlib>=3.5.2",
     "numpy>=1.22",
     "pandas>=1.5.2",
