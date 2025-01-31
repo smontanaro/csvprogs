@@ -198,6 +198,7 @@ class Options:
     "container for all the flags"
     backend: str = ""
     bkgds: list = dataclasses.field(default_factory=list)
+    block: bool = True
     dims: tuple = (8, 6)
     do_legend: bool = True
     fields: list = dataclasses.field(default_factory=list)
@@ -243,6 +244,8 @@ def main():
                                 "separator=",
                                 "verbose=",
                                 "x_label",
+                                "block", # just for testing
+                                "noblock", # just for testing
                                 ])
     for opt, arg in opts:
         if opt in ("-B", "--backend"):
@@ -312,6 +315,10 @@ def main():
             options.x_label = arg
         elif opt == "--xkcd":
             options.use_xkcd = True
+        elif opt == "--noblock":
+            options.block = False
+        elif opt == "--block":
+            options.block = True
         elif opt in ("-v", "--verbose"):
             options.verbose = True
         elif opt in ("-Y", "--y_range"):
@@ -378,7 +385,7 @@ def main():
 
     # callable module function goes here...
 
-    plot(options, rdr, block=True)
+    plot(options, rdr, block=options.block)
 
 @public
 def plot(options, rdr, block=False):
@@ -623,7 +630,7 @@ def color_bkgd(bkgds, plot_, y_range, raw_data, parse_x):
         if low == high:
             mask = low == numpy.array(ydata)
         else:
-            mask = low <= numpy.array(ydata) < high
+            mask = (low <= numpy.array(ydata)) & (numpy.array(ydata) < high)
         plot_.fill_between(xdata, y_range[0], y_range[1],
                            edgecolor=color, facecolor=color,
                            where=mask)
