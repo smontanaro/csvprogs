@@ -17,13 +17,15 @@ def test_plot():
         pyplot.close()
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
-            '-f', 'time,last,l,r', '-f', 'time,bid,r,b', "--noblock"],
-            stdout=subprocess.PIPE, stderr=None, input=open(NVDA, "rb").read())
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot", "-l", "legend",
+        '-f', 'time,last,l,r', '-f', 'time,bid,r,b', "--noblock", "--left_label", "left",
+        "-b", "time,last,135.07,lightgreen", "--format", "%Y-%m"],
+        stdout=subprocess.PIPE, stderr=None, input=open(NVDA, "rb").read())
     assert result.returncode == 0
 
 def test_cli_bg():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
-            '-f', 'Date,Close,l,r', "-b", "Date,% Change,-1:+1,lightgreen", "--noblock"],
-            stdout=subprocess.PIPE, stderr=None, input=open(VRTX_CSV, "rb").read())
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot", "-L",
+        '-f', 'Date,Close,l,r', "-b", "Date,% Change,-1:+1,lightgreen", "--noblock",
+        "--right_label", "right", "-B", "Agg"],
+        stdout=subprocess.PIPE, stderr=None, input=open(VRTX_CSV, "rb").read())
     assert result.returncode == 0
