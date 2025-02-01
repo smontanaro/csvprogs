@@ -52,14 +52,12 @@ SEE ALSO
 
 """
 
+from contextlib import suppress
 import csv
 import getopt
 import math
 import os
-import pprint
 import sys
-
-from csvprogs.common import swallow_exceptions
 
 
 PROG = os.path.basename(sys.argv[0])
@@ -129,7 +127,6 @@ def main():
     return 0
 
 def wma(elts, coeffs):
-    #pprint.pprint([elts, coeffs], stream=sys.stderr)
     num = sum(c * e for (c, e) in zip(coeffs, elts))
     den = sum(coeffs[:len(elts)])
     return num / den
@@ -140,5 +137,5 @@ def usage(msg=None):
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    with swallow_exceptions((BrokenPipeError, KeyboardInterrupt)):
+    with suppress((BrokenPipeError,)):
         sys.exit(main())
