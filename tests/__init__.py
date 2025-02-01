@@ -19,3 +19,5 @@ RANDOM_CSV = "./tests/data/RANDOM.csv"
 XLS_DATE = "./tests/data/xl-date.xls"
 
 IWY_CSVS = glob.glob("./tests/data/IWY-?.csv")
+
+BATCH_EX = "./tests/data/batch-example.csv"
