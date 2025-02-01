@@ -59,6 +59,9 @@ import os
 import pprint
 import sys
 
+from csvprogs.common import swallow_exceptions
+
+
 PROG = os.path.basename(sys.argv[0])
 
 def main():
@@ -137,4 +140,5 @@ def usage(msg=None):
     print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    with swallow_exceptions((BrokenPipeError, KeyboardInterrupt)):
+        sys.exit(main())
