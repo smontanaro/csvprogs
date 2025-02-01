@@ -29,10 +29,11 @@ SEE ALSO
 
 """
 
+from contextlib import suppress
 import csv
 import sys
 
-from csvprogs.common import CSVArgParser, usage, swallow_exceptions
+from csvprogs.common import CSVArgParser, usage
 
 
 def cat(files, key):
@@ -65,5 +66,5 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    with swallow_exceptions((BrokenPipeError, KeyboardInterrupt)):
+    with suppress((BrokenPipeError, KeyboardInterrupt)):
         sys.exit(main())

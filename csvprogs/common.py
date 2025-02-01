@@ -65,16 +65,6 @@ def usage(docstring, global_dict, msg=None):
     print(docstring % global_dict, file=output)
     return output.getvalue()
 
-@contextmanager
-def swallow_exceptions(exceptions):
-    "catch and swallow the tuple of exceptions"
-    try:
-        yield None
-    except exceptions:
-        pass
-    finally:
-        pass
-
 def type_convert(string, keep_tz=True):
     """Try to coerce a string value into various Python types.
 

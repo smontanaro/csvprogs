@@ -34,11 +34,12 @@ To sort stdin by date and time::
     %(PROG)s -k 'Date Stamp,Time Stamp'
 """
 
+from contextlib import suppress
 import sys
 import csv
 import os
 
-from csvprogs.common import CSVArgParser, openio, usage, swallow_exceptions
+from csvprogs.common import CSVArgParser, openio, usage
 
 
 PROG = os.path.basename(sys.argv[0])
@@ -70,5 +71,5 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    with swallow_exceptions((BrokenPipeError, KeyboardInterrupt)):
+    with suppress((BrokenPipeError, KeyboardInterrupt)):
         sys.exit(main())

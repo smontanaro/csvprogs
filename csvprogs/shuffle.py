@@ -29,11 +29,12 @@ Note: The entire contents of the input must be read first, so it is not a good
 idea to use this filter with very large files.
 """
 
+from contextlib import suppress
 import os
 import random
 import sys
 
-from csvprogs.common import CSVArgParser, openio, usage, swallow_exceptions
+from csvprogs.common import CSVArgParser, openio, usage
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -56,5 +57,5 @@ def main():
 
 
 if __name__ == "__main__":
-    with swallow_exceptions((BrokenPipeError, KeyboardInterrupt)):
+    with suppress((BrokenPipeError, KeyboardInterrupt)):
         sys.exit(main())
