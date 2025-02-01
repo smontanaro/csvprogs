@@ -19,12 +19,11 @@ compute mean, median, stddev of a series of values
 SYNOPSIS
 ========
 
-  {PROG} [ -H ] -f x ] [ -s sep ] [ -m val ] [ -M val ] [ file ]
+  {PROG} -f x ] [ -s sep ] [ -m val ] [ -M val ] [ file ]
 
 OPTIONS
 =======
 
--H       input has a CSV header
 -f x     average the values in column x (zero-based offset, default 1)
 -s sep   use sep as the field separator (default is comma)
 -m val   discard values below this value (no default)
