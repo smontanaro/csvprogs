@@ -49,8 +49,6 @@ SEE ALSO
 * sigavg
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import getopt
 import os
@@ -58,6 +56,7 @@ import numpy
 import csv
 
 PROG = os.path.basename(sys.argv[0])
+
 
 def main():
     try:
