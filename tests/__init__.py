@@ -11,6 +11,7 @@ SPY_XLS = "./tests/data/SPY.xls"
 SPY_PCK = "./tests/data/SPY.pck"
 SPY_CSV = "./tests/data/SPY.csv"
 
+VRTX_DAILY = "./tests/data/VRTX-daily.csv"
 VRTX_CSV = "./tests/data/VRTX.csv"
 RANDOM_CSV = "./tests/data/RANDOM.csv"
 
