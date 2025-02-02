@@ -24,3 +24,6 @@ BATCH_EX = "./tests/data/batch-example.csv"
 
 HTML_TABLE = "./tests/data/cal.html"
 HTML_CSV = "./tests/data/cal.csv"
+
+SPLIT_IN = "./tests/data/split-in.csv"
+SPLIT_EXP = "./tests/data/split-exp.csv"
