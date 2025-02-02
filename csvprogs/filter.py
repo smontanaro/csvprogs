@@ -19,16 +19,14 @@ Filter input values based upon user-defined function
 SYNOPSIS
 ========
 
- %(PROG)s -f lambda [ -s sep ] [ -k name ] [ -H ]
+ %(PROG)s -f lambda [ -k name ] [ infile [ outfile ] ]
 
 OPTIONS
 =======
 
--s sep      use sep as the field separator (default is comma)
 -f lambda   Python lambda expression which takes the row (split into
             fields) to use as the filter - returns True to print the row,
             False to discard it.
--H          Treat the first line as a header
 -k name     If given, the return value of the lambda function will be
             associated with this key in the output (if input has a
             header). If given but the input has no header, the return
@@ -37,11 +35,10 @@ OPTIONS
 DESCRIPTION
 ===========
 
-Data are read from stdin.  Each row is passed to the user-provided
-lambda expression.  If it returns True, the row is printed to stdout.
-If it returns False, the row is discarded.  Fields which look like
-numbers will be converted automatically.  Timestamps are kept as
-strings.
+Data are read from the given input file or stdin.  Each row is passed to the
+user-provided lambda expression.  If it returns True, the row is printed to the
+output file (or stdout).  If it returns False, the row is discarded.  Fields
+which look like numbers will be converted automatically.
 
 Example:
 
@@ -115,107 +112,58 @@ SEE ALSO
 * mean
 """
 
-import sys
-import getopt
-import os
 import csv
+import os
+import sys
+
+from csvprogs.common import type_convert, CSVArgParser, usage, openio
+
 
 PROG = os.path.basename(sys.argv[0])
 
+
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "f:s:hk:H")
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-f", "--function", required=True,
+                        help="Python lambda expression to use as row filter")
+    parser.add_argument("-k", "--lambda-key", default="",
+                        help="Result of lambda expression evaluation, if given")
+    options, args = parser.parse_known_args()
 
-    func = None
-    sep = ","
-    lambda_key = ""
-    has_header = False
-    for opt, arg in opts:
-        if opt == "-s":
-            sep = arg
-        elif opt == "-f":
-            func = eval(arg)
-        elif opt == "-k":
-            lambda_key = arg
-        elif opt == "-H":
-            has_header = True
-        elif opt == "-h":
-            usage()
-            raise SystemExit
+    # pylint: disable=W0123
+    func = eval(options.function)
 
-    if func is None:
-        usage("lambda expression is required!")
-        return 1
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        fieldnames = reader.fieldnames[:]
+        if options.lambda_key:
+            if options.lambda_key in fieldnames:
+                raise ValueError(f"{options.lambda_key} is already in {fieldnames}")
+            fieldnames.append(options.lambda_key)
+        writer = csv.DictWriter(outf, fieldnames=fieldnames, delimiter=options.outsep)
+        if not options.append:
+            writer.writeheader()
 
-    rdr = csv.reader(sys.stdin)
-    wtr = csv.writer(sys.stdout)
-    first = next(rdr)
-    indexes = None
-    if has_header:
-        # Treat first row as a header.
-        if lambda_key:
-            if lambda_key in first:
-                raise ValueError("%r is already in %s" % (lambda_key, first))
-            first.append(lambda_key)
-        rdr = csv.DictReader(sys.stdin, fieldnames=first, restval="")
-        wtr = csv.DictWriter(sys.stdout, fieldnames=first)
-        wtr.writerow(dict(list(zip(first, first))))
-        indexes = enumerate(first)
+        for row in reader:
+            type_convert_row(row)
 
-    for row in rdr:
-        type_convert(row)
-
-        if has_header:
             eff_row = row.copy()
-            for index, key in indexes:
-                eff_row[index] = eff_row[key]
             val = func(eff_row)
-            if lambda_key:
-                row[lambda_key] = val
-                wtr.writerow(row)
-            elif val:
-                wtr.writerow(row)
-        else:
-            val = func(row)
-            if lambda_key:
-                row.append(val)
-                wtr.writerow(row)
-            elif val:
-                wtr.writerow(row)
+            if options.lambda_key:
+                row[options.lambda_key] = val
+            if val:
+                writer.writerow(row)
 
     return 0
 
-def no_floats(row):
-    for elt in row:
-        try:
-            float(elt)
-        except ValueError:
-            pass
-        else:
-            return False
-    return True
 
-def type_convert(row):
-    if isinstance(row, dict):
-        for k in row:
-            row[k] = floatify(row[k])
-    else:
-        for i in range(len(row)):
-            row[i] = floatify(row[i])
+def type_convert_row(row):
+    for k in row:
+        row[k] = type_convert(row[k])
 
-def floatify(val):
-    try:
-        val = int(val)
-    except ValueError:
-        try:
-            val = float(val)
-        except ValueError:
-            pass
-    return val
-
-def usage(msg=""):
-    if msg:
-        print(msg, file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())
