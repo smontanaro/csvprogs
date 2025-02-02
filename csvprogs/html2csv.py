@@ -19,7 +19,7 @@ Convert an HTML table (stdin) to CSV form (stdout).
 SYNOPSIS
 ========
 
- %(PROG)s [ -s n ]
+ %(PROG)s [ -s n ] [ infile [ outfile ] ]
 
 OPTIONS
 =======
@@ -28,6 +28,9 @@ OPTIONS
 
 DESCRIPTION
 ===========
+
+Find the n-th table in the input file (or stdin) and write the cell data to
+output file (or stdout).
 
 SEE ALSO
 ========
@@ -44,19 +47,21 @@ from html.parser import HTMLParser
 import os
 import sys
 
+from csvprogs.common import CSVArgParser, usage, openio
+
+
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 EPOCH = datetime.datetime.fromtimestamp(0)
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = CSVArgParser(usage=usage("__doc__", globals()))
     parser.add_argument("-t", "--table", dest="table", default=1,
                         type=int)
-    parser.add_argument("-v", "--verbose", dest="verbose", default=False,
-                        action="store_true")
     (options, args) = parser.parse_known_args()
 
-    with (open(args[0], "r", encoding="utf-8") if len(args) >= 1 else sys.stdin as inf,
-          open(args[1], "w", encoding="utf-8") if len(args) == 2 else sys.stdout as outf):
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, "a",
+                encoding=options.encoding) as (inf, outf):
         tbl_parser = TableParser(options.table, options.verbose)
         for line in inf:
             tbl_parser.feed(line)
