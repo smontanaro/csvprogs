@@ -21,3 +21,6 @@ XLS_DATE = "./tests/data/xl-date.xls"
 IWY_CSVS = glob.glob("./tests/data/IWY-?.csv")
 
 BATCH_EX = "./tests/data/batch-example.csv"
+
+HTML_TABLE = "./tests/data/cal.html"
+HTML_CSV = "./tests/data/cal.csv"
