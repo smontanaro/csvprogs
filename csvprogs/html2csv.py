@@ -54,7 +54,7 @@ PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 EPOCH = datetime.datetime.fromtimestamp(0)
 
 def main():
-    parser = CSVArgParser(usage=usage("__doc__", globals()))
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
     parser.add_argument("-t", "--table", dest="table", default=1,
                         type=int)
     (options, args) = parser.parse_known_args()

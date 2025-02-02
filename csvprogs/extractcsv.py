@@ -121,7 +121,7 @@ from csvprogs.common import CSVArgParser, usage, type_convert
 PROG = os.path.split(sys.argv[0])[1]
 
 def main():
-    parser = CSVArgParser(usage=usage("__doc__", globals()))
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
     options, args = parser.parse_known_args()
 
     setlocale(LC_ALL, options.locale)
