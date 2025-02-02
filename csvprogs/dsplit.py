@@ -19,18 +19,17 @@ split CSV on dates, generating new CSV with multiple columns
 SYNOPSIS
 ========
 
-  %(PROG)s [ -f field ] [ -o field ] [ -p pattern ] [ -S pattern ] [ -s sep ]
+  %(PROG)s [ -f field ] [ -o field ] [ -p pattern ] [ -S pattern ]
 
 OPTIONS
 =======
 
--f field    split this field (not present in the output)
--o field    new output field name
--p pattern  split pattern on the input field (using strptime(3) format
-            specifiers, default: %Y-%m-%d)
--S pattern  output pattern (default: |%Y|%m-%d - see details below)
--t field    scatter this field over the new output columns (no default)
--s sep      use sep as the field separator (default is comma)
+-f field          split this field (not present in the output)
+--output field    new output field name
+-p pattern        split pattern on the input field (using strptime(3) format
+                  specifiers, default: %Y-%m-%d)
+-S pattern        output pattern (default: |%Y|%m-%d - see details below)
+-t field          scatter this field over the new output columns (no default)
 
 DESCRIPTION
 ===========
@@ -85,54 +84,57 @@ day,2020,2021,2022,2023,2024
 01-06,181.0,181.0,182.6,190.6,189.8
 """
 
-import argparse
 import csv
 import datetime
 import os
 import sys
 
+from csvprogs.common import CSVArgParser, usage, openio
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    parser = argparse.ArgumentParser(prog=f"{PROG}")
+    # haven't figured out what isn't fine with stuff like %%Y...
+    parser = CSVArgParser()#usage=usage(__doc__, globals()))
     parser.add_argument("--field", "-f", default="date",
                         help="date field to split")
-    parser.add_argument("--output", "-o", default="day",
+    parser.add_argument("--output", default="day",
                         help="output key name")
-    parser.add_argument("--value", "-v", required=True,
-                        help="value to copy to the output")
+    parser.add_argument("--column", "-c", required=True,
+                        help="column value to copy to the output")
     parser.add_argument("--pattern", "-p", default="%Y-%m-%d",
                         help="date pattern")
     parser.add_argument("--split", "-S", default="|%Y|%m-%d",
                         help="how to split date arg into column and row names")
-    parser.add_argument("--delimiter", "-d", default=",",
-                        help="input and output field delimiter")
-    args = parser.parse_args()
+    options, args = parser.parse_known_args()
 
-    rdr = csv.DictReader(sys.stdin, delimiter=args.delimiter)
-    rows = list(rdr)
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        rows = list(reader)
 
-    major = {}
-    columns = set()
+        major = {}
+        columns = set()
 
-    first, second = args.split[1:].split(args.split[0])
-    for row in rows:
-        dt = datetime.datetime.strptime(row[args.field], args.pattern)
-        colname = str(dt.strftime(first))
-        rowname = str(dt.strftime(second))
-        columns.add(colname)
-        if rowname not in major:
-            major[rowname] = {
-                args.output: rowname,
-            }
-        major[rowname][colname] = row[args.value]
-    fieldnames = [args.output]
-    fieldnames.extend(sorted(columns))
-    wtr = csv.DictWriter(sys.stdout, fieldnames=fieldnames,
-        delimiter=args.delimiter)
-    wtr.writeheader()
-    for row in sorted(major):
-        wtr.writerow(major[row])
+        first, second = options.split[1:].split(options.split[0])
+        for row in rows:
+            dt = datetime.datetime.strptime(row[options.field], options.pattern)
+            colname = str(dt.strftime(first))
+            rowname = str(dt.strftime(second))
+            columns.add(colname)
+            if rowname not in major:
+                major[rowname] = {
+                    options.output: rowname,
+                }
+            major[rowname][colname] = row[options.column]
+        fieldnames = [options.output]
+        fieldnames.extend(sorted(columns))
+        wtr = csv.DictWriter(outf, fieldnames=fieldnames,
+            delimiter=options.outsep)
+        wtr.writeheader()
+        for row in sorted(major):
+            wtr.writerow(major[row])
 
 if __name__ == "__main__":
     sys.exit(main())
