@@ -12,7 +12,7 @@ def test_cli():
         vrtx_data = vrtx.read()
 
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.hull",
-        "-f", "Close", "-o", "hull", "-n", "100"],
+        "-f", "Close-VRTX", "-o", "hull", "-n", "100"],
         stdout=subprocess.PIPE, stderr=None, input=vrtx_data)
     assert result.returncode == 0
     rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
