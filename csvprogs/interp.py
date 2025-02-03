@@ -15,64 +15,52 @@ interpolation is TBD.
 
 """
 
-import getopt
 import os
 import sys
 
 import numpy as np
 import pandas as pd
 
-PROG = os.path.split(sys.argv[0])[1]
+from csvprogs.common import CSVArgParser, openio, usage
 
-def usage(msg=None):
-    "help user"
-    if msg is not None:
-        printe(msg)
-        printe()
-    printe(__doc__.strip().format(**globals()))
+
+PROG = os.path.split(sys.argv[0])[1]
 
 def main():
     "see __doc__"
-    opts, args = getopt.getopt(sys.argv[1:], "hf:x:",
-                               ["help", "field=", "xaxis=",])
-    x_axis = None
-    field = None
-    for opt, arg in opts:
-        if opt in ("--help", "-h"):
-            usage()
-            return 0
-        if opt in ("-f", "--field"):
-            field = arg
-        elif opt in ("-x", "--xaxis"):
-            x_axis = arg
-    if field is None or x_axis is None:
-        usage("-x and -f are both required.")
-        return 1
 
-    infile = open(args[0]) if args else sys.stdin
-    header = next(infile).strip().split(",")
-    dtype = {
-        field: float,
-    }
-    for col in header:
-        if col not in (x_axis, field):
-            dtype[col] = str
-    frame = pd.read_csv(infile, dtype=dtype, names=header,
-                        parse_dates=[x_axis])
-    frame.index = frame[x_axis]
-    field_data = frame[[field]]
-    field_data = field_data.resample("D").mean().interpolate()
-    del frame[field]
-    frame = field_data.join(frame, how="outer")
-    del frame[x_axis]
-    frame = frame.reset_index()
-    frame = frame.replace(np.nan, "")
-    frame.to_csv(sys.stdout, index=False)
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-f", "--field", required=True,
+                        help="column to interpolate")
+    parser.add_argument("-x", "--xaxis", required=True,
+                        help="date/time column")
+    options, args = parser.parse_known_args()
+
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        header = next(inf).strip().split(options.insep)
+        dtype = {
+            options.field: float,
+        }
+        for col in header:
+            if col not in (options.xaxis, options.field):
+                dtype[col] = str
+        frame = pd.read_csv(inf, dtype=dtype, names=header,
+                            parse_dates=[options.xaxis])
+        frame.index = frame[options.xaxis]
+        field_data = frame[[options.field]]
+        field_data = field_data.resample("D").mean().interpolate()
+        del frame[options.field]
+        frame = field_data.join(frame, how="outer")
+        del frame[options.xaxis]
+        frame = frame.reset_index()
+        frame = frame.replace(np.nan, "")
+        frame.to_csv(outf, index=False)
+
     return 0
 
-def printe(*args, file=sys.stderr, **kwds):
-    "print, defaultint to stderr for output"
-    return print(*args, file=file, **kwds)
 
 if __name__ == "__main__":
     sys.exit(main())
