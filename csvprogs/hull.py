@@ -54,76 +54,67 @@ SEE ALSO
 
 from contextlib import suppress
 import csv
-import getopt
 import math
 import os
 import sys
+
+from csvprogs.common import CSVArgParser, openio, usage
 
 
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], "n:f:s:o:h")
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-n", "--length", default=30, type=int,
+                        help="moving average length")
+    parser.add_argument("-f", "--field", required=True,
+                        help="column on which to compute hull")
+    parser.add_argument("-c", "--column", default="hull",
+                        help="output column")
+    (options, args) = parser.parse_known_args()
 
-    outcol = "hull"
-    length = 30
-    field = None
-    sep = ","
-    for opt, arg in opts:
-        if opt == "-n":
-            length = int(arg)
-        elif opt == "-f":
-            field = arg
-        elif opt == "-s":
-            sep = arg
-        elif opt == "-o":
-            outcol = arg
-        elif opt == "-h":
-            usage()
-            return 0
-
-    if field is None:
-        usage("field name is required.")
-        return 1
-
-    rdr = csv.DictReader(sys.stdin, delimiter=sep)
-    fnames = rdr.fieldnames[:]
-    fnames.append(outcol)
-    wtr = csv.DictWriter(sys.stdout, delimiter=sep, fieldnames=fnames)
-    wtr.writeheader()
-    coeffs = list(range(length, 0, -1))
-    half = length // 2
-    sqrt_len = int(round(math.sqrt(length)))
-    # values correspond to raw data, wma(n), wma(n/2), hull(n).
-    # Values for wma(n), wma(n/2) and hull(n) are only computed when
-    # the raw data fills up enough to eliminate the None values in the
-    # raw data.
-    values = [
-        [None] * length,        # raw inputs, appended to end
-        [None] * length,        # wma(n)
-        [None] * length,        # wma(n/2)
-        [None] * length,        # 2 * wma(n/2) - wma(n)
-    ]
-    for row in rdr:
-        val = ""
-        if row[field]:
-            values[0].append(float(row[field]))
-            del values[0][0]
-            if None not in values[0]:
-                # wma(n)
-                values[1].append(wma(values[0], coeffs))
-                del values[1][0]
-                # wma(n/2)
-                values[2].append(wma(values[0][-half:], coeffs[-half:]))
-                del values[2][0]
-                # 2 * wma(n/2) - wma(n)
-                values[3].append(2 * values[2][-1] - values[1][-1])
-                del values[3][0]
-                vals = values[3][-sqrt_len:]
-                if None not in vals:
-                    val = wma(vals, coeffs[-sqrt_len:])
-        row[outcol] = val
-        wtr.writerow(row)
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        fnames = reader.fieldnames + [options.column]
+        wtr = csv.DictWriter(outf, delimiter=options.outsep, fieldnames=fnames)
+        if not options.append:
+            wtr.writeheader()
+        coeffs = list(range(options.length, 0, -1))
+        half = options.length // 2
+        sqrt_len = int(round(math.sqrt(options.length)))
+        # values correspond to raw data, wma(n), wma(n/2), hull(n).
+        # Values for wma(n), wma(n/2) and hull(n) are only computed when
+        # the raw data fills up enough to eliminate the None values in the
+        # raw data.
+        values = [
+            [None] * options.length,        # raw inputs, appended to end
+            [None] * options.length,        # wma(n)
+            [None] * options.length,        # wma(n/2)
+            [None] * options.length,        # 2 * wma(n/2) - wma(n)
+        ]
+        for row in reader:
+            val = ""
+            if row[options.field]:
+                values[0].append(float(row[options.field]))
+                del values[0][0]
+                if None not in values[0]:
+                    # wma(n)
+                    values[1].append(wma(values[0], coeffs))
+                    del values[1][0]
+                    # wma(n/2)
+                    values[2].append(wma(values[0][-half:], coeffs[-half:]))
+                    del values[2][0]
+                    # 2 * wma(n/2) - wma(n)
+                    values[3].append(2 * values[2][-1] - values[1][-1])
+                    del values[3][0]
+                    vals = values[3][-sqrt_len:]
+                    if None not in vals:
+                        val = wma(vals, coeffs[-sqrt_len:])
+            row[options.column] = val
+            wtr.writerow(row)
     return 0
 
 def wma(elts, coeffs):
@@ -131,10 +122,6 @@ def wma(elts, coeffs):
     den = sum(coeffs[:len(elts)])
     return num / den
 
-def usage(msg=None):
-    if msg:
-        print(msg, file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     with suppress((BrokenPipeError,)):
