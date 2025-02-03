@@ -68,7 +68,6 @@ dependencies = [
     mean = "csvprogs.mean:main"
     mvavg = "csvprogs.mvavg:main"
     regress = "csvprogs.regress:main"
-    roundtime = "csvprogs.roundtime:main"
     sharpe = "csvprogs.sharpe:main"
     shuffle = "csvprogs.shuffle:main"
     sigavg = "csvprogs.sigavg:main"
