@@ -12,7 +12,7 @@ def test_cli():
         vrtx_data = vrtx.read()
 
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.mean",
-        "-f", "% Change", "-m", "-10", "-M", "+10"],
+        "-f", "% Change-VRTX", "-m", "-10", "-M", "+10"],
         stdout=subprocess.PIPE, stderr=None, input=vrtx_data)
     assert result.returncode == 0
     values = [float(v) for v in result.stdout.decode("utf-8").split(",")]
