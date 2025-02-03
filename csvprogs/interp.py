@@ -52,7 +52,7 @@ def main():
     infile = open(args[0]) if args else sys.stdin
     header = next(infile).strip().split(",")
     dtype = {
-        field: np.float,
+        field: float,
     }
     for col in header:
         if col not in (x_axis, field):
