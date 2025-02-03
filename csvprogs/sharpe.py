@@ -72,7 +72,9 @@ def main():
 
     fields = next(csv.reader(sys.stdin, delimiter=sep))
 
+    n = int(fields[0])
     mean = float(fields[1])
+    median = float(fields[2])
     std = float(fields[3])
     print(mean / std * math.sqrt(days))
 
