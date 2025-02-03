@@ -37,7 +37,6 @@ SEE ALSO
 """
 
 import sys
-import getopt
 import os
 
 from csvprogs.common import CSVArgParser
