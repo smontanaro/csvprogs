@@ -14,6 +14,7 @@ SPY_CSV = "./tests/data/SPY.csv"
 VRTX_DAILY = "./tests/data/VRTX-daily.csv"
 VRTX_CSV = "./tests/data/VRTX.csv"
 RANDOM_CSV = "./tests/data/RANDOM.csv"
+SPY_DAILY = "./tests/data/SPY-daily.csv"
 
 # Excel file with date column explicitly defined as dates
 XLS_DATE = "./tests/data/xl-date.xls"
