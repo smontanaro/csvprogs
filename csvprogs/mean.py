@@ -48,69 +48,47 @@ SEE ALSO
 * sigavg
 """
 
-import sys
-import getopt
-import os
-import numpy
 import csv
+import os
+import statistics
+import sys
+
+
+from csvprogs.common import CSVArgParser, openio, usage
+
 
 PROG = os.path.basename(sys.argv[0])
 
 
 def main():
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "f:s:hm:M:")
-    except getopt.GetoptError:
-        usage()
-        return 1
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-f", "--field", required=True,
+                        help="field on which to compute rudimentary statistics")
+    parser.add_argument("-m", "--minval", default=-1e308, type=float,
+                        help="toss values below the minval")
+    parser.add_argument("-M", "--maxval", default=1e308, type=float,
+                        help="toss values above the maxval")
+    options, args = parser.parse_known_args()
 
-    field = None
-    sep = ","
-    maxval = 1e308
-    minval = -1e308
-    for opt, arg in opts:
-        if opt == "-f":
-            field = arg
-        elif opt in ("-m", "--minval"):
-            minval = float(arg)
-        elif opt in ("-M", "--maxval"):
-            maxval = float(arg)
-        elif opt == "-s":
-            sep = arg
-        elif opt == "-h":
-            usage()
-            return 0
-
-    if field is None:
-        usage("-f is required")
-        return 1
-
-    if len(args) > 1:
-        usage()
-        return 1
-    if len(args) == 1:
-        inf = open(args[0], "r")
-    else:
-        inf = sys.stdin
-    values = []
-    rdr = csv.DictReader(inf, delimiter=sep)
-    for row in rdr:
-        if row[field]:
-            val = float(row[field])
-            if val < minval or val > maxval:
-                continue
-            values.append(val)
-    median = sorted(values)[len(values)//2]
-    values = numpy.array(values, dtype=float)
-    mean = numpy.mean(values)
-    std = numpy.std(values)
-    print("%d%s%f%s%f%s%f" % (len(values), sep, mean, sep, median, sep, std))
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        values = []
+        for row in reader:
+            if row[options.field]:
+                val = float(row[options.field])
+                if val < options.minval or val > options.maxval:
+                    continue
+                values.append(val)
+        median = statistics.median(values)
+        mean = statistics.mean(values)
+        pstd = statistics.pstdev(values, mu=mean)
+        writer = csv.writer(outf, delimiter=options.outsep)
+        writer.writerow([len(values), mean, median, pstd])
     return 0
 
-def usage(msg=""):
-    if msg:
-        print(msg, file=sys.stderr)
-    print(__doc__.format(**globals()), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())

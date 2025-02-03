@@ -1,5 +1,3 @@
-import csv
-import io
 import subprocess
 
 from tests import VRTX_DAILY
@@ -15,6 +13,7 @@ def test_cli():
         "-f", "% Change-VRTX", "-m", "-10", "-M", "+10"],
         stdout=subprocess.PIPE, stderr=None, input=vrtx_data)
     assert result.returncode == 0
-    values = [float(v) for v in result.stdout.decode("utf-8").split(",")]
-
-    assert values == [3845.0, 0.043686, 0.049400, 2.095824]
+    act = [float(v) for v in result.stdout.decode("utf-8").split(",")]
+    exp = [3845.0, 0.043686, 0.049400, 2.0958242]
+    delta = [abs(x-y) for (x, y) in zip(act, exp)]
+    assert max(delta) <= EPS, (exp, act, delta)
