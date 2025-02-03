@@ -49,57 +49,48 @@ SEE ALSO
 """
 
 import csv
-import getopt
 import math
 import os
 import sys
 
+from csvprogs.common import CSVArgParser, openio, usage
+
+
 PROG = os.path.basename(sys.argv[0])
 
 def main():
-    opts, _args = getopt.getopt(sys.argv[1:], "a:e:s:o:h")
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("--ewma", default="ewma",
+                        help="column containing ewma values")
+    parser.add_argument("--atr", default="atr",
+                        help="column containing atr values")
+    parser.add_argument("-p", "--prefix", default="kc-",
+                        help="prefix for keltner output values")
+    options, args = parser.parse_known_args()
 
-    outpfx = "kc-"
-    atrcol = "atr"
-    emacol = "ewma"
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
 
-    sep = ","
-    for opt, arg in opts:
-        if opt == "-e":
-            emacol = arg
-        elif opt == "-a":
-            atrcol = arg
-        elif opt == "-o":
-            outpfx = arg
-        elif opt == "-s":
-            sep = arg
-        elif opt == "-h":
-            usage()
-            return 0
-
-    upper = outpfx + "upper"
-    lower = outpfx + "lower"
-    rdr = csv.DictReader(sys.stdin, delimiter=sep)
-    fnames = rdr.fieldnames[:]
-    fnames.append(upper)
-    fnames.append(lower)
-    wtr = csv.DictWriter(sys.stdout, delimiter=sep, fieldnames=fnames)
-    wtr.writeheader()
-    for row in rdr:
-        atr = float(row.get(atrcol, "") or 'nan')
-        ewma = float(row.get(emacol, "") or 'nan')
-        if math.isnan(atr) or math.isnan(ewma):
-            wtr.writerow(row)
-            continue
-        row[upper] = ewma + 2 * atr
-        row[lower] = ewma - 2 * atr
-        wtr.writerow(row)
+        upper = options.prefix + "upper"
+        lower = options.prefix + "lower"
+        fnames = reader.fieldnames + [upper, lower]
+        writer = csv.DictWriter(outf, delimiter=options.outsep, fieldnames=fnames)
+        if not options.append:
+            writer.writeheader()
+        for row in reader:
+            atr = float(row.get(options.atr, "") or 'nan')
+            ewma = float(row.get(options.ewma, "") or 'nan')
+            if math.isnan(atr) or math.isnan(ewma):
+                writer.writerow(row)
+                continue
+            row[upper] = ewma + 2 * atr
+            row[lower] = ewma - 2 * atr
+            writer.writerow(row)
     return 0
 
-def usage(msg=None):
-    if msg:
-        print(msg, file=sys.stderr)
-    print(__doc__ % globals(), file=sys.stderr)
 
 if __name__ == "__main__":
     sys.exit(main())
