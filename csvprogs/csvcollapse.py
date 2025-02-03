@@ -60,53 +60,51 @@ SEE ALSO
 * csv2csv
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import csv
 import sys
-import getopt
 import os
+
+from csvprogs.common import CSVArgParser, openio, usage
 
 PROG = os.path.split(sys.argv[0])[1]
 
-def usage(msg=None):
-    if msg is not None:
-        print(msg, file=sys.stderr)
-        print(file=sys.stderr)
-    print((__doc__.strip() % globals()), file=sys.stderr)
-
 def main():
-    keys = ()
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-k", "--keys", required=True,
+                        help="column(s) to use as keys for the merge/collapse")
+    options, args = parser.parse_known_args()
 
-    opts, _args = getopt.getopt(sys.argv[1:], "k:h")
-    for opt, arg in opts:
-        if opt == "-k":
-            keys = tuple(arg.split(","))
-        elif opt == "-h":
-            usage()
-            return 0
+    keys = tuple(options.keys.split(","))
 
     last = ()
     result = {}
-    reader = csv.DictReader(sys.stdin)
-    writer = csv.DictWriter(sys.stdout, fieldnames=reader.fieldnames)
-    writer.writeheader()
-    for row in reader:
-        row_key = []
-        for k in keys:
-            row_key.append(row.get(k))
-        row_key = tuple(row_key)
-        if row_key != last:
-            last = row_key
-            if result:
-                writer.writerow(result)
-                result.clear()
-        for key in row:
-            if row[key]:
-                result[key] = row[key]
 
-    if result:
-        writer.writerow(result)
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        writer = csv.DictWriter(outf, fieldnames=reader.fieldnames,
+            delimiter=options.outsep)
+        if not options.append:
+            writer.writeheader()
+        for row in reader:
+            row_key = []
+            for k in keys:
+                row_key.append(row.get(k))
+            row_key = tuple(row_key)
+            if row_key != last:
+                last = row_key
+                if result:
+                    writer.writerow(result)
+                    result.clear()
+            for key in row:
+                if row[key]:
+                    result[key] = row[key]
+
+        if result:
+            writer.writerow(result)
+
     return 0
 
 if __name__ == "__main__":
