@@ -42,6 +42,17 @@ class CSVArgParser(argparse.ArgumentParser):
                           help="append rows to output (no header is written)")
 
 @contextmanager
+def openi(infile, imode, encoding="utf-8"):
+    "open infile, guaranteeing automatic closure."
+    if hasattr(infile, "fileno"):
+        # need to reopen this file object
+        iopen = partial(os.fdopen, infile.fileno(), imode, encoding=encoding)
+    else:
+        iopen = partial(open, infile, imode, encoding=encoding)
+    with iopen() as inf:
+        yield inf
+
+@contextmanager
 def openio(infile, imode, outfile, omode, encoding="utf-8"):
     "open infile and outfile, guaranteeing automatic closure."
     if hasattr(infile, "fileno"):
