@@ -169,7 +169,6 @@ SEE ALSO
 
 import sys
 import csv
-import getopt
 import dataclasses
 import datetime
 import os
@@ -184,6 +183,8 @@ from  matplotlib import pyplot
 import matplotlib.ticker
 from public import public, private
 
+from csvprogs.common import CSVArgParser, openi, usage
+
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -197,7 +198,7 @@ ONE_HOUR = datetime.timedelta(minutes=60)
 class Options:
     "container for all the flags"
     backend: str = ""
-    bkgds: list = dataclasses.field(default_factory=list)
+    background: list = dataclasses.field(default_factory=list)
     block: bool = True
     dims: tuple = (8, 6)
     do_legend: bool = True
@@ -207,7 +208,7 @@ class Options:
     right_label: str = ""
     sep: str = ","
     title: str = ""
-    use_xkcd: bool = False
+    xkcd: bool = False
     verbose: bool = False
     xfmt: str = ""
     x_label: str = ""
@@ -223,137 +224,54 @@ class Options:
 @public
 def main():
     "see __doc__"
-    options = Options()
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    parser.add_argument("-B", "--backend", default="",
+                        help="Matplotlib backend renderer")
+    parser.add_argument("-F", "--format", "--xfmt", dest="xfmt", default="",
+                        help="X axis format")
+    parser.add_argument("-L", "--skip_legend", dest="do_legend", default=True,
+                        action="store_true", help="Suppress display of legend")
+    parser.add_argument("-T", "--title", default="",
+                        help="plot title")
+    parser.add_argument("-d", "--dimension", default="8.0, 6.0", dest="dims",
+                        help="plot dimensions")
+    parser.add_argument("-p", "--plot_file", default="",
+                        help="output plotter file")
+    parser.add_argument("--left_label", default="",
+                        help="lefthand Y axis label")
+    parser.add_argument("--right_label", default="",
+                        help="righthand Y axis label")
+    parser.add_argument("-x", "--x_label", default="",
+                        help="X axis label")
+    parser.add_argument("--xkcd", default=False, action="store_true",
+                        help="Use XKCD fonts")
+    parser.add_argument("-b", "--background", action="append",
+                        help="background color definition(s)")
+    parser.add_argument("-f", "--field", dest="fields", action="append",
+                        required=True, help="plot field specs")
+    parser.add_argument("--block", default=True, dest="block", action="store_true",
+                        help="block after plot display (testing only)")
+    parser.add_argument("--noblock", dest="block", action="store_false",
+                        help="don't block after plot display (testing only)")
+    parser.add_argument("-Y", "--y_range", default="",
+                        help="min/max ranges for left (and right) Y axes")
+    parser.add_argument("-X", "--x_range", default="",
+                        help="min/max range X axis")
+    options, args = parser.parse_known_args()
 
-    args = sys.argv[1:]
-    opts, args = getopt.getopt(args, "B:F:LT:X:Y:b:d:f:hl:p:r:s:vx:",
-                               ["backend=",
-                                "format=",
-                                "skip_legend",
-                                "title=",
-                                "xkcd",
-                                "x_range=",
-                                "y_range=",
-                                "background=",
-                                "dimension=",
-                                "field=",
-                                "help",
-                                "left_label=",
-                                "plot_file=",
-                                "right_label=",
-                                "separator=",
-                                "verbose=",
-                                "x_label",
-                                "block", # just for testing
-                                "noblock", # just for testing
-                                ])
-    for opt, arg in opts:
-        if opt in ("-B", "--backend"):
-            options.backend = arg
-        elif opt in ("-f", "--field"):
-            quotechar = "'" if "'" in arg else '"'
-            plarg = io.StringIO(arg)
-            plarg = next(csv.reader(plarg, quotechar=quotechar))
-            if len(plarg) == 2:
-                # plot using left y axis by default
-                plarg.append("l")
-            if len(plarg) == 3:
-                # plot using blue by default
-                plarg.append("b")
-            if len(plarg) == 4:
-                # use the Y column name as the default legend name.
-                plarg.append(plarg[1])
-            if len(plarg) == 5:
-                # plot with '-' line style by default
-                plarg.append("-")
-            if len(plarg) == 6:
-                # no marker by default
-                plarg.append("")
-            try:
-                options.fields.append([int(x.strip()) for x in plarg[0:2]]+
-                                      [plarg[2][0].lower()]+
-                                      [plarg[3].lower()]+
-                                      plarg[4:])
-                reader = csv.reader
-            except ValueError:
-                # Assume first two fields name column headers.
-                options.fields.append(plarg[0:2]+
-                                      [plarg[2][0].lower()]+
-                                      [plarg[3].lower()]+
-                                      plarg[4:])
-                reader = csv.DictReader
+    options.xtime = (options.xfmt == "" or
+        "%H" in options.xfmt or
+        "%M" in options.xfmt or
+        "%m" in options.xfmt or
+        "%d" in options.xfmt
+        )
+    options.dims = tuple(float(v.strip()) for v in re.split("[x,]", options.dims,
+                         maxsplit=1))
+    options.background = parse_background_specs(options.background)
+    options.fields = parse_plot_specs(options.fields)
 
-        elif opt in ("-b", "--background"):
-            bg_spec = arg.split(",")
-            try:
-                bg_spec[0] = int(bg_spec[0])
-                bg_spec[1] = int(bg_spec[1])
-                reader = csv.reader
-            except ValueError:
-                bg_spec[0] = bg_spec[0].strip()
-                bg_spec[1] = bg_spec[1].strip()
-                reader = csv.DictReader
-            if ":" in bg_spec[2]:
-                low, high = [float(x) for x in bg_spec[2].split(":")]
-            else:
-                low = high = float(bg_spec[2])
-            options.bkgds.append((bg_spec[0], bg_spec[1], low, high, bg_spec[3]))
-        elif opt in ("-F", "--format"):
-            options.xtime = "%H" in arg or "%M" in arg or "%m" in arg or "%d" in arg
-            options.xfmt = arg
-        elif opt in ("-d", "--dimension"):
-            options.dims = tuple(float(v.strip()) for v in re.split("[x,]", arg))
-        elif opt in ("-L", "--skip_legend"):
-            options.do_legend = False
-        elif opt in ("-p", "--plot_file"):
-            options.plot_file = arg
-        elif opt in ("-l", "--left_label"):
-            options.left_label = arg
-        elif opt in ("-r", "--right_label"):
-            options.right_label = arg
-        elif opt in ("-x", "--x_label"):
-            options.x_label = arg
-        elif opt == "--xkcd":
-            options.use_xkcd = True
-        elif opt == "--noblock":
-            options.block = False
-        elif opt == "--block":
-            options.block = True
-        elif opt in ("-v", "--verbose"):
-            options.verbose = True
-        elif opt in ("-Y", "--y_range"):
-            if "," in arg:
-                left, right = arg.split(",")
-                options.y_min_max = [[float(x) for x in left.split(":")],
-                                     [float(x) for x in right.split(":")]]
-            else:
-                options.y_min_max = [[float(x) for x in arg.split(":")]]
-        elif opt in ("-X", "--x_range"):
-            # First try splitting at colon (assuming a pair of floats). If
-            # that produces too many values, try a comma (assuming
-            # timestamps).
-            if len(arg.split(":")) == 2:
-                options.x_min_max = [[float(x) for x in arg.split(":")]]
-            else:
-                min_dt, max_dt = arg.split(",")
-                x_min = dateutil.parser.parse(min_dt)
-                try:
-                    x_max = dateutil.parser.parse(max_dt)
-                except dateutil.parser.ParserError:
-                    if max_dt == "today":
-                        x_max = datetime.datetime.now()
-                    elif max_dt == "yesterday":
-                        x_max = datetime.datetime.now() - datetime.timedelta(days=1)
-                    else:
-                        raise
-                options.x_min_max = [x_min, x_max]
-        elif opt in ("-s", "--separator"):
-            options.sep = arg
-        elif opt in ("-T", "--title"):
-            options.title = arg
-        elif opt in ("-h", "--help"):
-            usage()
-            raise SystemExit
+    options.y_min_max = parse_y_range(options.y_range)
+    options.x_min_max = parse_x_range(options.x_range)
 
     if not options.backend:
         if not os.environ.get("DISPLAY"):
@@ -365,7 +283,7 @@ def main():
     if options.verbose:
         print("Using", matplotlib.get_backend(), file=sys.stderr)
 
-    if options.use_xkcd:
+    if options.xkcd:
         try:
             pyplot.xkcd()
         except AttributeError:
@@ -374,18 +292,16 @@ def main():
             if options.verbose:
                 print("Using XKCD style.", file=sys.stderr)
 
-    if not options.fields:
-        options.fields = [(0, 2, "l", "b", "2", "-", "")]
-        reader = csv.reader
+    with openi(args[0] if len(args) >= 1 else sys.stdin, "r",
+               encoding=options.encoding) as inf:
+        rdr = csv.DictReader(inf, delimiter=options.insep)
 
-    rdr = reader(sys.stdin, delimiter=options.sep)
+        # if options.verbose:
+        #     options.debug_print()
 
-    if options.verbose:
-        options.debug_print()
+        # callable module function goes here...
 
-    # callable module function goes here...
-
-    plot(options, rdr, block=options.block)
+        plot(options, rdr, block=options.block)
 
 @public
 def plot(options, rdr, block=False):
@@ -573,8 +489,8 @@ def plot(options, rdr, block=False):
         else:
             right_plot.set_ylim(rt_y_range)
 
-    color_bkgd(options.bkgds, left and left_plot or right_plot,
-               left and lt_y_range or rt_y_range, raw, parse_x)
+    color_background(options.background, left and left_plot or right_plot,
+                     left and lt_y_range or rt_y_range, raw, parse_x)
 
     if options.x_min_max:
         left_plot.set_xlim(options.x_min_max[0])
@@ -607,12 +523,48 @@ def plot(options, rdr, block=False):
     return 0
 
 @private
-def color_bkgd(bkgds, plot_, y_range, raw_data, parse_x):
+def parse_y_range(spec):
+    y_min_max = []
+    if spec:
+        if "," in spec:
+            left, right = spec.split(",")
+            y_min_max = [[float(x) for x in left.split(":")],
+                                 [float(x) for x in right.split(":")]]
+        else:
+            y_min_max = [[float(x) for x in spec.split(":")]]
+    return y_min_max
+
+@private
+def parse_x_range(spec):
+    x_min_max = []
+    if spec:
+        # First try splitting at colon (assuming a pair of floats). If
+        # that produces too many values, try a comma (assuming
+        # timestamps).
+        if len(spec.split(":")) == 2:
+            x_min_max = [[float(x) for x in spec.split(":")]]
+        else:
+            min_dt, max_dt = spec.split(",")
+            x_min = dateutil.parser.parse(min_dt)
+            try:
+                x_max = dateutil.parser.parse(max_dt)
+            except dateutil.parser.ParserError:
+                if max_dt == "today":
+                    x_max = datetime.datetime.now()
+                elif max_dt == "yesterday":
+                    x_max = datetime.datetime.now() - datetime.timedelta(days=1)
+                else:
+                    raise
+            x_min_max = [x_min, x_max]
+    return x_min_max
+
+@private
+def color_background(backgrounds, plot_, y_range, raw_data, parse_x):
     "Add background fill colors."
-    if not bkgds:
+    if not backgrounds:
         return
 
-    for col1, col2, low, high, color in bkgds:
+    for col1, col2, low, high, color in backgrounds:
         xdata = []
         ydata = []
         for values in raw_data:
@@ -636,9 +588,48 @@ def color_bkgd(bkgds, plot_, y_range, raw_data, parse_x):
                            where=mask)
 
 @private
-def usage():
-    "help"
-    print(__doc__.format(**globals()), file=sys.stderr)
+def parse_background_specs(specs):
+    parsed = []
+    if specs:
+        for bg_spec in specs:
+            bg_spec = bg_spec.split(",")
+            print(">>", bg_spec, file=sys.stderr)
+            bg_spec[0] = bg_spec[0].strip()
+            bg_spec[1] = bg_spec[1].strip()
+            if ":" in bg_spec[2]:
+                low, high = [float(x) for x in bg_spec[2].split(":")]
+            else:
+                low = high = float(bg_spec[2])
+            parsed.append((bg_spec[0], bg_spec[1], low, high, bg_spec[3]))
+    return parsed
+
+@private
+def parse_plot_specs(specs):
+    parsed = []
+    for spec in specs:
+        print(">>", spec, file=sys.stderr)
+        quotechar = "'" if "'" in spec else '"'
+        plarg = next(csv.reader(io.StringIO(spec), quotechar=quotechar))
+        if len(plarg) == 2:
+            # plot using left y axis by default
+            plarg.append("l")
+        if len(plarg) == 3:
+            # plot using blue by default
+            plarg.append("b")
+        if len(plarg) == 4:
+            # use the Y column name as the default legend name.
+            plarg.append(plarg[1])
+        if len(plarg) == 5:
+            # plot with '-' line style by default
+            plarg.append("-")
+        if len(plarg) == 6:
+            # no marker by default
+            plarg.append("")
+        parsed.append(plarg[0:2]+
+                      [plarg[2][0].lower()]+
+                      [plarg[3].lower()]+
+                      plarg[4:])
+    return parsed
 
 @public
 def as_days(delta):
