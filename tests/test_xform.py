@@ -7,6 +7,9 @@ import subprocess
 import tempfile
 import unittest
 
+from tests import RANDOM_CSV
+
+
 class XFormTest(unittest.TestCase):
     def test_basic_xform(self):
         input_list = [
@@ -73,6 +76,18 @@ time,close\r
                     env=env, stdout=subprocess.PIPE, stderr=None,
                     input=bytes(raw_input, encoding="utf-8"))
                 assert result.stdout == expected
+
+
+def test_missing_xform():
+        result = subprocess.run(
+            [
+             "./venv/bin/python", "-m",
+             "csvprogs.xform",
+             "-p", "sample_global=1.0",
+             RANDOM_CSV,
+            ],
+            stdout=subprocess.PIPE, stderr=None)
+        assert result.stdout != 0
 
 if __name__ == "__main__":
     unittest.main()
