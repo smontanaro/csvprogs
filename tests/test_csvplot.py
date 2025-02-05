@@ -43,6 +43,6 @@ def test_cli_nondate():
 def test_cli_bg():
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot", "-L",
         "--verbose", '-f', 'Date,Close,l,r', "-b", "Date,% Change,-1:+1,lightgreen",
-        "--noblock", "--right_label", "right", "-B", "Agg", VRTX_CSV],
+        "--noblock", "--right_label", "right", "-B", "Agg", "--xkcd", VRTX_CSV],
         stdout=subprocess.PIPE, stderr=None)
     assert result.returncode == 0
