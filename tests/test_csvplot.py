@@ -18,6 +18,7 @@ def test_plot():
             rdr = csv.DictReader(inp)
             plot(options, rdr, block=False)
     finally:
+        os.close(fd)
         os.unlink(fname)
 
 def test_cli():
