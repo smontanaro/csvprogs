@@ -160,10 +160,7 @@ PROG = os.path.basename(sys.argv[0])
 def main():
     "see __doc__"
     options = process_args()
-
-    if options.xform is None:
-        print(usage(__doc__, globals(), "-f or -F are required."),
-              file=sys.stderr)
+    if options is None:
         return 1
 
     rdr = csv.DictReader(sys.stdin, delimiter=options.insep)
@@ -256,7 +253,7 @@ def process_args():
     (options, _args) = parser.parse_known_args()
     if options.function and options.ext_func:
         print(usage(__doc__, globals(), "only one of -f or -F may be given"))
-        return 1
+        return None
 
     for (i, extra) in enumerate(options.extra_names):
         options.extra_names[i] = extra.split(",")
@@ -278,6 +275,9 @@ def process_args():
         options.xform = getattr(mod, funcname)
         if hasattr(mod, "__xform_names__"):
             options.extra_names.extend(getattr(mod, "__xform_names__"))
+    else:
+        print(usage(__doc__, globals(), "no transform function given"))
+        return None
 
     if options.vars:
         keys = [x.split("=")[0].strip() for x in options.vars.split(",")]
@@ -332,17 +332,6 @@ class ListyDict:
     def __getattr__(self, k):
         "delegate to self.data"
         return getattr(self.data, k)
-
-def add_numeric_keys(row, indexes):
-    "Add numeric keys to dicts so functions can index using ints."
-    for index, key in indexes:
-        row[index] = row[key]
-
-def del_numeric_keys(row, indexes):
-    "Undo work of add_numeric_keys"
-    for index, _key in indexes:
-        if index in row:
-            del row[index]
 
 def type_convert(row):
     "guess data types (can you say Perl???)"
