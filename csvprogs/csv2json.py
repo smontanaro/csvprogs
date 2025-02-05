@@ -83,8 +83,7 @@ PROG = os.path.split(sys.argv[0])[1]
 def datetime(s):
     dt = dateutil.parser.parse(s)
     milli = int(round(dt.microsecond / 1000))
-    return (f"new Date({dt.year}, {dt.month}, {dt.day}, "
-            f"{dt.hour}, {dt.minute}, {dt.second}, {milli})")
+    return (dt.isoformat())
 date = time = datetime
 
 TYPES = {
