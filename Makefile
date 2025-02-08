@@ -6,7 +6,7 @@ PY_SCRIPTS = \
     atr.py bars.py csv2csv.py csv2json.py csv2xls.py csvcat.py \
     csvcollapse.py csvfill.py csvmerge.py csvplot.py csvsort.py dsplit.py \
     ewma.py extractcsv.py filter.py html2csv.py hull.py interp.py \
-    keltner.py mean.py mvavg.py regress.py roundtime.py sharpe.py \
+    keltner.py mean.py mvavg.py regress.py sharpe.py \
     shuffle.py sigavg.py spline.py square.py take.py xform.py xls2csv.py
 
 RST_FILES = data_filters.rst
@@ -21,13 +21,13 @@ RST2MAN = $(shell which rst2man || which rst2man.py 2>/dev/null)
 
 # Little, if anything, below here should need to be changed.
 
-SCRIPTS = $(PY_SCRIPTS)
-
 BINDIR = bin
 SRCDIR = csvprogs
 MANDIR = share/man/man1
 RSTDIR = share/man/rst1
 VENVDIR = ./venv
+
+SCRIPTS = $(foreach s,$(PY_SCRIPTS),$(SRCDIR)/$(s))
 
 BIN_SCRIPTS = $(foreach s,$(SCRIPTS),$(BINDIR)/$(basename $(s)))
 SRC_SCRIPTS = $(foreach s,$(SCRIPTS),$(SRCDIR)/$(s))
@@ -48,24 +48,27 @@ lint : FORCE
 	pylint $(SRC_SCRIPTS)
 
 .PHONY: test
-test : venv
+test : virtualenv
 	. $(VENVDIR)/bin/activate && pytest --cov=csvprogs --cov-report=html
 
-venv : FORCE
-	if [ ! -d $(VENVDIR) ] ; then \
-	  v=`python --version | awk '{print $$2}' | awk -F . '{printf("%2d%02d\n", $$1, $$2)}'` ; \
-	  if [ $${v} -ge 310 ] ; then \
-	    python -m venv $(VENVDIR) ; \
-	    . $(VENVDIR)/bin/activate ; \
-	    python -m pip install -U pip ; \
-	    python -m pip install build pytest pytest-cov ; \
-	    python -m build ; \
-	    python -m pip install `ls -tr dist/*.whl | tail -1` ; \
-	  else \
-	    echo "Python version $${v} isn't new enough" 1>&2 ; \
-	    exit 1 ; \
-	  fi ; \
+.PHONY: virtualenv
+virtualenv : $(VENVDIR)
+
+$(VENVDIR) : $(SCRIPTS)
+	mkdir -p $(VENVDIR)
+	v=`python --version | awk '{print $$2}' | awk -F . '{printf("%2d%02d\n", $$1, $$2)}'` ; \
+	if [ $${v} -ge 310 ] ; then \
+	  python -m venv $(VENVDIR) ; \
+	  . $(VENVDIR)/bin/activate ; \
+	  python -m pip install -U pip ; \
+	  python -m pip install build pytest pytest-cov ; \
+	  python -m build ; \
+	  python -m pip install `ls -tr dist/*.whl | tail -1` ; \
+	else \
+	  echo "Python version $${v} isn't new enough" 1>&2 ; \
+	  exit 1 ; \
 	fi
+	touch $(VENVDIR)
 
 $(BINDIR)/% : $(SRCDIR)/%.py
 	mkdir -p $(BINDIR)
