@@ -127,33 +127,33 @@ trap "rm -f ${scr} ${csv}" EXIT
 (head -1 $WTCSV ; tail -$LOOKBACK $WTCSV) > ${csv}
 
 # The years present in the data...
-years=( $(for y in $( csv2csv -n -H -f date < ${csv} | awk -F- '{print $1}' | sort -u) ; do
+years=( $(for y in $( csv2csv -n -f date < ${csv} | tail -n +2 | awk -F- '{print $1}' | sort -u) ; do
 printf "$y "
 done) )
 
 cat > ${scr} <<EOF
-${AVG} -f weight -o 'weight (avg)' < ${csv} \
-    | ${AVG} -f O2 -o 'O2 (avg)' \
-    | ${AVG} -f hr -o 'HR (avg)' \
-    | mpl -T "${title}" \
+${AVG} -f weight --outcol 'weight (avg)' < ${csv} \
+    | ${AVG} -f O2 --outcol 'O2 (avg)' \
+    | ${AVG} -f hr --outcol 'HR (avg)' \
+    | csvplot -T "${title}" \
            ${WT} ${O2} ${HR} \
            -Y 165:200,40:100 \
            -F $FMT \
-           "$@" &
+           &
 EOF
 
 # EWMA for each of the years to be plotted...
 MA="$(for ((i=0; i<${#years[@]}; i++)); do
-    printf " | ewma -m ${MISSING} -f ${years[i]} -o e${years[i]}"
+    printf " | ewma -m ${MISSING} -f ${years[i]} --outcol e${years[i]}"
 done)"
 
 # Plot one line for each year...
-MPL="mpl -T 'Stacked Weight' $(for ((i=0; i<${#years[@]}; i++)); do
+MPL="csvplot -T 'Stacked Weight' $(for ((i=0; i<${#years[@]}; i++)); do
     printf " -f day,e${years[i]},l,${COLORS[i]}"
 done)"
 
 cat >> ${scr} <<EOF
-dsplit -v weight < ${csv} \
+dsplit -c weight < ${csv} \
     ${MA} \
     | ${MPL} &
 
