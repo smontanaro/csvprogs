@@ -187,7 +187,6 @@ from csvprogs.common import CSVArgParser, openi, usage
 
 PROG = os.path.basename(sys.argv[0])
 
-SECONDS_PER_DAY = 60 * 60 * 24
 ONE_MINUTE = datetime.timedelta(minutes=1)
 ONE_DAY = datetime.timedelta(days=1)
 ONE_HOUR = datetime.timedelta(minutes=60)
@@ -284,13 +283,9 @@ def main():
         print("Using", matplotlib.get_backend(), file=sys.stderr)
 
     if options.xkcd:
-        try:
-            pyplot.xkcd()
-        except AttributeError:
-            print("XKCD style not available.", file=sys.stderr)
-        else:
-            if options.verbose:
-                print("Using XKCD style.", file=sys.stderr)
+        pyplot.xkcd()
+        if options.verbose:
+            print("Using XKCD style.", file=sys.stderr)
 
     with openi(args[0] if len(args) >= 1 else sys.stdin, "r",
                encoding=options.encoding) as inf:
@@ -624,11 +619,6 @@ def parse_plot_specs(specs):
                       [plarg[3].lower()]+
                       plarg[4:])
     return parsed
-
-@public
-def as_days(delta):
-    "timedelta as float # of days"
-    return delta.days + delta.seconds / SECONDS_PER_DAY
 
 if __name__ == "__main__":
     sys.exit(main())
