@@ -2,12 +2,12 @@
 
 "usage..."
 
-import atexit
+import datetime
 import os
 import subprocess
 import tempfile
 
-from csvprogs.common import usage
+from csvprogs.common import usage, openi, as_days
 
 INPUT = b"""\
 time,close,position\r
@@ -33,9 +33,12 @@ time,close\r
 2015-04-17T15:00,27.77\r
 """
 
+EPS = 1e-7
+
+
 def test_openio_stdin_stdout():
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
-        "-f", "time,close", "-n" "QUOTE_NONE"],
+        "-f", "time,close", "-n", "QUOTE_NONE"],
         input=INPUT, stdout=subprocess.PIPE, stderr=None)
     assert result.stdout == EXPECTED
 
@@ -48,7 +51,8 @@ def test_openio_files():
         f.write(INPUT)
         f.close()
         result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
-            "-f", "time,close", "-n" "QUOTE_NONE", inf, outf])
+            "-f", "time,close", "-n", "QUOTE_NONE", inf, outf])
+        assert result.returncode == 0
         f = os.fdopen(fd2, "rb")
         f.seek(0)
         assert f.read() == EXPECTED
@@ -60,3 +64,16 @@ def test_openio_files():
 def test_usage():
     usage_msg = usage(__doc__, globals(), msg="msg")
     assert "usage..." in usage_msg and "msg" in usage_msg
+
+def test_openi():
+    inf = tempfile.mktemp()
+    fp1 = open(inf, "w")
+    fp1.write("hello world\n")
+    fp1.seek(0)
+    with openi(fp1, "r") as fp2:
+        assert fp1.fileno() == fp2.fileno()
+    os.unlink(inf)
+
+def test_as_days():
+    delta = datetime.timedelta(days=2, seconds=37000, microseconds=59)
+    assert abs(as_days(delta) - 2.42824074) < EPS
