@@ -62,6 +62,7 @@ SEE ALSO
 """
 
 import argparse
+from contextlib import suppress
 import csv
 import os
 import sys
@@ -99,14 +100,11 @@ class QuoteAction(argparse.Action):
 
 def csv2csv(reader, writer, fields):
     "copy the named fields from the CSV reader to the CSV writer"
-    try:
-        for inrow in reader:
-            outrow = {}
-            for field in fields:
-                outrow[field] = inrow.get(field, "")
-            writer.writerow(outrow)
-    except IOError:
-        pass
+    for inrow in reader:
+        outrow = {}
+        for field in fields:
+            outrow[field] = inrow.get(field, "")
+        writer.writerow(outrow)
 
 
 def main():
@@ -152,8 +150,5 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    try:
-        result = main()
-    except BrokenPipeError:
-        result = 0
-    sys.exit(result)
+    with suppress((BrokenPipeError, KeyboardInterrupt)):
+        sys.exit(main())
