@@ -174,7 +174,6 @@ import datetime
 import os
 import re
 import io
-import warnings
 
 import dateutil.parser
 import numpy
@@ -218,7 +217,8 @@ class Options:
 
     def debug_print(self):
         print("fields:", file=sys.stderr)
-        for attr in self.__dataclass_fields__:
+        # pylint: disable=E1101
+        for attr in self.__class__.__dataclass_fields__:
             print(f"  {attr}: {getattr(self, attr)}", file=sys.stderr)
 
 @public
@@ -422,16 +422,6 @@ def plot(options, rdr, block=False):
     left_plot.set_axisbelow(True)
     left_plot.yaxis.set_major_formatter(pyplot.FormatStrFormatter('%g'))
     left_plot.xaxis.set_major_formatter(formatter)
-    # Somebody below me generates a label named "_child0", which causes
-    # Matplotlib (I think) to spit out a warning.  Suppress that.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=UserWarning)
-        # Use a light, but solid, grid for the X axis and the left Y axis.  No
-        # grid for right Y axis.
-        left_plot.xaxis.grid(True, linestyle='solid', which='major',
-                            color='lightgrey', alpha=0.5)
-        left_plot.yaxis.grid(True, linestyle='solid', which='major',
-                            color='lightgrey', alpha=0.5)
 
     lines = []
     if left:
@@ -504,15 +494,21 @@ def plot(options, rdr, block=False):
         left_plot.set_xlim(x_range)
 
     if options.do_legend:
-        labels = [line.get_label() for line in lines]
-        # Somebody below me generates a label named "_child0", which causes
-        # Matplotlib (I think) to spit out a warning.  Suppress that.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=UserWarning)
-            if right:
-                right_plot.legend(lines, labels, loc='best').set_draggable(True)
-            else:
-                left_plot.legend(lines, labels, loc='best').set_draggable(True)
+        # Suppress empty labels
+        new_lines = []
+        new_labels = []
+        for line in lines:
+            label = line.get_label()
+            if not label or label[0] == "_":
+                continue
+            new_labels.append("" if label.startswith("_") else label)
+            new_lines.append(line)
+        if right:
+            right_plot.legend(new_lines, new_labels,
+                              loc='best').set_draggable(True)
+        else:
+            left_plot.legend(new_lines, new_labels,
+                             loc='best').set_draggable(True)
 
     figure.tight_layout()
     if options.plot_file:
@@ -585,7 +581,7 @@ def color_background(backgrounds, plot_, y_range, raw_data, parse_x):
             mask = (low <= numpy.array(ydata)) & (numpy.array(ydata) < high)
         plot_.fill_between(xdata, y_range[0], y_range[1],
                            edgecolor=color, facecolor=color,
-                           where=mask)
+                           where=mask, label="")
 
 @private
 def parse_background_specs(specs):
@@ -593,7 +589,6 @@ def parse_background_specs(specs):
     if specs:
         for bg_spec in specs:
             bg_spec = bg_spec.split(",")
-            print(">>", bg_spec, file=sys.stderr)
             bg_spec[0] = bg_spec[0].strip()
             bg_spec[1] = bg_spec[1].strip()
             if ":" in bg_spec[2]:
@@ -607,7 +602,6 @@ def parse_background_specs(specs):
 def parse_plot_specs(specs):
     parsed = []
     for spec in specs:
-        print(">>", spec, file=sys.stderr)
         quotechar = "'" if "'" in spec else '"'
         plarg = next(csv.reader(io.StringIO(spec), quotechar=quotechar))
         if len(plarg) == 2:
