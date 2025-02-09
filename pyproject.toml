@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "csvprogs"
-version = "2.0.1"
+version = "2.0.2"
 authors = [
     { name = "Skip Montanaro", email = "skip.montanaro@gmail.com" },
 ]
@@ -66,6 +66,7 @@ dependencies = [
     interp = "csvprogs.interp:main"
     keltner = "csvprogs.keltner:main"
     mean = "csvprogs.mean:main"
+    mpl = "csvprogs.csvplot:main"
     mvavg = "csvprogs.mvavg:main"
     regress = "csvprogs.regress:main"
     sharpe = "csvprogs.sharpe:main"
