@@ -47,8 +47,7 @@ SEE ALSO
 import sys
 import os
 import csv
-
-import scipy.stats
+import statistics
 
 from csvprogs.common import CSVArgParser, usage, openio
 
@@ -84,7 +83,8 @@ def main():
                 x.append(row[field1])
                 y.append(row[field2])
 
-        (slope, intercept, r, p, stderr) = scipy.stats.linregress(x, y)
+        (slope, intercept) = statistics.linear_regression(x, y)
+        r = statistics.correlation(x, y)
 
         if options.corr:
             print(r)
@@ -92,7 +92,7 @@ def main():
 
         if options.verbose:
             print("slope:", slope, "intercept:", intercept, file=sys.stderr)
-            print("corr coeff:", r, "p:", p, "err:", stderr, file=sys.stderr)
+            print("corr coeff:", r, file=sys.stderr)
 
         if not options.append:
             writer.writeheader()
