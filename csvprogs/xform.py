@@ -245,8 +245,7 @@ def process_args():
                         help="user-defined function to execute")
     parser.add_argument("-F", "--external-function", dest="ext_func", default="",
                         help="user-defined external function to execute")
-    parser.add_argument("-c", "--extra-args", dest="extra_names", default=[],
-                        action="append",
+    parser.add_argument("-c", "--extra-args", dest="extra_names", default="",
                         help="arguments guaranteed to be in the output")
     parser.add_argument("-p", "--variable-pair", dest="vars", default="",
                         help="global variable name/value pairs")
@@ -255,8 +254,7 @@ def process_args():
         print(usage(__doc__, globals(), "only one of -f or -F may be given"))
         return None
 
-    for (i, extra) in enumerate(options.extra_names):
-        options.extra_names[i] = extra.split(",")
+    options.extra_names = options.extra_names.split(",")
 
     if options.function:
         d = {}
