@@ -25,3 +25,8 @@ def test_cli():
                                                         "% Change vs Average","Volume"]
     finally:
         os.unlink(fname)
+
+def test_missing_file():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2xls",],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0
