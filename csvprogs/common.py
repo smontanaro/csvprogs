@@ -4,8 +4,6 @@
 Common arg processing for this group of CSV programs
 """
 
-__all__ = ["CSVArgParser",]
-
 import argparse
 from contextlib import contextmanager
 from functools import partial
@@ -14,11 +12,14 @@ from locale import getlocale, atoi, atof
 import os
 
 import dateutil.parser
-
+from public import public, private
 
 LOCALE = ".".join(getlocale())
 
+SECONDS_PER_DAY = 60 * 60 * 24
 
+
+@public
 class CSVArgParser(argparse.ArgumentParser):
     "ArgumentParser with some behavior common to all CSV progs/data filters"
 
@@ -41,6 +42,7 @@ class CSVArgParser(argparse.ArgumentParser):
         self.add_argument("-a", "--append", default=False, action='store_true',
                           help="append rows to output (no header is written)")
 
+@public
 @contextmanager
 def openi(infile, imode, encoding="utf-8"):
     "open infile, guaranteeing automatic closure."
@@ -52,6 +54,7 @@ def openi(infile, imode, encoding="utf-8"):
     with iopen() as inf:
         yield inf
 
+@public
 @contextmanager
 def openio(infile, imode, outfile, omode, encoding="utf-8"):
     "open infile and outfile, guaranteeing automatic closure."
@@ -68,6 +71,7 @@ def openio(infile, imode, outfile, omode, encoding="utf-8"):
     with (iopen() as inf, oopen() as outf):
         yield (inf, outf)
 
+@public
 def usage(docstring, global_dict, msg=None):
     "common extraction of __doc__"
     output = io.StringIO()
@@ -76,6 +80,7 @@ def usage(docstring, global_dict, msg=None):
     print(docstring % global_dict, file=output)
     return output.getvalue()
 
+@public
 def type_convert(string, keep_tz=True):
     """Try to coerce a string value into various Python types.
 
@@ -97,3 +102,10 @@ def type_convert(string, keep_tz=True):
             return result
     # nothing matched, punt...
     return string
+
+@public
+def as_days(delta):
+    "timedelta as float # of days"
+    return (delta.days +
+            delta.seconds / SECONDS_PER_DAY +
+            delta.microseconds / (1e6 * SECONDS_PER_DAY))
