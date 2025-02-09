@@ -54,7 +54,7 @@ test : virtualenv
 .PHONY: virtualenv
 virtualenv : $(VENVDIR)
 
-$(VENVDIR) : $(SCRIPTS)
+$(VENVDIR) : $(SCRIPTS) $(SRCDIR)/common.py
 	mkdir -p $(VENVDIR)
 	v=`python --version | awk '{print $$2}' | awk -F . '{printf("%2d%02d\n", $$1, $$2)}'` ; \
 	if [ $${v} -ge 310 ] ; then \
