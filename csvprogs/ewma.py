@@ -64,7 +64,18 @@ def ewma(rdr, field, outcol, alpha, gap):
     val = nan
     missing = 0
     result = []
-    for row in rdr:
+
+    # Trim trailing rows with empty string values for the field of
+    # interest. This should keep us from spuriously continuing to produce
+    # values after the useful end of the input.
+    rows = list(rdr)
+    extras = []
+    while rows and rows[-1][field] == rdr.restval:
+        # save these rows for later restoration
+        extras.insert(0, rows[-1])
+        del rows[-1]
+
+    for row in rows:
         if not row[field] or math.isnan(float(row[field])):
             missing += 1
             if missing >= gap:
@@ -77,6 +88,11 @@ def ewma(rdr, field, outcol, alpha, gap):
                 val = alpha * float(row[field]) + (1-alpha) * val
         row[outcol] = val
         result.append(row)
+
+    # Restore the rows we removed for the ewma calculation, for use
+    # by downstream programs.
+    result.extend(extras)
+
     return result
 
 def main():
@@ -93,7 +109,7 @@ def main():
               file=sys.stderr)
         return 1
 
-    rdr = csv.DictReader(sys.stdin, delimiter=options.insep)
+    rdr = csv.DictReader(sys.stdin, delimiter=options.insep, restval="")
     fnames = rdr.fieldnames[:]
     fnames.append(options.outcol)
     wtr = csv.DictWriter(sys.stdout, delimiter=options.outsep,
