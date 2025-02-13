@@ -10,6 +10,7 @@ import unittest
 
 from csvprogs.ewma import ewma
 
+EPS = 1e-7
 
 class EWMATest(unittest.TestCase):
     "test"
@@ -73,15 +74,15 @@ date,weight,hr,O2
 2024-11-01,182.6,48,94
 2024-11-02,183.6,48,95
 2024-11-03,182.6
-2024-11-04,181.0,56,97
-2024-11-05,180.6,59,94
-2024-11-06,181.6,53,96
-2024-11-07,182.8,45,98
-2024-11-08,182.0,49,97
-2024-11-09,181.8,48,96
-2024-11-10,182.0,46,96
-2024-11-11,183.0,45,97
-2024-11-12,181.8,46,96
+2024-11-04,181.0,56
+2024-11-05,180.6,59
+2024-11-06,181.6,53
+2024-11-07,182.8,45
+2024-11-08,182.0,49
+2024-11-09,181.8,48
+2024-11-10,182.0,46
+2024-11-11,183.0,45
+2024-11-12,181.8,46
 """
 
     def test_basic_ewma(self):
@@ -100,8 +101,8 @@ date,weight,hr,O2
             "-f", "weight"], check=True,
             stdout=subprocess.PIPE, stderr=None,
             input=bytes(self.input_data, encoding="utf-8"))
-        result = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))
-        assert result[8]["ewma"] != "nan"
+        rdr = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))
+        assert rdr[8]["ewma"] != "nan"
 
     def test_bad_gap(self):
         result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
@@ -110,6 +111,16 @@ date,weight,hr,O2
             input=bytes(self.input_data, encoding="utf-8"))
         assert result.returncode != 0
 
+    def test_trailing_blanks(self):
+        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+            "-f", "O2", "--gap=5"], check=False,
+            stdout=subprocess.PIPE, stderr=None,
+            input=bytes(self.input_data, encoding="utf-8"))
+        assert result.returncode == 0
+        rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
+        dates = {row["date"]: row for row in rdr}
+        assert float(dates["2024-11-02"]["ewma"]) - 95.53292969 < EPS
+        assert dates["2024-11-03"]["ewma"] == ""
 
 if __name__ == "__main__":
     unittest.main()
