@@ -12,7 +12,7 @@ from locale import getlocale, atoi, atof
 import os
 
 import dateutil.parser
-from public import public, private
+from public import public
 
 LOCALE = ".".join(getlocale())
 

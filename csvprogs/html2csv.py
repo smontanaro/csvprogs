@@ -40,7 +40,6 @@ SEE ALSO
 
 """
 
-import argparse
 import csv
 import datetime
 from html.parser import HTMLParser

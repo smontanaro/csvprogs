@@ -47,7 +47,6 @@ SEE ALSO
 """
 
 import csv
-import io
 import os
 import sys
 
