@@ -76,6 +76,7 @@ class QuoteAction(argparse.Action):
     "Custom action for quote style"
     # Keys are possible values used on cmdline.
     quotes = {
+        # names (more common)
         'QUOTE_ALL': csv.QUOTE_ALL,
         'QUOTE_MINIMAL': csv.QUOTE_MINIMAL,
         'QUOTE_NONE': csv.QUOTE_NONE,
@@ -84,15 +85,19 @@ class QuoteAction(argparse.Action):
         'MINIMAL': csv.QUOTE_MINIMAL,
         'NONE': csv.QUOTE_NONE,
         'NONNUMERIC': csv.QUOTE_NONNUMERIC,
-        str(csv.QUOTE_ALL): csv.QUOTE_ALL,
-        str(csv.QUOTE_MINIMAL): csv.QUOTE_MINIMAL,
-        str(csv.QUOTE_NONE): csv.QUOTE_NONE,
-        str(csv.QUOTE_NONNUMERIC): csv.QUOTE_NONNUMERIC,
-        int(csv.QUOTE_ALL): csv.QUOTE_ALL,
-        int(csv.QUOTE_MINIMAL): csv.QUOTE_MINIMAL,
-        int(csv.QUOTE_NONE): csv.QUOTE_NONE,
-        int(csv.QUOTE_NONNUMERIC): csv.QUOTE_NONNUMERIC,
         }
+    # later additions
+    if sys.version_info.minor >= 12:
+        quotes.update({
+            'QUOTE_NOTNULL': csv.QUOTE_NOTNULL,
+            'QUOTE_STRINGS': csv.QUOTE_STRINGS,
+            'NOTNULL': csv.QUOTE_NOTNULL,
+            'STRINGS': csv.QUOTE_STRINGS,
+                      }
+        )
+    # stringified numbers (less common)
+    for val in set(quotes.values()):
+        quotes[str(val)] = val
 
     def __call__(self, parser, namespace, value, option_string=None):
         val = self.quotes[value] if value else csv.QUOTE_NONE
