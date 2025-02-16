@@ -1,8 +1,9 @@
 import csv
 import io
 import subprocess
+import sys
 
-from csvprogs.csv2csv import csv2csv
+from csvprogs.csv2csv import csv2csv, QuoteAction
 from tests import NVDA
 
 INPUT = """\
@@ -55,6 +56,12 @@ def test_csv2csv():
     wtr.writeheader()
     csv2csv(rdr, wtr, wtr.fieldnames)
     assert out.getvalue() == TAB_EXPECTED
+
+def test_new_quotes():
+    if sys.version_info.minor >= 12:
+        assert "NOTNULL" in QuoteAction.quotes
+    else:
+        assert "NOTNULL" not in QuoteAction.quotes
 
 def test_append():
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
