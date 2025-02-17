@@ -28,3 +28,8 @@ HTML_CSV = "./tests/data/cal.csv"
 
 SPLIT_IN = "./tests/data/split-in.csv"
 SPLIT_EXP = "./tests/data/split-exp.csv"
+
+FIRST = "./tests/data/first.csv"
+SECOND = "./tests/data/second.csv"
+MERGED = "./tests/data/merged.csv"
+FILLED = "./tests/data/filled.csv"
