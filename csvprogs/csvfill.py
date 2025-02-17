@@ -83,17 +83,16 @@ SEE ALSO
 * csvmerge
 """
 
-import argparse
 import csv
 import os
 import sys
 
-from csvprogs.common import usage
+from csvprogs.common import usage, CSVArgParser, openio
 
 PROG = os.path.splitext(os.path.split(sys.argv[0])[1])[0]
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = CSVArgParser(usage=usage(__doc__, globals()))
     parser.add_argument("-k", "--keys", dest="keys", required=True)
     (options, args) = parser.parse_known_args()
     if options.keys:
@@ -104,19 +103,23 @@ def main():
               file=sys.stderr)
         return 1
 
-    inf = open((args[0] if args else "/dev/stdin"), "r")
-    outf = open((args[1] if len(args) > 1 else "/dev/stdout"), "w")
-    rdr = csv.DictReader(inf)
-    wtr = csv.DictWriter(outf, fieldnames=rdr.fieldnames, restval="")
-    wtr.writeheader()
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        reader = csv.DictReader(inf, delimiter=options.insep)
+        writer = csv.DictWriter(outf, fieldnames=reader.fieldnames, restval="")
 
-    last = {}
-    for row in rdr:
-        for k in options.keys:
-            if not row[k]:
-                row[k] = last.get(k, "")
-        wtr.writerow(row)
-        last = row
+        if not options.append:
+            writer.writeheader()
+
+        last = {}
+        for row in reader:
+            for k in options.keys:
+                if not row[k]:
+                    row[k] = last.get(k, "")
+            writer.writerow(row)
+            last = row
     return 0
 
 if __name__ == "__main__":
