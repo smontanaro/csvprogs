@@ -93,38 +93,38 @@ def main():
     return 0
 
 def generate_bars(rdr, wtr, time, price, barname, barlen):
-        interval = datetime.timedelta(seconds=barlen)
+    interval = datetime.timedelta(seconds=barlen)
 
-        barstart = ""
-        prev_last = last = ""
-        close = ""
+    barstart = ""
+    prev_last = last = ""
+    close = ""
 
-        for row in rdr:
-            dt = dateutil.parser.parse(row[time])
-            prev_last = last
-            if row[price]:
-                last = float(row[price])
-            if barstart == "":
-                offset = (dt.hour * 60 * 60) + dt.minute * 60 + dt.second
-                barstart = offset // barlen * barlen
-                hour = barstart // 3600
-                minute = barstart % 3600 // 60
-                second = barstart % 3600 % 60
-                barstart = dt.replace(hour=hour, minute=minute, second=second,
-                                      microsecond=0)
-                nextbar = barstart + interval
-            close = prev_last
-            if dt >= nextbar:
-                # emit a new row with just the bar
-                barstart += interval
-                wtr.writerow({
-                    time: barstart,
-                    barname: str(close),
-                })
-                nextbar += interval
-            else:
-                row[barname] = ""
-            wtr.writerow(row)
+    for row in rdr:
+        dt = dateutil.parser.parse(row[time])
+        prev_last = last
+        if row[price]:
+            last = float(row[price])
+        if barstart == "":
+            offset = (dt.hour * 60 * 60) + dt.minute * 60 + dt.second
+            barstart = offset // barlen * barlen
+            hour = barstart // 3600
+            minute = barstart % 3600 // 60
+            second = barstart % 3600 % 60
+            barstart = dt.replace(hour=hour, minute=minute, second=second,
+                                  microsecond=0)
+            nextbar = barstart + interval
+        close = prev_last
+        if dt >= nextbar:
+            # emit a new row with just the bar
+            barstart += interval
+            wtr.writerow({
+                time: barstart,
+                barname: str(close),
+            })
+            nextbar += interval
+        else:
+            row[barname] = ""
+        wtr.writerow(row)
 
 if __name__ == "__main__":
     sys.exit(main())
