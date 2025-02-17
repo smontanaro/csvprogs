@@ -58,6 +58,10 @@ SEE ALSO
 :Manual group: data filters
 """
 
+# TODO: should format date/time objects on output so variable input date/time
+# formats work.
+
+from contextlib import suppress
 import datetime
 import sys
 import csv
@@ -69,6 +73,9 @@ from csvprogs.common import CSVArgParser, usage
 
 
 PROG = os.path.split(sys.argv[0])[1]
+
+# Given the recent craziness in the US gov't, maybe EPOCH should be 1875-05-20, e.g.,
+#   https://www.dailykos.com/stories/2025/2/14/2303889/-Nope-There-are-no-150-year-olds-on-Social-Security-It-s-COBOL
 EPOCH = datetime.datetime.fromtimestamp(0)
 
 
@@ -76,16 +83,13 @@ def main():
     parser = CSVArgParser()
     parser.add_argument("-k", "--keys", dest="keys", default="",
                         help="merge fields")
-    parser.add_argument("-d", "--date-keys", dest="date_keys", action="append",
+    parser.add_argument("-d", "--date-keys", dest="date_keys",
                         default="", help="normalize fields as dates")
     (options, args) = parser.parse_known_args()
 
     keys = options.keys.split(",")
     readers = []
-    date_keys = set()
-
-    for dk in options.date_keys:
-        date_keys.add(dk.split(","))
+    date_keys = set(options.date_keys.split(","))
 
     if len(args) < 1:
         print(usage(__doc__, globals(), "At least one input file is required."),
@@ -118,8 +122,8 @@ def merge(keys, date_keys, readers, writer):
         except StopIteration:
             pass
         else:
-            rows[rdr] = (construct_key(row, keys, date_keys),
-                         sorted(row.items()), rdr)
+            key = construct_key(row, keys, date_keys)
+            rows[rdr] = (key, sorted(row.items()), rdr)
 
     while True:
         if not rows:
@@ -135,8 +139,8 @@ def merge(keys, date_keys, readers, writer):
         except StopIteration:
             del rows[rdr]
         else:
-            rows[rdr] = (construct_key(row, keys, date_keys),
-                         sorted(row.items()), rdr)
+            key = construct_key(row, keys, date_keys)
+            rows[rdr] = (key, sorted(row.items()), rdr)
     return 0
 
 def construct_key(row, keys, date_keys):
@@ -157,8 +161,5 @@ def construct_key(row, keys, date_keys):
     return key
 
 if __name__ == "__main__":
-    try:
-        result = main()
-    except BrokenPipeError:
-        result = 0
-    sys.exit(result)
+    with suppress((KeyboardInterrupt, BrokenPipeError)):
+        sys.exit(main())
