@@ -4,6 +4,7 @@ bin
 share
 dist
 venv
+build
 .coverage
 *.py.bak
 *.egg-info
