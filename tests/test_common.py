@@ -67,12 +67,14 @@ def test_usage():
 
 def test_openi():
     inf = tempfile.mktemp()
-    fp1 = open(inf, "w")
-    fp1.write("hello world\n")
-    fp1.seek(0)
-    with openi(fp1, "r") as fp2:
-        assert fp1.fileno() == fp2.fileno()
-    os.unlink(inf)
+    try:
+        with open(inf, "w") as fp1:
+            fp1.write("hello\n")
+        with openi(inf, "r") as fp2:
+            assert not fp2.closed
+        assert fp2.closed
+    finally:
+        os.unlink(inf)
 
 def test_as_days():
     delta = datetime.timedelta(days=2, seconds=37000, microseconds=59)
