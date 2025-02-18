@@ -33,3 +33,8 @@ FIRST = "./tests/data/first.csv"
 SECOND = "./tests/data/second.csv"
 MERGED = "./tests/data/merged.csv"
 FILLED = "./tests/data/filled.csv"
+
+# invalid characters in timestamp
+BAD_DATE_1 = "./tests/data/bad-date-1.csv"
+# Feb 29th in non-leap year
+BAD_DATE_2 = "./tests/data/bad-date-2.csv"
