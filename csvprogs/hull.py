@@ -58,7 +58,7 @@ import math
 import os
 import sys
 
-from csvprogs.common import CSVArgParser, openio, usage
+from csvprogs.common import CSVArgParser, openpair, usage, weighted_ma
 
 
 PROG = os.path.basename(sys.argv[0])
@@ -73,10 +73,7 @@ def main():
                         help="output column")
     (options, args) = parser.parse_known_args()
 
-    mode = "a" if options.append else "w"
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, mode,
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         reader = csv.DictReader(inf, delimiter=options.insep)
         fnames = reader.fieldnames + [options.column]
         wtr = csv.DictWriter(outf, delimiter=options.outsep, fieldnames=fnames)
@@ -102,25 +99,20 @@ def main():
                 del values[0][0]
                 if None not in values[0]:
                     # wma(n)
-                    values[1].append(wma(values[0], coeffs))
+                    values[1].append(weighted_ma(values[0], coeffs))
                     del values[1][0]
                     # wma(n/2)
-                    values[2].append(wma(values[0][-half:], coeffs[-half:]))
+                    values[2].append(weighted_ma(values[0][-half:], coeffs[-half:]))
                     del values[2][0]
                     # 2 * wma(n/2) - wma(n)
                     values[3].append(2 * values[2][-1] - values[1][-1])
                     del values[3][0]
                     vals = values[3][-sqrt_len:]
                     if None not in vals:
-                        val = wma(vals, coeffs[-sqrt_len:])
+                        val = weighted_ma(vals, coeffs[-sqrt_len:])
             row[options.column] = val
             wtr.writerow(row)
     return 0
-
-def wma(elts, coeffs):
-    num = sum(c * e for (c, e) in zip(coeffs, elts))
-    den = sum(coeffs[:len(elts)])
-    return num / den
 
 
 if __name__ == "__main__":

@@ -56,7 +56,7 @@ import csv
 import os
 import sys
 
-from csvprogs.common import CSVArgParser, openio, usage
+from csvprogs.common import CSVArgParser, openpair, usage, weighted_ma
 
 
 PROG = os.path.basename(sys.argv[0])
@@ -77,10 +77,7 @@ def main():
     nan = float('nan')
     elts = [None] * options.length
 
-    mode = "a" if options.append else "w"
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, mode,
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         rdr = csv.DictReader(inf, delimiter=options.insep)
         wtr = csv.DictWriter(outf, delimiter=options.outsep,
             fieldnames=rdr.fieldnames+[options.column])
@@ -97,17 +94,12 @@ def main():
                 # restart mv avg calc
                 elts = [None] * options.length
             if None not in elts:
-                val = avg(elts, coeffs)
+                val = weighted_ma(elts, coeffs)
             else:
                 val = nan
             row[options.column] = val
             wtr.writerow(row)
     return 0
-
-def avg(elts, coeffs):
-    num = sum(c * e for (c, e) in zip(coeffs, elts))
-    den = sum(coeffs[:len(elts)])
-    return num / den
 
 
 if __name__ == "__main__":
