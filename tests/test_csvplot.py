@@ -6,7 +6,7 @@ import sys
 import tempfile
 
 from csvprogs.csvplot import plot, Options
-from tests import NVDA, VRTX_CSV, RANDOM_CSV
+from tests import NVDA, VRTX_CSV, RANDOM_CSV, BAD_DATE_1, BAD_DATE_2
 
 def test_plot():
     fd, fname = tempfile.mkstemp()
@@ -51,6 +51,18 @@ def test_cli_bg():
         "--noblock", "--right_label", "right", "-B", "Agg", "--xkcd",
         "-X", "2025-01-02T06:00:00.000Z,today",
         VRTX_CSV],
+        stdout=subprocess.PIPE, stderr=None)
+    assert result.returncode == 0
+
+def test_bad_date():
+    # two paths through bad date land, one we can recover from, one we can't.
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+        '-f', 'time,close', BAD_DATE_1],
+        stdout=subprocess.PIPE, stderr=None)
+    assert result.returncode != 0
+    # we know how to recover from invalid leap year dates.
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+        '-f', 'time,close', BAD_DATE_2],
         stdout=subprocess.PIPE, stderr=None)
     assert result.returncode == 0
 

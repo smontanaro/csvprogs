@@ -314,12 +314,16 @@ def plot(options, rdr, block=False):
             try:
                 return dateutil.parser.parse(x_val)
             except dateutil.parser.ParserError as err:
-                if err.args and err.args[0].startswith("day is out of range for month"):
-                    # Maybe Feb 29 in non-leap year? Unfortunately, I can't
-                    # tell more about the date's structure.
-                    if re.search(r"\b29\b", x_val) is not None:
-                        return ""
-                    print(f"Can't parse {x_val!r} as a timestamp.", file=sys.stderr)
+                if err.args:
+                    msg = err.args[0]
+                    if msg.startswith("day is out of range for month"):
+                        # Maybe Feb 29 in non-leap year? Unfortunately, I can't
+                        # tell more about the date's structure.
+                        if re.search(r"\b29[^0-9]", x_val) is not None:
+                            return ""
+                    else:
+                        print(f"Can't parse {x_val!r} as a timestamp.",
+                              file=sys.stderr)
                 raise
 
         def fmt_date(tick_val, _=None, xfmt=options.xfmt):
