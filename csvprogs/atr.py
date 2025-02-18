@@ -52,7 +52,7 @@ import sys
 
 import dateutil.parser
 
-from csvprogs.common import CSVArgParser, openio, usage
+from csvprogs.common import CSVArgParser, openpair, usage
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -80,14 +80,13 @@ def main():
     atrs = [None] * length
     high = low = close = None
     tr = None
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, "w",
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         rdr = csv.DictReader(inf, delimiter=insep)
         fnames = rdr.fieldnames[:]
         fnames.append(outcol)
         wtr = csv.DictWriter(outf, delimiter=outsep, fieldnames=fnames)
-        wtr.writeheader()
+        if not options.append:
+            wtr.writeheader()
         for row in rdr:
             if date is None:
                 # first record, just save the close price

@@ -87,7 +87,7 @@ import csv
 import os
 import sys
 
-from csvprogs.common import usage, CSVArgParser, openio
+from csvprogs.common import usage, CSVArgParser, openpair
 
 PROG = os.path.splitext(os.path.split(sys.argv[0])[1])[0]
 
@@ -103,10 +103,7 @@ def main():
               file=sys.stderr)
         return 1
 
-    mode = "a" if options.append else "w"
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, mode,
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         reader = csv.DictReader(inf, delimiter=options.insep)
         writer = csv.DictWriter(outf, fieldnames=reader.fieldnames, restval="")
 

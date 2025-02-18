@@ -55,7 +55,7 @@ import numpy
 from scipy import interpolate
 import dateutil.parser
 
-from csvprogs.common import CSVArgParser, usage, openio
+from csvprogs.common import CSVArgParser, usage, openpair
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -74,10 +74,7 @@ def main():
                         help="indicate independent variable is not time-based")
     (options, args) = parser.parse_known_args()
 
-    mode = "a" if options.append else "w"
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, mode,
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         rdr = csv.DictReader(inf, delimiter=options.insep)
         wtr = csv.DictWriter(outf, fieldnames=rdr.fieldnames+[options.column],
             delimiter=options.outsep)

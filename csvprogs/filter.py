@@ -116,7 +116,7 @@ import csv
 import os
 import sys
 
-from csvprogs.common import type_convert, CSVArgParser, usage, openio
+from csvprogs.common import type_convert, CSVArgParser, usage, openpair
 
 
 PROG = os.path.basename(sys.argv[0])
@@ -133,10 +133,7 @@ def main():
     # pylint: disable=W0123
     func = eval(options.function)
 
-    mode = "a" if options.append else "w"
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, mode,
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         reader = csv.DictReader(inf, delimiter=options.insep)
         fieldnames = reader.fieldnames[:]
         if options.lambda_key:

@@ -54,7 +54,7 @@ import re
 import dateutil.parser
 import unum.units
 
-from csvprogs.common import CSVArgParser, openio
+from csvprogs.common import CSVArgParser, openpair
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -73,10 +73,7 @@ def main():
     # Use time units to allow smaller magnitudes for longer bars. For example,
     # you can give "1h" instead of "3600s" for one-hour bars.
 
-    mode = "a" if options.append else "w"
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, mode,
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         rdr = csv.DictReader(inf, delimiter=options.insep)
         wtr = csv.DictWriter(outf, delimiter=options.outsep,
             fieldnames=rdr.fieldnames + [options.name])

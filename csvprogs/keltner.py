@@ -53,7 +53,7 @@ import math
 import os
 import sys
 
-from csvprogs.common import CSVArgParser, openio, usage
+from csvprogs.common import CSVArgParser, openpair, usage
 
 
 PROG = os.path.basename(sys.argv[0])
@@ -68,10 +68,7 @@ def main():
                         help="prefix for keltner output values")
     options, args = parser.parse_known_args()
 
-    mode = "a" if options.append else "w"
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, mode,
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         reader = csv.DictReader(inf, delimiter=options.insep)
 
         upper = options.prefix + "upper"

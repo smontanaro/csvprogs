@@ -21,7 +21,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from csvprogs.common import CSVArgParser, openio, usage
+from csvprogs.common import CSVArgParser, openpair, usage
 
 
 PROG = os.path.split(sys.argv[0])[1]
@@ -36,10 +36,7 @@ def main():
                         help="date/time column")
     options, args = parser.parse_known_args()
 
-    mode = "a" if options.append else "w"
-    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
-                args[1] if len(args) == 2 else sys.stdout, mode,
-                encoding=options.encoding) as (inf, outf):
+    with openpair(options, args) as (inf, outf):
         header = next(inf).strip().split(options.insep)
         dtype = {
             options.field: float,
