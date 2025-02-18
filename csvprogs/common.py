@@ -10,6 +10,7 @@ from functools import partial
 import io
 from locale import getlocale, atoi, atof
 import os
+import sys
 
 import dateutil.parser
 from public import public
@@ -72,6 +73,15 @@ def openio(infile, imode, outfile, omode, encoding="utf-8"):
         yield (inf, outf)
 
 @public
+@contextmanager
+def openpair(options, args):
+    mode = "a" if options.append else "w"
+    with openio(args[0] if len(args) >= 1 else sys.stdin, "r",
+                args[1] if len(args) == 2 else sys.stdout, mode,
+                encoding=options.encoding) as (inf, outf):
+        yield (inf, outf)
+
+@public
 def usage(docstring, global_dict, msg=None):
     "common extraction of __doc__"
     output = io.StringIO()
@@ -109,3 +119,10 @@ def as_days(delta):
     return (delta.days +
             delta.seconds / SECONDS_PER_DAY +
             delta.microseconds / (1e6 * SECONDS_PER_DAY))
+
+@public
+def weighted_ma(elts, coeffs):
+    "moving average of elts, weighted by coeffs"
+    num = sum(c * e for (c, e) in zip(coeffs, elts))
+    den = sum(coeffs[:len(elts)])
+    return num / den
