@@ -89,7 +89,7 @@ import datetime
 import os
 import sys
 
-from csvprogs.common import CSVArgParser, usage, openpair
+from csvprogs.common import CSVArgParser, openpair#, usage
 PROG = os.path.basename(sys.argv[0])
 
 def main():
