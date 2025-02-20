@@ -262,6 +262,7 @@ def main():
         "%H" in options.xfmt or
         "%M" in options.xfmt or
         "%m" in options.xfmt or
+        "%b" in options.xfmt or
         "%d" in options.xfmt
         )
     options.dims = tuple(float(v.strip()) for v in re.split("[x,]", options.dims,
