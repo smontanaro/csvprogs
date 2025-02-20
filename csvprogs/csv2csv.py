@@ -95,9 +95,10 @@ class QuoteAction(argparse.Action):
             'STRINGS': csv.QUOTE_STRINGS,
                       }
         )
-    # stringified numbers (less common)
+    # numbers (less common)
     for val in set(quotes.values()):
         quotes[str(val)] = val
+        quotes[val] = val
 
     def __call__(self, parser, namespace, value, option_string=None):
         val = self.quotes[value] if value else csv.QUOTE_NONE
