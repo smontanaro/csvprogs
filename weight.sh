@@ -7,8 +7,9 @@ cat <<EOF
 
 Plot, weight, O2 saturation, and/or resting heart rate.
 
-weight [ -e ] [ -w ] [ -o ] [ -p ] [ LOOKBACK ]
+weight [ -d ] [ -e ] [ -w ] [ -o ] [ -p ] [ LOOKBACK ]
 
+-d   - debug: use git repo versions of csv progs (must be first option!)
 -w   - exclude weight
 -o   - exclude O2 saturation
 -p   - exclude heart rate
@@ -62,6 +63,12 @@ cvtdays () {
     fi
 }
 
+CSV2CSV=csv2csv
+CSVPLOT=csvplot
+DSPLIT=dsplit
+EWMA=ewma
+MVAVG=mvavg
+
 COLORS=( "black" "orange" "cyan" "magenta" "red" "green" "blue" )
 O2="-f date,O2,r,blue,'',dotted -f date,'O2 (avg)',r,blue,'O2 (r)'"
 HR="-f date,hr,r,green,'',dotted -f date,'HR (avg)',r,green,'HR (r)'"
@@ -69,14 +76,22 @@ WT="-f date,weight,l,red,'',dotted -f date,'weight (avg)',l,red,'Weight (l)'"
 tO2=O2
 tHR=HR
 tWT=Weight
-AVG="mvavg -n 7"
+AVG="${MVAVG} -n 7"
 MISSING=2
 
-while getopts 'e:opwh' OPTION; do
+while getopts 'de:opwh' OPTION; do
     case "$OPTION" in
+        d)
+            dbgpfx="python ${HOME}/src/csvprogs/csvprogs"
+            CSV2CSV=${dbgpfx}/${CSV2CSV}.py
+            CSVPLOT=${dbgpfx}/${CSVPLOT}.py
+            DSPLIT=${dbgpfx}/${DSPLIT}.py
+            EWMA=${dbgpfx}/${EWMA}.py
+            MVAVG=${dbgpfx}/${MVAVG}.py
+            ;;
         e)
             MISSING=${OPTARG}
-            AVG="ewma -m ${MISSING}"
+            AVG="${EWMA} -m ${MISSING}"
             ;;
         o)
             O2=
@@ -97,6 +112,15 @@ while getopts 'e:opwh' OPTION; do
     esac
 done
 shift "$(($OPTIND -1))"
+
+# Chicken-and-egg situation dictates a last-minute patch-up. If -d was
+# given but -e wasn't, ${AVG} won't reference the uninstalled version
+# of mvavg.
+if [ "x{dbgpfx}" != "x" ] ; then
+    if [ "x${AVG}" = "xmvavg -n 7" ] ; then
+        AVG="${MVAVG} -n 7"
+    fi
+fi
 
 if [ "x${O2}${WT}${HR}" = "x" ] ; then
     echo
@@ -127,7 +151,7 @@ trap "rm -f ${scr} ${csv}" EXIT
 (head -1 $WTCSV ; tail -$LOOKBACK $WTCSV) > ${csv}
 
 # The years present in the data...
-years=( $(for y in $( csv2csv -n -f date < ${csv} | tail -n +2 | awk -F- '{print $1}' | sort -u) ; do
+years=( $(for y in $( ${CSV2CSV} -n -f date < ${csv} | tail -n +2 | awk -F- '{print $1}' | sort -u) ; do
 printf "$y "
 done) )
 
@@ -135,7 +159,7 @@ cat > ${scr} <<EOF
 ${AVG} -f weight --outcol 'weight (avg)' < ${csv} \
     | ${AVG} -f O2 --outcol 'O2 (avg)' \
     | ${AVG} -f hr --outcol 'HR (avg)' \
-    | csvplot -T "${title}" \
+    | ${CSVPLOT} -T "${title}" \
            ${WT} ${O2} ${HR} \
            -Y 165:200,40:100 \
            -F $FMT \
@@ -144,16 +168,16 @@ EOF
 
 # EWMA for each of the years to be plotted...
 MA="$(for ((i=0; i<${#years[@]}; i++)); do
-    printf " | ewma -m ${MISSING} -f ${years[i]} --outcol e${years[i]}"
+    printf " | ${EWMA} -m ${MISSING} -f ${years[i]} --outcol e${years[i]}"
 done)"
 
 # Plot one line for each year...
-MPL="csvplot -T 'Stacked Weight' $(for ((i=0; i<${#years[@]}; i++)); do
+MPL="${CSVPLOT} -F %b -T 'Stacked Weight' $(for ((i=0; i<${#years[@]}; i++)); do
     printf " -f day,e${years[i]},l,${COLORS[i]}"
 done)"
 
 cat >> ${scr} <<EOF
-dsplit -c weight < ${csv} \
+${DSPLIT} -c weight < ${csv} \
     ${MA} \
     | ${MPL} &
 
