@@ -63,7 +63,7 @@ PROG = os.path.basename(sys.argv[0])
 
 def main():
     parser = CSVArgParser(usage=usage(__doc__, globals()))
-    parser.add_argument("-c", "--column", default="mean",
+    parser.add_argument("-c", "--column", "--outcol", default="mean",
                         help="output column name")
     parser.add_argument("-f", "--field", help="input column name",
                         required=True)
