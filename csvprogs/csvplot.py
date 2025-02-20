@@ -320,7 +320,7 @@ def plot(options, rdr, block=False):
                     if msg.startswith("day is out of range for month"):
                         # Maybe Feb 29 in non-leap year? Unfortunately, I can't
                         # tell more about the date's structure.
-                        if re.search(r"\b29[^0-9]", x_val) is not None:
+                        if re.search(r"[- ]29(\b|[^0-9]|$)", x_val) is not None:
                             return ""
                     else:
                         print(f"Can't parse {x_val!r} as a timestamp.",
