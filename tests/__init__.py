@@ -13,6 +13,7 @@ SPY_CSV = "./tests/data/SPY.csv"
 
 VRTX_DAILY = "./tests/data/VRTX-daily.csv"
 VRTX_CSV = "./tests/data/VRTX.csv"
+VRTX_MISSING_CSV = "./tests/data/VRTX-missing.csv"
 RANDOM_CSV = "./tests/data/RANDOM.csv"
 SPY_DAILY = "./tests/data/SPY-daily.csv"
 
