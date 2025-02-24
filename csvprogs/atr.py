@@ -46,6 +46,7 @@ SEE ALSO
 * ewma
 """
 
+from contextlib import suppress
 import csv
 import os
 import sys
@@ -117,8 +118,5 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    try:
-        result = main()
-    except BrokenPipeError:
-        result = 0
-    sys.exit(result)
+    with suppress((BrokenPipeError, KeyboardInterrupt)):
+        sys.exit(main())
