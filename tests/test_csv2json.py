@@ -5,7 +5,7 @@ import subprocess
 
 import dateutil.parser
 
-from tests import VRTX_CSV, SPY_DAILY
+from tests import VRTX_CSV, VRTX_MISSING_CSV, SPY_DAILY
 
 
 setlocale(LC_ALL, "en_US.UTF-8")
@@ -25,6 +25,27 @@ def test_cli():
             assert atof(v["Open"]) == j["Open"], (v["Open"] == j["Open"])
             assert atof(v["Close"]) == j["Close"], (v["Close"] == j["Close"])
             assert atoi(v["Volume"]) == j["Volume"], (v["Volume"] == j["Volume"])
+
+
+def test_missing_no_default():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
+        "-f", 'Date,Open,High,Low,Close,% Change,% Change vs Average,Volume',
+        "-t", "datetime,float,float,float,float,float,float,int:0",
+        VRTX_MISSING_CSV],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0
+
+
+def test_missing_with_default():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
+        "-f", 'Date,Open,High,Low,Close,% Change,% Change vs Average,Volume',
+        "-t", "datetime,float,float,float,float:-1.0,float,float:-1,int:0",
+        VRTX_MISSING_CSV],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode == 0
+    converted = json.loads(result.stdout.decode("utf-8"))
+    assert (converted[-1]["% Change vs Average"] == -1.0 and
+            converted[-1]["Close"] == -1.0)
 
 
 def test_cli_array():
