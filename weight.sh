@@ -132,9 +132,9 @@ LOOKBACK=$(cvtdays ${1:-365})
 LOOKBACK=$(min $LOOKBACK $(( $(wc -l < $WTCSV) - 1 )) )
 
 if [ $LOOKBACK -gt 365 ] ; then
-    FMT=%m/%y
+    FMT="%b '%y"
 else
-    FMT=%m/%d
+    FMT='%b %d'
 fi
 
 title="$(strjoin / ${tWT} ${tHR} ${tO2}) Progression"
@@ -162,7 +162,7 @@ ${AVG} -f weight --outcol 'weight (avg)' < ${csv} \
     | ${CSVPLOT} -T "${title}" \
            ${WT} ${O2} ${HR} \
            -Y 165:200,40:100 \
-           -F $FMT \
+           -F "$FMT" \
            &
 EOF
 
