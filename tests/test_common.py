@@ -2,12 +2,15 @@
 
 "usage..."
 
+import csv
 import datetime
 import os
 import subprocess
+import sys
 import tempfile
 
-from csvprogs.common import usage, openi, as_days
+from csvprogs.common import usage, openi, as_days, ListyDict
+from tests import RANDOM_CSV
 
 INPUT = b"""\
 time,close,position\r
@@ -79,3 +82,19 @@ def test_openi():
 def test_as_days():
     delta = datetime.timedelta(days=2, seconds=37000, microseconds=59)
     assert abs(as_days(delta) - 2.42824074) < EPS
+
+def test_listy_dict():
+    with open(RANDOM_CSV, encoding="ascii") as fp:
+        rdr = csv.DictReader(fp)
+        indexes = list(enumerate(rdr.fieldnames))
+        for row in rdr:
+            ld = ListyDict(row, indexes)
+            assert ld.keys() == rdr.fieldnames
+            assert len(ld) == 2
+            assert "i" in ld
+            for (i, k) in enumerate(iter(ld)):
+                assert ld[i] == ld[k]
+            ld["i"] = 2
+            assert ld[0] == 2
+            del ld["i"]
+            assert "i" not in ld and 0 not in ld

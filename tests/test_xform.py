@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from tests import RANDOM_CSV
+from tests import RANDOM_CSV, VRTX_CSV
 
 
 class XFormTest(unittest.TestCase):
@@ -66,6 +66,32 @@ def xform(row):
     return (pre, [])
 """
 
+
+XFORMSTRING = """
+
+def func1(row):
+    import datetime, dateutil.parser
+    t = dateutil.parser.parse(row["Date"])
+    pre_t = t - datetime.timedelta(seconds=1)
+    pre = [{"Date": pre_t.strftime("%Y-%m-%dT%H:%M:%S"),
+            "OClose": row["Close"],
+            "Close": row["Close"] - 0.01}]
+    return (pre, [])
+
+def func2(row):
+    import datetime, dateutil.parser
+    t = dateutil.parser.parse(row["Date"])
+    pre_t = t - datetime.timedelta(seconds=1)
+    pre = [{"Date": pre_t.strftime("%Y-%m-%dT%H:%M:%S"),
+            "OClose": row["Close"],
+            "Close": row["Close"] - 0.1}]
+    return (pre, [])
+
+__xform__ = "func2"
+__xform_names__ = ["OClose"]
+"""
+
+
 CALLSTRING = """
 from datetime import datetime, timedelta
 
@@ -78,6 +104,19 @@ class XForm:
         return (pre, [])
 xform = XForm()
 """
+
+def test_f_xform():
+    with open(VRTX_CSV, "rb") as f:
+        data = f.read()
+        result = subprocess.run(
+            [
+             "./venv/bin/python", "-m",
+             "csvprogs.xform",
+             "-f", XFORMSTRING,
+             "-p", "sample_global=1.0",
+            ],
+            stdout=subprocess.PIPE, stderr=None, input=data)
+        assert result.returncode == 0
 
 def test_extra_f():
     with tempfile.NamedTemporaryFile(mode="w+", dir="/tmp",
