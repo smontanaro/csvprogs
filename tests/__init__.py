@@ -32,7 +32,10 @@ SPLIT_EXP = "./tests/data/split-exp.csv"
 
 FIRST = "./tests/data/first.csv"
 SECOND = "./tests/data/second.csv"
+SECOND_SHORT = "./tests/data/second-short.csv"
+EMPTY = "./tests/data/empty.csv"
 MERGED = "./tests/data/merged.csv"
+MERGED_SHORT = "./tests/data/merged-short.csv"
 FILLED = "./tests/data/filled.csv"
 
 # invalid characters in timestamp
