@@ -153,7 +153,7 @@ import inspect
 import os
 import sys
 
-from csvprogs.common import CSVArgParser, usage
+from csvprogs.common import CSVArgParser, usage, ListyDict
 
 PROG = os.path.basename(sys.argv[0])
 
@@ -164,7 +164,6 @@ def main():
         return 1
 
     rdr = csv.DictReader(sys.stdin, delimiter=options.insep)
-    # Treat first row as a header.
     out_fields = rdr.fieldnames[:]
     for name in options.extra_names:
         if name not in rdr.fieldnames:
@@ -226,6 +225,8 @@ def inject_globals(func, vrbls):
             func_globals = sys.modules[func.__module__].__dict__
         elif inspect.ismethoddescriptor(func):
             raise TypeError("Can't get globals of a method descriptor")
+        elif hasattr(func, "__class__"):
+            func_globals = sys.modules[func.__class__.__module__].__dict__
         elif hasattr(func, "__call__"):
             func = func.__call__
             # Try again...
@@ -286,50 +287,6 @@ def process_args():
     options.extra_names = sorted(set(options.extra_names))
     return options
 
-
-class ListyDict:
-    """Dictish objects which also support some list-style numeric indexing."""
-    def __init__(self, d, indexes):
-        self.data = d
-        self.indexes = dict(indexes)
-
-    def keys(self):
-        "delegate to self.data"
-        return list(self.data.keys())
-
-    def __contains__(self, k):
-        "delegate to self.data"
-        return k in self.data
-
-    def __iter__(self):
-        "delegate to self.data"
-        return iter(self.data)
-
-    def __getitem__(self, k):
-        "k can be list index or dict key"
-        k = self.indexes.get(k, k)
-        return self.data[k]
-
-    def __delitem__(self, k):
-        "k can be list index or dict key"
-        k = self.indexes.get(k, k)
-        del self.data[k]
-
-    def __setitem__(self, k, v):
-        "k can be list index or dict key"
-        k = self.indexes.get(k, k)
-        self.data[k] = v
-
-    def __len__(self):
-        "delegate to self.data"
-        return len(self.data)
-
-    def __str__(self):
-        return f"<{self.__class__.__name__} {self.data}>"
-
-    def __getattr__(self, k):
-        "delegate to self.data"
-        return getattr(self.data, k)
 
 def type_convert(row):
     "guess data types (can you say Perl???)"

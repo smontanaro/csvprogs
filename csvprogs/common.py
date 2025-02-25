@@ -126,3 +126,48 @@ def weighted_ma(elts, coeffs):
     num = sum(c * e for (c, e) in zip(coeffs, elts))
     den = sum(coeffs[:len(elts)])
     return num / den
+
+@public
+class ListyDict:
+    """Dictish objects which also support some list-style numeric indexing."""
+    def __init__(self, d, indexes):
+        self.data = d
+        self.indexes = dict(indexes)
+
+    def keys(self):
+        "delegate to self.data"
+        return list(self.data.keys())
+
+    def __contains__(self, k):
+        "delegate to self.data"
+        return k in self.data
+
+    def __iter__(self):
+        "delegate to self.data"
+        return iter(self.data)
+
+    def __getitem__(self, k):
+        "k can be list index or dict key"
+        k = self.indexes.get(k, k)
+        return self.data[k]
+
+    def __delitem__(self, k):
+        "k can be list index or dict key"
+        k = self.indexes.get(k, k)
+        del self.data[k]
+
+    def __setitem__(self, k, v):
+        "k can be list index or dict key"
+        k = self.indexes.get(k, k)
+        self.data[k] = v
+
+    def __len__(self):
+        "delegate to self.data"
+        return len(self.data)
+
+    def __str__(self):
+        return f"<{self.__class__.__name__} {self.data}>"
+
+    def __getattr__(self, k):
+        "delegate to self.data"
+        return getattr(self.data, k)
