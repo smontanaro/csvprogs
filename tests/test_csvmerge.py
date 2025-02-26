@@ -18,7 +18,8 @@ def test_merge():
 
 def test_merge_empty():
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvmerge",
-        "-k", "time", FIRST, EMPTY], stdout=subprocess.PIPE, stderr=None)
+        "-k", "time", "-d", "time", FIRST, EMPTY],
+        stdout=subprocess.PIPE, stderr=None)
     assert result.returncode == 0
     with open(FIRST, "rb") as merged:
         assert result.stdout.replace(b"\r\n", b"\n") == merged.read()
