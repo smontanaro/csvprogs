@@ -533,28 +533,37 @@ def parse_y_range(spec):
     return y_min_max
 
 @private
-def parse_x_range(spec):
-    x_min_max = []
-    if spec:
-        # First try splitting at colon (assuming a pair of floats). If
-        # that produces too many values, try a comma (assuming
-        # timestamps).
-        if len(spec.split(":")) == 2:
-            x_min_max = [[float(x) for x in spec.split(":")]]
+def parse_x_date_range(min_dt, max_dt):
+    result = []
+    for dt in (min_dt, max_dt):
+        if dt == "today":
+            date = datetime.datetime.now()
+        elif dt == "yesterday":
+            date = datetime.datetime.now() - datetime.timedelta(days=1)
         else:
-            min_dt, max_dt = spec.split(",")
-            x_min = dateutil.parser.parse(min_dt)
+            date = dateutil.parser.parse(dt)
+        result.append(date)
+    return result
+
+@private
+def parse_x_range(spec):
+    if not spec:
+        return []
+    if spec == "today":
+        return [datetime.datetime.now()] * 2
+    if spec == "yesterday":
+        return [datetime.datetime.now() - datetime.timedelta(days=1)] * 2
+
+    # First try splitting at colon that produces too many values, try a
+    # comma. Both might be floats or timestamps.
+    for split_spec in (spec.split(":"), spec.split(",")):
+        if len(split_spec) == 2:
             try:
-                x_max = dateutil.parser.parse(max_dt)
-            except dateutil.parser.ParserError:
-                if max_dt == "today":
-                    x_max = datetime.datetime.now()
-                elif max_dt == "yesterday":
-                    x_max = datetime.datetime.now() - datetime.timedelta(days=1)
-                else:
-                    raise
-            x_min_max = [x_min, x_max]
-    return x_min_max
+                return [float(x) for x in split_spec]
+            except ValueError:
+                # hmmm... not two floats, reinterpret as two datetimes
+                return parse_x_date_range(*split_spec)
+    raise ValueError(f"Can't parse range: {repr(spec)}")
 
 @private
 def color_background(backgrounds, plot_, y_range, raw_data, parse_x):
