@@ -86,7 +86,7 @@ def main():
             x = [to_timestamp(dateutil.parser.parse(row[options.x]))
                     for row in rows]
         else:
-            x = [float(row[0]) for row in rows]
+            x = [float(row[options.x]) for row in rows]
         x = numpy.array(x, dtype=float)
         y = numpy.array([float(row[options.field]) for row in rows], dtype=float)
         tck, u = interpolate.splprep([x, y], s=options.smooth)
