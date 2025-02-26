@@ -2,7 +2,7 @@ import csv
 import io
 import subprocess
 
-from tests import SPY_CSV
+from tests import SPY_CSV, RANDOM_CSV
 
 exp = [448.10995923176694,
 448.01075535803784,
@@ -69,3 +69,10 @@ def test_cli():
 
     eps = [x-y for (x, y) in zip(act, exp)]
     assert max(eps) <= EPS, eps
+
+def test_non_dt():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.spline",
+                            "-f", "random", "-x", "i", "--x-not-time",
+        "-s", "1", RANDOM_CSV],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode == 0
