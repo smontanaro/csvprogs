@@ -19,7 +19,7 @@ def test_cli():
 
     # bid < ask
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.extractcsv",
-        '(', 'bid', '<', 'ask', ')', "or", "bid", "match", "99"],
+        "-v", '(', 'bid', '<', 'ask', ')', "or", "bid", "match", "99"],
         stdout=subprocess.PIPE, stderr=None, input=nvda_data)
     assert result.returncode == 0
     less = io.StringIO(result.stdout.decode("utf-8"))
