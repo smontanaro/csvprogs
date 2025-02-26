@@ -185,7 +185,7 @@ from public import public, private
 from csvprogs.common import CSVArgParser, openi, usage
 
 
-PROG = os.path.basename(sys.argv[0])
+PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
 ONE_MINUTE = datetime.timedelta(minutes=1)
 ONE_DAY = datetime.timedelta(days=1)
@@ -223,7 +223,9 @@ class Options:
 @public
 def main():
     "see __doc__"
-    parser = CSVArgParser(usage=usage(__doc__, globals()))
+    # see comment in common.usage()
+    docstring = __doc__.format(**globals())
+    parser = CSVArgParser(usage=usage(docstring, {}))
     parser.add_argument("-B", "--backend", default="",
                         help="Matplotlib backend renderer")
     parser.add_argument("-F", "--format", "--xfmt", dest="xfmt", default="",
