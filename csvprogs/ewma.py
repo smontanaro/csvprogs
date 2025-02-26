@@ -48,6 +48,7 @@ SEE ALSO
 
 __all__ = ["ewma"]
 
+from contextlib import suppress
 import csv
 import math
 import os
@@ -123,7 +124,5 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
+    with suppress((KeyboardInterrupt, BrokenPipeError)):
         sys.exit(main())
-    except (OSError, KeyboardInterrupt):
-        sys.exit(0)
