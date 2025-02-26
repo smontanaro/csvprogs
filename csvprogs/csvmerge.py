@@ -68,6 +68,8 @@ import csv
 import os
 
 import dateutil.parser
+# Create a trivial guess_... function in common?
+from pandas.tseries.api import guess_datetime_format
 
 from csvprogs.common import CSVArgParser, usage
 
@@ -85,11 +87,18 @@ def main():
                         help="merge fields")
     parser.add_argument("-d", "--date-keys", dest="date_keys",
                         default="", help="normalize fields as dates")
+    # maybe into CSVArgParser?
+    parser.add_argument("-F", "--date-format", dest="format",
+                        default="%Y-%m-%dT%H:%M:%S",
+                        help="output datetime format")
     (options, args) = parser.parse_known_args()
 
     keys = options.keys.split(",")
     readers = []
-    date_keys = set(options.date_keys.split(","))
+    if options.date_keys:
+        date_keys = set(options.date_keys.split(","))
+    else:
+        date_keys = set()
 
     if len(args) < 1:
         print(usage(__doc__, globals(), "At least one input file is required."),
@@ -110,10 +119,33 @@ def main():
     writer = csv.DictWriter(sys.stdout, fieldnames=out_fields, restval="")
     writer.writeheader()
 
-    return merge(keys, date_keys, readers, writer)
+    return merge(keys, date_keys, readers, writer, options.format)
 
-def merge(keys, date_keys, readers, writer):
+def merge(keys, date_keys, readers, writer, default_format):
     "merge rows from all readers, sending to writer"
+
+    formats = set()
+    if default_format:
+        formats.add(default_format)
+
+    def construct_key(row, keys, date_keys):
+        "helper"
+        key = []
+        for k in keys:
+            v = row.get(k, "")
+            if k in date_keys:
+                if v:
+                    formats.add(guess_datetime_format(v))
+                    v = dateutil.parser.parse(v)
+                    row[k] = v
+                else:
+                    # Comparison will still fail if the key is
+                    # missing, so substitute epoch for empty
+                    # string.
+                    v = EPOCH
+            key.append(v)
+        return key
+
     rows = {}
     # Populate dict of readers with the first row from each.
     for rdr in readers:
@@ -125,13 +157,17 @@ def merge(keys, date_keys, readers, writer):
             key = construct_key(row, keys, date_keys)
             rows[rdr] = (key, sorted(row.items()), rdr)
 
+    format = formats.pop()
     while True:
         if not rows:
             return 0
 
         _, row, rdr = min(rows.values(), key=lambda x: x[0])
         # Back to dict form for writing...
-        writer.writerow(dict(row))
+        row = dict(row)
+        for k in date_keys:
+            row[k] = row[k].strftime(format)
+        writer.writerow(row)
 
         # Fill in the now stale slot with the next row.
         try:
@@ -142,23 +178,6 @@ def merge(keys, date_keys, readers, writer):
             key = construct_key(row, keys, date_keys)
             rows[rdr] = (key, sorted(row.items()), rdr)
     return 0
-
-def construct_key(row, keys, date_keys):
-    "helper"
-    key = []
-    for k in keys:
-        v = row.get(k, "")
-        if k in date_keys:
-            if v:
-                v = dateutil.parser.parse(v)
-                row[k] = v
-            else:
-                # Comparison will still fail if the key is
-                # missing, so substitute epoch for empty
-                # string.
-                v = EPOCH
-        key.append(v)
-    return key
 
 if __name__ == "__main__":
     with suppress((KeyboardInterrupt, BrokenPipeError)):
