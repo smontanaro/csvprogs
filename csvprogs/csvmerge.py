@@ -89,7 +89,7 @@ def main():
                         default="", help="normalize fields as dates")
     # maybe into CSVArgParser?
     parser.add_argument("-F", "--date-format", dest="format",
-                        default="%Y-%m-%dT%H:%M:%S",
+                        default="%Y-%m-%dT%H:%M",
                         help="output datetime format")
     (options, args) = parser.parse_known_args()
 
