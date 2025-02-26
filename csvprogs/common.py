@@ -87,7 +87,21 @@ def usage(docstring, global_dict, msg=None):
     output = io.StringIO()
     if msg:
         print(msg, file=output)
-    print(docstring % global_dict, file=output)
+
+    # see csvplot.py:main where I thwart this step
+
+    if global_dict:
+        print(docstring % global_dict, file=output)
+    else:
+        print(docstring, file=output)
+
+    # eventually this instead? argparse.ArgumentParser uses % string
+    # formatting, which makes it difficult to double up. Using {}-style
+    # formatting here might work better, but all callers to this function have
+    # to be modified.
+
+    # print(docstring.format(**global_dict), file=output)
+
     return output.getvalue()
 
 @public
