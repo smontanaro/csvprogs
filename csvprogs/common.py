@@ -181,7 +181,3 @@ class ListyDict:
 
     def __str__(self):
         return f"<{self.__class__.__name__} {self.data}>"
-
-    def __getattr__(self, k):
-        "delegate to self.data"
-        return getattr(self.data, k)
