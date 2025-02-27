@@ -37,6 +37,7 @@ EMPTY = "./tests/data/empty.csv"
 MERGED = "./tests/data/merged.csv"
 MERGED_SHORT = "./tests/data/merged-short.csv"
 FILLED = "./tests/data/filled.csv"
+WEIGHT_CSV = "./tests/data/weight.csv"
 
 # invalid characters in timestamp
 BAD_DATE_1 = "./tests/data/bad-date-1.csv"
