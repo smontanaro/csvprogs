@@ -391,7 +391,9 @@ def plot(options, rdr, block=False):
             # Rows don't need to be completely filled.
             if x_val == "":
                 continue
-            y_val = 'nan' if y_val.strip() == "" else y_val
+            # The None case happens if there is no trailing comma at the end of
+            # the row. Any data after that reads as None, not "".
+            y_val = 'nan' if y_val is None or y_val.strip() == "" else y_val
             x_val = parse_x(x_val)
             if x_val == "":
                 continue
@@ -459,7 +461,7 @@ def plot(options, rdr, block=False):
         if options.right_label:
             right_plot.set_ylabel(options.right_label, color=right[0][1])
         if options.x_label and not left:
-            right_plot.set_xlabel(options.x_label, color=left[0][1])
+            right_plot.set_xlabel(options.x_label, color=right[0][1])
 
         for data in right:
             points, color, legend, style, marker = data
@@ -501,9 +503,9 @@ def plot(options, rdr, block=False):
         new_labels = []
         for line in lines:
             label = line.get_label()
-            if not label or label[0] == "_":
+            if label[0:1] == "_":
                 continue
-            new_labels.append("" if label.startswith("_") else label)
+            new_labels.append(label)
             new_lines.append(line)
         if right:
             right_plot.legend(new_lines, new_labels,
@@ -550,9 +552,15 @@ def parse_x_range(spec):
     if not spec:
         return []
     if spec == "today":
-        return [datetime.datetime.now()] * 2
+        min_dt = datetime.datetime.now().replace(hour=0, minute=0, second=0,
+            microsecond=0)
+        max_dt = min_dt + datetime.timedelta(days=1)
+        return [min_dt, max_dt]
     if spec == "yesterday":
-        return [datetime.datetime.now() - datetime.timedelta(days=1)] * 2
+        max_dt = datetime.datetime.now().replace(hour=0, minute=0, second=0,
+            microsecond=0)
+        min_dt = max_dt - datetime.timedelta(days=1)
+        return [min_dt, max_dt]
 
     # First try splitting at colon that produces too many values, try a
     # comma. Both might be floats or timestamps.
