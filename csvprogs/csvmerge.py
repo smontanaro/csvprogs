@@ -157,7 +157,7 @@ def merge(keys, date_keys, readers, writer, default_format):
             key = construct_key(row, keys, date_keys)
             rows[rdr] = (key, sorted(row.items()), rdr)
 
-    format = formats.pop()
+    fmt = formats.pop()
     while True:
         if not rows:
             return 0
@@ -166,7 +166,7 @@ def merge(keys, date_keys, readers, writer, default_format):
         # Back to dict form for writing...
         row = dict(row)
         for k in date_keys:
-            row[k] = row[k].strftime(format)
+            row[k] = row[k].strftime(fmt)
         writer.writerow(row)
 
         # Fill in the now stale slot with the next row.
