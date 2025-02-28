@@ -5,7 +5,6 @@
 import csv
 import io
 import subprocess
-import unittest
 
 from tests import NVDA
 
@@ -32,7 +31,3 @@ def test_cli_csv():
     output = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))
     assert (abs(float(output[7]["reg"]) - 135.4728217) < EPS and
             abs(float(output[-1]["reg"]) - 137.7006059) < EPS)
-
-
-if __name__ == "__main__":
-    unittest.main()

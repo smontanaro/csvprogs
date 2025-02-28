@@ -5,13 +5,10 @@
 import csv
 import io
 import subprocess
-import unittest
 
 EPS = 1e-7
 
-class MATest(unittest.TestCase):
-    "test"
-    input_data = """\
+INPUT = """\
 date,weight,hr,O2
 2024-09-07,179.8,50,95
 2024-09-08,180.4,48,96
@@ -82,17 +79,13 @@ date,weight,hr,O2
 2024-11-12,181.8,46,96
 """
 
-    def test_cli(self):
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.mvavg",
-            "-f", "weight", "-n", "5", "--column", "mean"], check=True,
-            stdout=subprocess.PIPE, stderr=None,
-            input=bytes(self.input_data, encoding="utf-8"))
-        assert result.returncode == 0
-        csvdata = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))
-        assert set(x["mean"] for x in csvdata[0:3]) == set(["nan"])
-        m4 = float(csvdata[4]["mean"])
-        assert abs(m4 - 181.04) < EPS, (m4, (m4 - 181.92))
-
-
-if __name__ == "__main__":
-    unittest.main()
+def test_cli():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.mvavg",
+        "-f", "weight", "-n", "5", "--column", "mean"], check=True,
+        stdout=subprocess.PIPE, stderr=None,
+        input=bytes(INPUT, encoding="utf-8"))
+    assert result.returncode == 0
+    csvdata = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))
+    assert set(x["mean"] for x in csvdata[0:3]) == set(["nan"])
+    m4 = float(csvdata[4]["mean"])
+    assert abs(m4 - 181.04) < EPS, (m4, (m4 - 181.92))

@@ -6,15 +6,12 @@ import csv
 import io
 import math
 import subprocess
-import unittest
 
 from csvprogs.ewma import ewma
 
 EPS = 1e-7
 
-class EWMATest(unittest.TestCase):
-    "test"
-    input_data = """\
+INPUT = """\
 date,weight,hr,O2
 2024-09-07,179.8,50,95
 2024-09-08,180.4,48,96
@@ -85,42 +82,39 @@ date,weight,hr,O2
 2024-11-12,181.8,46
 """
 
-    def test_basic_ewma(self):
-        input_file = io.StringIO(self.input_data)
-        rdr = csv.DictReader(input_file)
-        result = ewma(rdr, "weight", "ewma", 0.1, 1)
-        assert math.isnan(result[8]["ewma"])
+def test_basic_ewma():
+    input_file = io.StringIO(INPUT)
+    rdr = csv.DictReader(input_file)
+    result = ewma(rdr, "weight", "ewma", 0.1, 1)
+    assert math.isnan(result[8]["ewma"])
 
-        input_file.seek(0)
-        rdr = csv.DictReader(input_file)
-        result = ewma(rdr, "weight", "ewma", 0.1, 2)
-        assert not math.isnan(result[8]["ewma"])
+    input_file.seek(0)
+    rdr = csv.DictReader(input_file)
+    result = ewma(rdr, "weight", "ewma", 0.1, 2)
+    assert not math.isnan(result[8]["ewma"])
 
-    def test_cli(self):
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
-            "-f", "weight"], check=True,
-            stdout=subprocess.PIPE, stderr=None,
-            input=bytes(self.input_data, encoding="utf-8"))
-        rdr = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))
-        assert rdr[8]["ewma"] != "nan"
+def test_cli():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+        "-f", "weight"], check=True,
+        stdout=subprocess.PIPE, stderr=None,
+        input=bytes(INPUT, encoding="utf-8"))
+    rdr = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))
+    assert rdr[8]["ewma"] != "nan"
 
-    def test_bad_gap(self):
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
-            "-f", "weight", "--gap=-1"], check=False,
-            stdout=subprocess.PIPE, stderr=None,
-            input=bytes(self.input_data, encoding="utf-8"))
-        assert result.returncode != 0
+def test_bad_gap():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+        "-f", "weight", "--gap=-1"], check=False,
+        stdout=subprocess.PIPE, stderr=None,
+        input=bytes(INPUT, encoding="utf-8"))
+    assert result.returncode != 0
 
-    def test_trailing_blanks(self):
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
-            "-f", "O2", "--gap=5"], check=False,
-            stdout=subprocess.PIPE, stderr=None,
-            input=bytes(self.input_data, encoding="utf-8"))
-        assert result.returncode == 0
-        rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
-        dates = {row["date"]: row for row in rdr}
-        assert float(dates["2024-11-02"]["ewma"]) - 95.53292969 < EPS
-        assert dates["2024-11-03"]["ewma"] == ""
-
-if __name__ == "__main__":
-    unittest.main()
+def test_trailing_blanks():
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+        "-f", "O2", "--gap=5"], check=False,
+        stdout=subprocess.PIPE, stderr=None,
+        input=bytes(INPUT, encoding="utf-8"))
+    assert result.returncode == 0
+    rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
+    dates = {row["date"]: row for row in rdr}
+    assert float(dates["2024-11-02"]["ewma"]) - 95.53292969 < EPS
+    assert dates["2024-11-03"]["ewma"] == ""
