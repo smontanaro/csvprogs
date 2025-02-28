@@ -94,12 +94,18 @@ def main():
             else:
                 x.append(float(x1))
             y.append(float(y1))
+        # xx = numpy.linspace(min(x), max(x), len(x))
         x = numpy.array(x, dtype=float)
         y = numpy.array(y, dtype=float)
         tck, u = interpolate.splprep([x, y], s=options.smooth)
         ynew = interpolate.splev(u, tck)
         for (y, row) in zip(ynew[1], rows):
             row[options.column] = y
+        # maybe someday? but not yet (too much difference in outpus)
+        # bspline = interpolate.make_splrep(x, y, s=options.smooth)
+        # ynew = bspline(xx)
+        # for (y, row) in zip(ynew, rows):
+        #     row[options.column] = y
         wtr.writerows(rows)
 
     return 0
