@@ -58,9 +58,6 @@ SEE ALSO
 :Manual group: data filters
 """
 
-# TODO: should format date/time objects on output so variable input date/time
-# formats work.
-
 from contextlib import suppress
 import datetime
 import sys
@@ -77,7 +74,8 @@ from csvprogs.common import CSVArgParser, usage
 PROG = os.path.split(sys.argv[0])[1]
 
 # Given the recent craziness in the US gov't, maybe EPOCH should be 1875-05-20, e.g.,
-#   https://www.dailykos.com/stories/2025/2/14/2303889/-Nope-There-are-no-150-year-olds-on-Social-Security-It-s-COBOL
+#   https://www.dailykos.com/stories/2025/2/14/2303889/...
+#      ...-Nope-There-are-no-150-year-olds-on-Social-Security-It-s-COBOL
 EPOCH = datetime.datetime.fromtimestamp(0)
 
 
@@ -88,9 +86,8 @@ def main():
     parser.add_argument("-d", "--date-keys", dest="date_keys",
                         default="", help="normalize fields as dates")
     # maybe into CSVArgParser?
-    parser.add_argument("-F", "--date-format", dest="format",
-                        default="%Y-%m-%dT%H:%M",
-                        help="output datetime format")
+    parser.add_argument("-F", "--date-format", dest="date_format",
+                        default="", help="output datetime format")
     (options, args) = parser.parse_known_args()
 
     keys = options.keys.split(",")
@@ -119,14 +116,12 @@ def main():
     writer = csv.DictWriter(sys.stdout, fieldnames=out_fields, restval="")
     writer.writeheader()
 
-    return merge(keys, date_keys, readers, writer, options.format)
+    return merge(keys, date_keys, readers, writer, options.date_format)
 
-def merge(keys, date_keys, readers, writer, default_format):
+def merge(keys, date_keys, readers, writer, date_format):
     "merge rows from all readers, sending to writer"
 
     formats = set()
-    if default_format:
-        formats.add(default_format)
 
     def construct_key(row, keys, date_keys):
         "helper"
@@ -157,7 +152,12 @@ def merge(keys, date_keys, readers, writer, default_format):
             key = construct_key(row, keys, date_keys)
             rows[rdr] = (key, sorted(row.items()), rdr)
 
-    fmt = formats.pop()
+    if date_format:
+        fmt = date_format
+    else:
+        # punt, pick one of the input formats
+        fmt = formats.pop()
+
     while True:
         if not rows:
             return 0
