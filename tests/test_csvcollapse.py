@@ -15,8 +15,8 @@ def test_cli():
         with open(VRTX_DAILY, "r", encoding="utf-8") as inf:
             os.fdopen(fd2, "w", encoding="utf-8").writelines(inf.readlines()[0:100])
 
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvmerge", "-k", "Date",
-                                tmp1, tmp2],
+        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvmerge",
+            "-k", "Date", "-d", "Date", tmp1, tmp2],
             stdout=subprocess.PIPE, stderr=None)
         assert result.returncode == 0
     finally:

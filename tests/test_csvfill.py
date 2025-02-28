@@ -7,7 +7,7 @@ from tests import NVDA, FIRST, SECOND, MERGED, FILLED
 
 def merge_helper(first, second):
     result = subprocess.run(["./venv/bin/python", "-m",
-        "csvprogs.csvmerge", "-k", "time", first, second],
+        "csvprogs.csvmerge", "-k", "time", "-d", "time", first, second],
         stdout=subprocess.PIPE, stderr=None)
     return result.stdout
 
