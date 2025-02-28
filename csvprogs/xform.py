@@ -219,22 +219,24 @@ def inject_globals(func, vrbls):
     for _i in (0, 1):
         if inspect.ismethod(func):
             func_globals = func.__func__.__globals__
-        elif inspect.isfunction(func):
+            break
+        if inspect.isfunction(func):
             func_globals = func.__globals__
-        elif inspect.isbuiltin(func):
+            break
+        if inspect.isbuiltin(func):
             func_globals = sys.modules[func.__module__].__dict__
-        elif inspect.ismethoddescriptor(func):
+            break
+        if inspect.ismethoddescriptor(func):
             raise TypeError("Can't get globals of a method descriptor")
-        elif hasattr(func, "__class__"):
+        if hasattr(func, "__class__"):
             func_globals = sys.modules[func.__class__.__module__].__dict__
-        elif hasattr(func, "__call__"):
+            break
+        if hasattr(func, "__call__"):
             func = func.__call__
             # Try again...
             continue
-        else:
-            raise TypeError("Don't know how to find globals "
-                            f"from {type(func)} objects")
-        break
+        raise TypeError("Don't know how to find globals "
+                        f"from {type(func)} objects")
     else:
         raise TypeError("Don't know how to find globals "
                         f"from {type(func)} objects")
