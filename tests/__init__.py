@@ -36,6 +36,7 @@ SECOND_SHORT = "./tests/data/second-short.csv"
 EMPTY = "./tests/data/empty.csv"
 MERGED = "./tests/data/merged.csv"
 MERGED_SHORT = "./tests/data/merged-short.csv"
+MERGED_SECS = "./tests/data/merged-secs.csv"
 FILLED = "./tests/data/filled.csv"
 WEIGHT_CSV = "./tests/data/weight.csv"
 
