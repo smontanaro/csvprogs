@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 
+import pytest
 from csvprogs.csvplot import plot, Options
 from tests import (NVDA, VRTX_CSV, RANDOM_CSV, BAD_DATE_1, BAD_DATE_2, EMPTY,
                    WEIGHT_CSV,)
@@ -25,27 +26,28 @@ def test_plot():
         os.close(fd)
         os.unlink(fname)
 
-def test_cli():
+@pytest.mark.parametrize(("test_input",),
+             [("2019-01-01:2025-01-20",),
+              ("2021-01-01:2025-01-20",),
+              ("2023-01-01:2024-07-10",),
+              ("2025-01-17T08:30,2025-01-17T08:32",),
+              ("2025-01-17T08:30,2025-01-17T10:07",),
+              ("today",),
+              ("yesterday",),
+             ])
+def test_cli(test_input):
     env = os.environ.copy()
     try:
         del env["DISPLAY"]
     except KeyError:
         pass
-    for xrange in ("2019-01-01:2025-01-20", # > 5 years
-                   "2021-01-01:2025-01-20", # > 2 years
-                   "2023-01-01:2024-07-10", # > 1.5 years
-                   "2025-01-17T08:30,2025-01-17T08:32", # < 10 minutes
-                   "2025-01-17T08:30,2025-01-17T10:07", # < two hours
-                   "today", # one day
-                   "yesterday", # one day
-    ):
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
-            "-l", "legend", '-f', 'time,last,l,r', '-f', 'time,bid,r,b',
-            "--noblock", "--left_label", "left", "--right_label", "right",
-            "-b", "time,last,135.07,lightgreen", "-Y", "0:100,0:100",
-            "-X", xrange, "-T", "test_cli", NVDA],
-            stdout=subprocess.PIPE, stderr=None, env=env)
-        assert result.returncode == 0
+    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+        "-l", "legend", '-f', 'time,last,l,r', '-f', 'time,bid,r,b',
+        "--noblock", "--left_label", "left", "--right_label", "right",
+        "-b", "time,last,135.07,lightgreen", "-Y", "0:100,0:100",
+        "-X", test_input, "-T", "test_cli", NVDA],
+        stdout=subprocess.PIPE, stderr=None, env=env)
+    assert result.returncode == 0
 
 def test_cli_nondate():
     result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
