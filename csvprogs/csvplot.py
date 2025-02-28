@@ -340,14 +340,10 @@ def plot(options, rdr, block=False):
                     xfmt = "%Y"
                 elif x_delta > int(2 * 365) * ONE_DAY:
                     xfmt = "%Y-%m"
-                elif x_delta > int(1.5 * 365) * ONE_DAY:
-                    xfmt = "%Y-%m-%d"
                 elif x_delta > 2 * ONE_DAY:
                     xfmt = "%m/%d\n%H:%M"
                 elif x_delta < 10 * ONE_MINUTE:
                     xfmt = "%H:%M\n%S.%f"
-                elif x_delta < 2 * ONE_HOUR:
-                    xfmt = "%H:%M:%S"
                 else:
                     xfmt = "%H:%M"
             return date.strftime(xfmt)
