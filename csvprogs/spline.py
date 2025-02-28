@@ -82,13 +82,20 @@ def main():
             wtr.writeheader()
 
         rows = list(rdr)
-        if options.istime:
-            x = [to_timestamp(dateutil.parser.parse(row[options.x]))
-                    for row in rows]
-        else:
-            x = [float(row[options.x]) for row in rows]
+        x = []
+        y = []
+        for row in rows:
+            x1 = row[options.x]
+            y1 = row[options.field]
+            if not x1 or not y1:
+                continue
+            if options.istime:
+                x.append(to_timestamp(dateutil.parser.parse(x1)))
+            else:
+                x.append(float(x1))
+            y.append(float(y1))
         x = numpy.array(x, dtype=float)
-        y = numpy.array([float(row[options.field]) for row in rows], dtype=float)
+        y = numpy.array(y, dtype=float)
         tck, u = interpolate.splprep([x, y], s=options.smooth)
         ynew = interpolate.splev(u, tck)
         for (y, row) in zip(ynew[1], rows):
