@@ -70,6 +70,7 @@ EWMA=ewma
 MVAVG=mvavg
 
 COLORS=( "black" "orange" "cyan" "magenta" "red" "green" "blue" )
+STYLES=( "solid" "dotted" "dashed" "dashdot" "solid" "dotted" "dashed" )
 O2="-f date,O2,r,blue,'',dotted -f date,'O2 (avg)',r,blue,'O2 (r)'"
 HR="-f date,hr,r,green,'',dotted -f date,'HR (avg)',r,green,'HR (r)'"
 WT="-f date,weight,l,red,'',dotted -f date,'weight (avg)',l,red,'Weight (l)'"
@@ -173,7 +174,7 @@ done)"
 
 # Plot one line for each year...
 MPL="${CSVPLOT} -F %b -T 'Stacked Weight' $(for ((i=0; i<${#years[@]}; i++)); do
-    printf " -f day,e${years[i]},l,${COLORS[i]}"
+    printf " -f day,e${years[i]},l,${COLORS[i]},${years[i]},${STYLES[i]}"
 done)"
 
 cat >> ${scr} <<EOF
