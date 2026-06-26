@@ -10,6 +10,7 @@ from functools import partial
 import io
 from locale import getlocale, atoi, atof
 import os
+import re
 import sys
 
 import dateutil.parser
@@ -181,3 +182,23 @@ class ListyDict:
 
     def __str__(self):
         return f"<{self.__class__.__name__} {self.data}>"
+
+@public
+def parse_x(x_val):
+    try:
+        return float(x_val)
+    except ValueError as err:
+        try:
+            return dateutil.parser.parse(x_val)
+        except dateutil.parser.ParserError as err:
+            if err.args:
+                msg = err.args[0]
+                if (msg.startswith("day is out of range for month") or
+                    msg.startswith("day 29 must be in range 1..28")):
+                    # Maybe Feb 29 in non-leap year? Unfortunately, I can't
+                    # tell more about the date's structure.
+                    if re.search(r"[- ]29(\b|[^0-9]|$)", x_val) is not None:
+                        return ""
+                else:
+                    raise ValueError(f"Can't parse {x_val!r} as a timestamp or a number.")
+            raise
