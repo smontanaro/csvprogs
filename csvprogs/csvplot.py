@@ -182,7 +182,7 @@ from  matplotlib import pyplot
 import matplotlib.ticker
 from public import public, private
 
-from csvprogs.common import CSVArgParser, openi, usage
+from csvprogs.common import CSVArgParser, openi, usage, parse_x
 
 
 PROG = os.path.splitext(os.path.basename(sys.argv[0]))[0]
@@ -313,23 +313,6 @@ def plot(options, rdr, block=False):
     if options.xtime:
         min_x = datetime.datetime(9999, 12, 31, 23, 59, 59)
         max_x = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        def parse_x(x_val):
-            try:
-                return dateutil.parser.parse(x_val)
-            except dateutil.parser.ParserError as err:
-                if err.args:
-                    msg = err.args[0]
-                    if (msg.startswith("day is out of range for month") or
-                        msg.startswith("day 29 must be in range 1..28")):
-                        # Maybe Feb 29 in non-leap year? Unfortunately, I can't
-                        # tell more about the date's structure.
-                        if re.search(r"[- ]29(\b|[^0-9]|$)", x_val) is not None:
-                            return ""
-                    else:
-                        print(f"Can't parse {x_val!r} as a timestamp.",
-                              file=sys.stderr)
-                raise
-
         def fmt_date(tick_val, _=None, xfmt=options.xfmt):
             date = matplotlib.dates.num2date(tick_val)
             if not xfmt:
@@ -353,9 +336,6 @@ def plot(options, rdr, block=False):
     else:
         min_x = 1e99
         max_x = -1e99
-        def parse_x(x_val):
-            return float(x_val)
-
         def fmt_float(x_val, _=None):
             return options.xfmt % x_val
         formatter = matplotlib.ticker.FuncFormatter(fmt_float)
