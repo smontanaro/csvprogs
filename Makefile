@@ -30,7 +30,6 @@ VENVDIR = ./venv
 SCRIPTS = $(foreach s,$(PY_SCRIPTS),$(SRCDIR)/$(s))
 
 BIN_SCRIPTS = $(foreach s,$(SCRIPTS),$(BINDIR)/$(basename $(s)))
-SRC_SCRIPTS = $(foreach s,$(SCRIPTS),$(SRCDIR)/$(s))
 MAN_FILES = $(foreach s,$(SCRIPTS),$(MANDIR)/$(basename $(s)).1) \
 	$(foreach s,$(RST_FILES),$(MANDIR)/$(basename $(s)).1)
 
@@ -45,7 +44,7 @@ man : $(MAN_FILES)
 
 .PHONY: lint
 lint : FORCE
-	pylint $(SRC_SCRIPTS)
+	$(HOME)/py314/bin/pylint $(SCRIPTS)
 
 .PHONY: test
 test : virtualenv
