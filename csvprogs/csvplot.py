@@ -461,7 +461,7 @@ def plot(options, rdr, block=False):
             right_plot.set_ylim(rt_y_range)
 
     color_background(options.background, left and left_plot or right_plot,
-                     left and lt_y_range or rt_y_range, raw, parse_x)
+                     left and lt_y_range or rt_y_range, raw)
 
     if options.x_min_max:
         left_plot.set_xlim(options.x_min_max[0])
@@ -551,7 +551,7 @@ def parse_x_range(spec):
     raise ValueError(f"Can't parse range: {repr(spec)}")
 
 @private
-def color_background(backgrounds, plot_, y_range, raw_data, parse_x):
+def color_background(backgrounds, plot_, y_range, raw_data):
     "Add background fill colors."
     if not backgrounds:
         return
