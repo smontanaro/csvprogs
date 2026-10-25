@@ -23,16 +23,16 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "atpublic>=3.1",
-    "matplotlib>=3.5.2",
-    "numpy>=1.22",
-    "pandas>=1.5.2",
-    "python-dateutil>=2.8.2",
+    "atpublic",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "python-dateutil",
     "scipy",
-    "unum>=4.2.1",
-    "xlrd>=2.0.1",
-    "xlwt>=1.3.0",
-    "openpyxl>=3.1.5",
+    "unum",
+    "xlrd",
+    "xlwt",
+    "openpyxl",
 ]
 
 [tool.setuptools.packages.find]
