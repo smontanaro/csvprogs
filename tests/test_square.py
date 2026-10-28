@@ -78,6 +78,6 @@ def test_empty_square():
     assert result == exp_rows, result
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.square",
+    result = subprocess.run(["python", "-m", "csvprogs.square",
         "-a", NVDA], stdout=subprocess.PIPE, stderr=None)
     assert result.returncode == 0

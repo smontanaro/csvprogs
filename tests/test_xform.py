@@ -110,7 +110,7 @@ time,close,name1,name2\r
         env["PYTHONPATH"] = "/tmp"
         result = subprocess.run(
             [
-             "./venv/bin/python", "-m",
+             "python", "-m",
              "csvprogs.xform",
              "-F", f"{modname}.xform",
              "-p", "sample_global=1.0",
@@ -126,7 +126,7 @@ def test_f_xform():
         data = f.read()
         result = subprocess.run(
             [
-             "./venv/bin/python", "-m",
+             "python", "-m",
              "csvprogs.xform",
              "-f", XFORMSTRING,
              "-p", "sample_global=1.0",
@@ -143,7 +143,7 @@ def test_extra_f():
         modname = os.path.splitext(os.path.split(xfile.name)[1])[0]
         result = subprocess.run(
             [
-             "./venv/bin/python", "-m",
+             "python", "-m",
              "csvprogs.xform",
              "-F", f"{modname}.xform",
              "-f", "lambda row: row['i']",
@@ -156,7 +156,7 @@ def test_extra_f():
 def test_missing_xform():
     result = subprocess.run(
         [
-         "./venv/bin/python", "-m",
+         "python", "-m",
          "csvprogs.xform",
          "-p", "sample_global=1.0",
          RANDOM_CSV,

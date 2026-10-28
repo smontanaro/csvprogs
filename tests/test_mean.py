@@ -9,7 +9,7 @@ def test_cli():
     with open(VRTX_DAILY, "rb") as vrtx:
         vrtx_data = vrtx.read()
 
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.mean",
+    result = subprocess.run(["python", "-m", "csvprogs.mean",
         "-f", "% Change-VRTX", "-m", "-10", "-M", "+10"],
         stdout=subprocess.PIPE, stderr=None, input=vrtx_data)
     assert result.returncode == 0

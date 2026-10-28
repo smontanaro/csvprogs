@@ -64,17 +64,17 @@ def test_new_quotes():
         assert "NOTNULL" not in QuoteAction.quotes
 
 def test_append():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2csv",
         "-a", NVDA], stdout=subprocess.PIPE, stderr=None)
     rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
     assert rdr.fieldnames != ["time", "ask", "bid", "last"]
 
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2csv",
         NVDA], stdout=subprocess.PIPE, stderr=None)
     rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
     assert rdr.fieldnames == ["time", "ask", "bid", "last"]
 
 def test_bad_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2csv",
         "-a", NVDA, NVDA, NVDA], stdout=subprocess.PIPE, stderr=None)
     assert result.returncode != 0

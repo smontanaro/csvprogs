@@ -11,14 +11,14 @@ def test_cli():
         nvda_data = nvda.read()
 
     # bid >= ask
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.extractcsv",
+    result = subprocess.run(["python", "-m", "csvprogs.extractcsv",
         '(', 'bid', '>=', 'ask', ')', "or", "bid", "match", "99"],
         stdout=subprocess.PIPE, stderr=None, input=nvda_data)
     assert result.returncode == 0
     grt_eq = io.StringIO(result.stdout.decode("utf-8"))
 
     # bid < ask
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.extractcsv",
+    result = subprocess.run(["python", "-m", "csvprogs.extractcsv",
         "-v", '(', 'bid', '<', 'ask', ')', "or", "bid", "match", "99"],
         stdout=subprocess.PIPE, stderr=None, input=nvda_data)
     assert result.returncode == 0

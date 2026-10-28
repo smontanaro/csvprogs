@@ -15,7 +15,7 @@ def test_cli():
         with open(VRTX_DAILY, "r", encoding="utf-8") as inf:
             os.fdopen(fd2, "w", encoding="utf-8").writelines(inf.readlines()[0:100])
 
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvmerge",
+        result = subprocess.run(["python", "-m", "csvprogs.csvmerge",
             "-k", "Date", "-d", "Date", tmp1, tmp2],
             stdout=subprocess.PIPE, stderr=None)
         assert result.returncode == 0
@@ -27,7 +27,7 @@ def test_cli():
 
     # we subtract 1 from the resulting lists to discard the file header
     in_count = len(result.stdout.decode("utf-8").strip().split("\r\n")) - 1
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvcollapse",
+    result = subprocess.run(["python", "-m", "csvprogs.csvcollapse",
         "-k", "Date"],
         stdout=subprocess.PIPE, stderr=None, input=result.stdout)
     assert result.returncode == 0

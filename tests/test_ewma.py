@@ -94,7 +94,7 @@ def test_basic_ewma():
     assert not math.isnan(result[8]["ewma"])
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+    result = subprocess.run(["python", "-m", "csvprogs.ewma",
         "-f", "weight"], check=True,
         stdout=subprocess.PIPE, stderr=None,
         input=bytes(INPUT, encoding="utf-8"))
@@ -102,14 +102,14 @@ def test_cli():
     assert rdr[8]["ewma"] != "nan"
 
 def test_bad_gap():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+    result = subprocess.run(["python", "-m", "csvprogs.ewma",
         "-f", "weight", "--gap=-1"], check=False,
         stdout=subprocess.PIPE, stderr=None,
         input=bytes(INPUT, encoding="utf-8"))
     assert result.returncode != 0
 
 def test_trailing_blanks():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.ewma",
+    result = subprocess.run(["python", "-m", "csvprogs.ewma",
         "-f", "O2", "--gap=5"], check=False,
         stdout=subprocess.PIPE, stderr=None,
         input=bytes(INPUT, encoding="utf-8"))

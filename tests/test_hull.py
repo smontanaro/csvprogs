@@ -11,7 +11,7 @@ def test_cli():
     with open(VRTX_DAILY, "rb") as vrtx:
         vrtx_data = vrtx.read()
 
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.hull",
+    result = subprocess.run(["python", "-m", "csvprogs.hull",
         "-f", "Close-VRTX", "-c", "hull", "-n", "100"],
         stdout=subprocess.PIPE, stderr=None, input=vrtx_data)
     assert result.returncode == 0

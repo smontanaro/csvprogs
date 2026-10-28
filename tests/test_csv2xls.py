@@ -8,7 +8,7 @@ from tests import VRTX_CSV
 
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2xls", VRTX_CSV],
+    result = subprocess.run(["python", "-m", "csvprogs.csv2xls", VRTX_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert result.returncode == 0
     fd, fname = tempfile.mkstemp()
@@ -27,6 +27,6 @@ def test_cli():
         os.unlink(fname)
 
 def test_missing_file():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2xls",],
+    result = subprocess.run(["python", "-m", "csvprogs.csv2xls",],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert result.returncode != 0

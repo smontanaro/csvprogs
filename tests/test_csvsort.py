@@ -7,7 +7,7 @@ from tests import RANDOM_CSV
 
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvsort",
+    result = subprocess.run(["python", "-m", "csvprogs.csvsort",
             '-k', 'random', RANDOM_CSV],
             stdout=subprocess.PIPE, stderr=None)
     assert result.returncode == 0

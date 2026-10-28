@@ -6,7 +6,7 @@ from tests import SPY_CSV
 
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.sigavg",
+    result = subprocess.run(["python", "-m", "csvprogs.sigavg",
                             "-x", "Date", "-y", "Close",
         "-m", "447.75", "-M", "448.75", SPY_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)

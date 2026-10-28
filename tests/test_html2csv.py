@@ -8,7 +8,7 @@ def test_cli():
     with open(HTML_TABLE, "rb") as inp:
         inp_data = inp.read()
 
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.html2csv", "-v"],
+    result = subprocess.run(["python", "-m", "csvprogs.html2csv", "-v"],
         stdout=subprocess.PIPE, stderr=None, input=inp_data)
     assert result.returncode == 0
     act = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8"))))

@@ -57,7 +57,7 @@ exp = [448.10995923176694,
 EPS = 1e-7
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.spline",
+    result = subprocess.run(["python", "-m", "csvprogs.spline",
                             "-f", "Close", "-x", "Date", "-s", "1",
                             SPY_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -71,7 +71,7 @@ def test_cli():
     assert max(eps) <= EPS, eps
 
 def test_non_dt():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.spline",
+    result = subprocess.run(["python", "-m", "csvprogs.spline",
                             "-f", "random", "-x", "i", "--x-not-time",
         "-s", "1", RANDOM_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)

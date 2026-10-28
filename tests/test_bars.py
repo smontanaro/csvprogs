@@ -28,7 +28,7 @@ def test_generate_bars():
 
 def test_cli_bars():
     out = io.StringIO()
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.bars",
+    result = subprocess.run(["python", "-m", "csvprogs.bars",
         "-b", "1h", "-n" "bar", "-t", "time", "-p", "last", NVDA],
         stdout=subprocess.PIPE, stderr=None)
     rdr = csv.DictReader(io.StringIO(result.stdout.decode("utf-8")))
@@ -44,7 +44,7 @@ def test_cli_bars():
 
 def test_cli_bars_append():
     out = io.StringIO()
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.bars",
+    result = subprocess.run(["python", "-m", "csvprogs.bars",
         "-a", "-b", "1h", "-n" "bar", "-t", "time", "-p", "last", NVDA],
         stdout=subprocess.PIPE, stderr=None)
     pfx = result.stdout[0:5]

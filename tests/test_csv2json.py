@@ -12,7 +12,7 @@ setlocale(LC_ALL, "en_US.UTF-8")
 
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2json",
         "-f", 'Date,Open,High,Low,Close,% Change,% Change vs Average,Volume',
         "-t", "datetime,float,float,float,float,float,float,int:0",
         VRTX_CSV],
@@ -28,7 +28,7 @@ def test_cli():
 
 
 def test_missing_no_default():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2json",
         "-f", 'Date,Open,High,Low,Close,% Change,% Change vs Average,Volume',
         "-t", "datetime,float,float,float,float,float,float,int:0",
         VRTX_MISSING_CSV],
@@ -37,7 +37,7 @@ def test_missing_no_default():
 
 
 def test_missing_with_default():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2json",
         "-f", 'Date,Open,High,Low,Close,% Change,% Change vs Average,Volume',
         "-t", "datetime,float,float,float,float:-1.0,float,float:-1,int:0",
         VRTX_MISSING_CSV],
@@ -49,7 +49,7 @@ def test_missing_with_default():
 
 
 def test_cli_array():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2json",
         "-t", "datetime,float,float,float,float,float,float,int",
         "--array", "-H", VRTX_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -60,7 +60,7 @@ def test_cli_array():
 
 
 def test_bad_type_info():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2json",
         "-t", "datetime,float,float,float,float,float,int",
         "--array", "-H", VRTX_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -68,7 +68,7 @@ def test_bad_type_info():
 
 
 def test_cli_default():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2json",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2json",
         "-t", "datetime,float:0.0,float:0.0,float:0.0,float:0.0,float:0.0,float:0.0,int",
         SPY_DAILY],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)

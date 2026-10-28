@@ -36,7 +36,7 @@ def maybe_float(s):
 def test_cli():
     with (open(SPY_CSV, "r", encoding="utf-8") as csvf,
           open(SPY_XLS, "rb") as xlsf):
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.xls2csv"],
+        result = subprocess.run(["python", "-m", "csvprogs.xls2csv"],
             input=xlsf.read(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode == 0:
             act = list(csv.reader(io.StringIO(result.stdout.decode("utf-8"))))
@@ -51,6 +51,6 @@ def test_cli():
             raise SystemError
 
 def test_bad_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.xls2csv",
+    result = subprocess.run(["python", "-m", "csvprogs.xls2csv",
         "SPY.xls"], input=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert result.returncode != 0

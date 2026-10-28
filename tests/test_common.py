@@ -40,7 +40,7 @@ EPS = 1e-7
 
 
 def test_openio_stdin_stdout():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
+    result = subprocess.run(["python", "-m", "csvprogs.csv2csv",
         "-f", "time,close", "-n", "QUOTE_NONE"],
         input=INPUT, stdout=subprocess.PIPE, stderr=None)
     assert result.stdout == EXPECTED
@@ -53,7 +53,7 @@ def test_openio_files():
         f.seek(0)
         f.write(INPUT)
         f.close()
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csv2csv",
+        result = subprocess.run(["python", "-m", "csvprogs.csv2csv",
             "-f", "time,close", "-n", "QUOTE_NONE", inf, outf])
         assert result.returncode == 0
         f = os.fdopen(fd2, "rb")

@@ -12,7 +12,7 @@ def test_cli():
             rdr = csv.DictReader(inf)
             old_dates.extend([row["Date"] for row in rdr])
 
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvcat",
+    result = subprocess.run(["python", "-m", "csvprogs.csvcat",
             '-k', 'Date'] + IWY_CSVS,
             stdout=subprocess.PIPE, stderr=None)
     assert result.returncode == 0

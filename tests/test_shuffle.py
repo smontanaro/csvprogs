@@ -4,7 +4,7 @@ from tests import SPY_CSV
 
 
 def test_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.shuffle",
+    result = subprocess.run(["python", "-m", "csvprogs.shuffle",
         SPY_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert result.returncode == 0
@@ -17,7 +17,7 @@ def test_cli():
                 sorted(output.split("\n")) == sorted(input.split("\n")))
 
 def test_bad_cli():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.shuffle",
+    result = subprocess.run(["python", "-m", "csvprogs.shuffle",
         SPY_CSV, SPY_CSV, SPY_CSV, SPY_CSV],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert result.returncode == 1

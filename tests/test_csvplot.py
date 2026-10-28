@@ -41,7 +41,7 @@ def test_cli(test_input):
         del env["DISPLAY"]
     except KeyError:
         pass
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         "-l", "legend", '-f', 'time,last,l,r', '-f', 'time,bid,r,b',
         "--noblock", "--left_label", "left", "--right_label", "right",
         "-b", "time,last,135.07,lightgreen", "-Y", "0:100,0:100",
@@ -50,7 +50,7 @@ def test_cli(test_input):
     assert result.returncode == 0
 
 def test_cli_nondate():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         '-f', 'i,random', "--noblock", "--format", '%.0f',
         "-Y", "0:1", "-X", "0:10", "-T", "test_cli_nondate",
         RANDOM_CSV],
@@ -58,14 +58,14 @@ def test_cli_nondate():
     assert result.returncode == 0
 
 def test_missing_yval():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         '-f', 'date,weight', "--noblock", "-X", "2025-01-01,yesterday",
         WEIGHT_CSV],
         stdout=subprocess.PIPE, stderr=None)
     assert result.returncode == 0
 
 def test_cli_bg():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         "-L", "--verbose", '-f', 'Date,Close,l,r,_Close,-/3,;/2',
         "-b", "Date,% Change,-1:+1,lightgreen",
         "--noblock", "--right_label", "right", "-B", "Agg", "--xkcd",
@@ -76,26 +76,26 @@ def test_cli_bg():
 
 def test_bad_date_1():
     # two paths through bad date land, one we can recover from, one we can't.
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         '-f', 'time,close', "-T", "test_bad_date_1", BAD_DATE_1],
         stdout=subprocess.PIPE, stderr=None)
     assert result.returncode != 0
 
 def test_bad_date_2():
     # we know how to recover from invalid leap year dates.
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         '-f', 'time,close', "-T", "test_bad_date_2", "--noblock", BAD_DATE_2],
         stdout=subprocess.PIPE, stderr=None)
     assert result.returncode == 0
 
 def test_bad_x_range():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         '-f', 'time,last,l,r', "-X", "yesterday,today,today", NVDA],
         stdout=subprocess.PIPE, stderr=None)
     assert result.returncode != 0
 
 def test_empty():
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         '-f', 'time,close', "--noblock", EMPTY],
         stdout=subprocess.PIPE, stderr=None)
     assert result.returncode != 0
@@ -106,7 +106,7 @@ def test_only_right_y():
         del env["DISPLAY"]
     except KeyError:
         pass
-    result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.csvplot",
+    result = subprocess.run(["python", "-m", "csvprogs.csvplot",
         '-f', 'time,bid,r,b', "--noblock", "--x_label", "x", NVDA],
         stdout=subprocess.PIPE, stderr=None, env=env)
     assert result.returncode == 0

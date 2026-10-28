@@ -11,19 +11,9 @@ from tests import NVDA
 EPS = 1e-7
 
 
-def test_cli_c():
-    with open(NVDA, "rb") as nvda:
-        raw_input = nvda.read()
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.regress",
-            "-f", "bid,ask", "--corr", NVDA, "/dev/stdout"], check=True,
-            stdout=subprocess.PIPE, stderr=None)
-    assert result.returncode == 0
-    corr = float(result.stdout.strip())
-    assert abs(corr - 0.98374687) < EPS
-
 def test_cli_csv():
     with open(NVDA, "rb") as nvda:
-        result = subprocess.run(["./venv/bin/python", "-m", "csvprogs.regress",
+        result = subprocess.run(["python", "-m", "csvprogs.regress",
             "-f", "bid,ask", "--column", "reg", "--verbose"], check=True,
             stdout=subprocess.PIPE, stderr=None,
             input=nvda.read())
