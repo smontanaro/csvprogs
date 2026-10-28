@@ -91,9 +91,9 @@ def test_listy_dict():
             ld = ListyDict(row, indexes)
             assert str(ld) == f"<ListyDict {row}>"
             assert ld.keys() == rdr.fieldnames
-            assert len(ld) == 2
+            assert len(ld) == 3, rdr.fieldnames
             assert "i" in ld
-            for (i, k) in enumerate(iter(ld)):
+            for (i, k) in indexes:
                 assert ld[i] == ld[k]
             ld["i"] = 2
             assert ld[0] == 2
