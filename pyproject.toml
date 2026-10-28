@@ -27,6 +27,8 @@ dependencies = [
     "matplotlib",
     "numpy",
     "pandas",
+    # force from github until a 3.16-compatible version is released
+    "pillow @ git+https://github.com/python-pillow/Pillow",
     "python-dateutil",
     "scipy",
     "unum",
