@@ -6,7 +6,7 @@ PY_SCRIPTS = \
     atr.py bars.py csv2csv.py csv2json.py csv2xls.py csvcat.py \
     csvcollapse.py csvfill.py csvmerge.py csvplot.py csvsort.py dsplit.py \
     ewma.py extractcsv.py filter.py html2csv.py hull.py interp.py \
-    keltner.py mean.py mvavg.py regress.py sharpe.py \
+    keltner.py mean.py mvavg.py corr.py regress.py sharpe.py \
     shuffle.py sigavg.py spline.py square.py take.py xform.py xls2csv.py
 
 RST_FILES = data_filters.rst
