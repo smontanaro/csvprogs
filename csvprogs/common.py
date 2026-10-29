@@ -83,6 +83,16 @@ def openpair(options, args):
         yield (inf, outf)
 
 @public
+@contextmanager
+def openin(options, args):
+    mode = "a" if options.append else "w"
+    if len(args) >= 1:
+        inf = io.open(args[0], "r", encoding=options.encoding)
+    else:
+        inf = sys.stdin
+    yield inf
+
+@public
 def usage(docstring, global_dict, msg=None):
     "common extraction of __doc__"
     output = io.StringIO()
